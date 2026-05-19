@@ -2,3 +2,33 @@
 /.claude/.10x-cli-manifest.json
 **/SKILL.md
 /.claude/skills/
+
+# from 10x-astro-starter
+dist/
+.astro/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.env
+.env.production
+.dev.vars
+.wrangler/
+.DS_Store
+.idea/
+
+# from 10x-astro-starter
+dist/
+.astro/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.env
+.env.production
+.dev.vars
+.wrangler/
+.DS_Store
+.idea/
