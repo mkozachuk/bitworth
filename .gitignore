@@ -1,1 +1,4 @@
 /.idea/
+/.claude/.10x-cli-manifest.json
+**/SKILL.md
+/.claude/skills/
