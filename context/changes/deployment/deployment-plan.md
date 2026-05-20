@@ -70,8 +70,9 @@ SUPABASE_KEY=your-anon-key-here
 - [X] **2a.** Install Cloudflare Workers & Pages GitHub App + authorize repo
 - [X] **2b.** Configure Build Settings (build command, output dir, deploy command)
 - [X] **2c.** Add environment variables in Cloudflare dashboard
-  - Set via `wrangler secret put SUPABASE_URL --name bitworth` + `wrangler secret put SUPABASE_KEY --name bitworth` (secrets injected at deploy time, not build time)
-- [ ] **2d.** Enable auto-deploy on master
+  - Runtime secrets: `wrangler secret put SUPABASE_URL --name bitworth` + `wrangler secret put SUPABASE_KEY --name bitworth`
+  - Build env vars: set in dashboard (required for Workers Builds auto-deploy pipeline) — user done
+- [X] **2d.** Enable auto-deploy on master — verified working, pushes to master trigger builds
 
 This step requires a human action via the Cloudflare Dashboard.
 
@@ -137,7 +138,7 @@ If not: `npx wrangler login`
 - [X] **4a.** Worker `bitworth` appears in **Workers & Pages** with status "Success"
 - [X] **4b.** `npx wrangler tail bitworth --status error --format json` shows no errors (started, no errors observed)
 - [X] **4c.** Browser: `/auth/signin` loads (HTTP 200), `/dashboard` redirects to signin (HTTP 302)
-- [ ] **4d.** Push a test commit to `master` — auto-deploy fires within 1-2 min
+- [X] **4d.** Push a test commit to `master` — auto-deploy fires within 1-2 min
 
 ---
 

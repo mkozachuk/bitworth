@@ -32,3 +32,4 @@ pnpm-debug.log*
 .wrangler/
 .DS_Store
 .idea/
+/.env

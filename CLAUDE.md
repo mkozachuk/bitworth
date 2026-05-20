@@ -30,9 +30,12 @@ Unauthenticated requests to protected routes redirect to `/auth/signin`.
 
 ## Environment Setup
 
-- Copy `.env.example` to `.dev.vars` for local dev
 - Required vars: `SUPABASE_URL`, `SUPABASE_KEY`
-- Supabase local dev requires Docker (`supabase start`)
+- **Local dev**: `.env` — local Supabase (run `supabase start` via Docker first); also copy `.env.example` to `.dev.vars` for Wrangler
+- **Production**: two-step setup required for Cloudflare Workers Builds auto-deploy:
+  1. Runtime secrets: `wrangler secret put SUPABASE_URL --name bitworth` + `wrangler secret put SUPABASE_KEY --name bitworth`
+  2. Build env vars: set the same vars in Cloudflare dashboard under `Settings → Environment Variables` (Workers Builds pipeline reads these, not runtime secrets)
+- Both `.env` and `.dev.vars` are gitignored — never commit credentials
 
 ## Pre-commit Hooks
 
