@@ -1,0 +1,42 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { DashboardClient } from "@/components/dashboard/DashboardClient";
+import { ErrorBoundary } from "@/components/dashboard/ErrorBoundary";
+import { createSupabaseAdminClient } from "@/lib/db";
+
+const DEMO_USER_ID = "00000000-0000-0000-0000-000000000001";
+
+// Use admin client (service role) to bypass RLS for demo data
+const db = createSupabaseAdminClient();
+if (!db) {
+  return new Response("Database unavailable", { status: 500 });
+}
+
+const [profileResult, assetsResult, snapshotsResult, ratesResult] = await Promise.all([
+  db.from("profiles").select("*").eq("id", DEMO_USER_ID).single(),
+  db.from("assets").select("*").eq("user_id", DEMO_USER_ID).order("created_at", { ascending: false }),
+  db.from("snapshots").select("*").eq("user_id", DEMO_USER_ID).order("snapshot_date", { ascending: true }),
+  db.from("exchange_rates").select("*").order("fetched_at", { ascending: false }).limit(10),
+]);
+
+const profile = profileResult.data;
+const assets = assetsResult.data ?? [];
+const snapshots = snapshotsResult.data ?? [];
+const rates = ratesResult.data ?? [];
+const displayCurrency = (profile?.display_currency ?? "PLN") as "PLN" | "USD" | "EUR";
+---
+
+<Layout title="Demo - BitWorth">
+  <div class="bg-cosmic min-h-screen">
+    <ErrorBoundary client:only="react">
+      <DashboardClient
+        client:only="react"
+        profile={{ display_currency: displayCurrency }}
+        assets={assets}
+        snapshots={snapshots}
+        rates={rates}
+        isDemo={true}
+      />
+    </ErrorBoundary>
+  </div>
+</Layout>

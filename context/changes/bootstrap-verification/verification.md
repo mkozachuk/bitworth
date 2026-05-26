@@ -40,10 +40,10 @@ BitWorth is a privacy-first personal net worth tracker for a solo user, built af
 
 ## Pre-scaffold verification
 
-| Signal             | Value                                      | Severity | Notes                                      |
-| ------------------ | ------------------------------------------ | -------- | ------------------------------------------ |
-| GitHub repo        | przeprogramowani/10x-astro-starter         | unknown  | gh not authenticated; pushed_at unavailable |
-| npm package        | not run                                    | —        | git-clone strategy; no create-* CLI        |
+| Signal      | Value                              | Severity | Notes                                       |
+| ----------- | ---------------------------------- | -------- | ------------------------------------------- |
+| GitHub repo | przeprogramowani/10x-astro-starter | unknown  | gh not authenticated; pushed_at unavailable |
+| npm package | not run                            | —        | git-clone strategy; no create-\* CLI        |
 
 No npm recency check ran — git-clone strategy skips the npm step per pre-scaffold-verification.md.
 
@@ -59,27 +59,27 @@ No npm recency check ran — git-clone strategy skips the npm step per pre-scaff
 
 ### File move detail
 
-| File                          | Action                              |
-| ----------------------------- | ----------------------------------- |
-| public/                       | moved silently                      |
-| src/                          | moved silently                      |
-| supabase/                     | moved silently                      |
-| astro.config.mjs              | moved silently                      |
-| components.json               | moved silently                      |
-| eslint.config.js              | moved silently                      |
-| package-lock.json             | moved silently                      |
-| tsconfig.json                 | moved silently                      |
-| wrangler.jsonc                | moved silently                      |
-| .env.example                  | moved silently                      |
-| .nvmrc                        | moved silently                      |
-| .prettierrc.json             | moved silently                      |
-| .github/                      | moved silently                      |
-| .husky/                       | moved silently                      |
-| .vscode/                      | moved silently                      |
-| CLAUDE.md                     | existing wins; CLAUDE.md.scaffold   |
-| README.md                     | existing wins; README.md.scaffold   |
-| package.json                  | existing wins; package.json.scaffold|
-| .bootstrap-scaffold/.git/    | deleted before move-up              |
+| File                      | Action                               |
+| ------------------------- | ------------------------------------ |
+| public/                   | moved silently                       |
+| src/                      | moved silently                       |
+| supabase/                 | moved silently                       |
+| astro.config.mjs          | moved silently                       |
+| components.json           | moved silently                       |
+| eslint.config.js          | moved silently                       |
+| package-lock.json         | moved silently                       |
+| tsconfig.json             | moved silently                       |
+| wrangler.jsonc            | moved silently                       |
+| .env.example              | moved silently                       |
+| .nvmrc                    | moved silently                       |
+| .prettierrc.json          | moved silently                       |
+| .github/                  | moved silently                       |
+| .husky/                   | moved silently                       |
+| .vscode/                  | moved silently                       |
+| CLAUDE.md                 | existing wins; CLAUDE.md.scaffold    |
+| README.md                 | existing wins; README.md.scaffold    |
+| package.json              | existing wins; package.json.scaffold |
+| .bootstrap-scaffold/.git/ | deleted before move-up               |
 
 Note: `package.json` did not exist in cwd at scaffold time (cwd had only pre-chain files). It was surfaced as a `.scaffold` sibling for review, then promoted to cwd to enable `npm install`. The CLAUDE.md and README.md .scaffold siblings are genuine pre-existing file conflicts.
 
@@ -99,18 +99,18 @@ _(none)_
 
 #### MODERATE findings (10)
 
-| Package                  | Via / Cause                           |
-| ------------------------ | ------------------------------------- |
-| @astrojs/check           | @astrojs/language-server             |
-| @astrojs/cloudflare      | @cloudflare/vite-plugin              |
-| @astrojs/language-server| volar-service-yaml                   |
-| @cloudflare/vite-plugin  | miniflare                            |
-| miniflare                | ws                                   |
-| volar-service-yaml       | yaml-language-server                 |
-| wrangler                 | miniflare                            |
-| ws                       | ws                                   |
-| yaml                     | yaml                                 |
-| yaml-language-server     | yaml                                 |
+| Package                  | Via / Cause              |
+| ------------------------ | ------------------------ |
+| @astrojs/check           | @astrojs/language-server |
+| @astrojs/cloudflare      | @cloudflare/vite-plugin  |
+| @astrojs/language-server | volar-service-yaml       |
+| @cloudflare/vite-plugin  | miniflare                |
+| miniflare                | ws                       |
+| volar-service-yaml       | yaml-language-server     |
+| wrangler                 | miniflare                |
+| ws                       | ws                       |
+| yaml                     | yaml                     |
+| yaml-language-server     | yaml                     |
 
 All 10 MODERATE findings are **transitive** — they stem from dev-dependency tooling (language servers, type checkers, wrangler dev server) and do not affect the production runtime. Consider reviewing after the MVP is stabilized; they are not acute risk at this stage.
 
@@ -120,27 +120,28 @@ _(none)_
 
 ## Hints recorded but not acted on
 
-| Hint                        | Value              |
-| -------------------------- | ------------------ |
-| bootstrapper_confidence    | first-class       |
-| quality_override           | false             |
-| path_taken                 | standard          |
-| self_check_answers         | null              |
-| team_size                  | solo              |
-| deployment_target          | cloudflare-pages  |
-| ci_provider                | github-actions    |
-| ci_default_flow           | auto-deploy-on-merge |
-| has_auth                   | true              |
-| has_payments               | false             |
-| has_realtime               | false             |
-| has_ai                     | false             |
-| has_background_jobs        | false             |
+| Hint                    | Value                |
+| ----------------------- | -------------------- |
+| bootstrapper_confidence | first-class          |
+| quality_override        | false                |
+| path_taken              | standard             |
+| self_check_answers      | null                 |
+| team_size               | solo                 |
+| deployment_target       | cloudflare-pages     |
+| ci_provider             | github-actions       |
+| ci_default_flow         | auto-deploy-on-merge |
+| has_auth                | true                 |
+| has_payments            | false                |
+| has_realtime            | false                |
+| has_ai                  | false                |
+| has_background_jobs     | false                |
 
 ## Next steps
 
 Next: a future skill will set up agent context (CLAUDE.md, AGENTS.md). For now, your project is scaffolded and verified — happy hacking.
 
 Useful manual steps in the meantime:
+
 - `git init` (if you have not already) to start your own repo history — done implicitly; the git-clone strategy deleted the cloned .git/ so your original repo history is preserved.
 - Review any `.scaffold` siblings the conflict policy created (`CLAUDE.md.scaffold`, `README.md.scaffold`, `package.json.scaffold`) and decide which version of each file to keep.
 - Copy `.env.example` to `.env` (or `.dev.vars` for Cloudflare local dev) and fill in your Supabase credentials.

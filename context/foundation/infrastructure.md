@@ -19,14 +19,14 @@ The tech stack is already built for Cloudflare via `@astrojs/cloudflare` adapter
 
 ## Platform Comparison
 
-| Platform | CLI-first | Managed/Serverless | Agent-readable docs | Stable deploy API | MCP / Integration | Total |
-|---|---|---|---|---|---|---|
-| **Cloudflare Workers** | **Pass** | **Pass** | **Pass** | **Pass** | **Pass** | **5/5** |
-| **Vercel** | **Pass** | **Pass** | **Pass** | **Pass** | **Partial** (MCP beta) | **4.5/5** |
-| Netlify | **Pass** | **Pass** | **Pass** | **Pass** | **Pass** | **5/5** |
-| Fly.io | **Pass** | **Pass** | **Pass** | **Pass** | **Pass** | **5/5** |
-| Railway | **Pass** | **Pass** | **Partial** (no llms.txt) | **Partial** (no rollback command) | **Pass** | **4/5** |
-| Render | **Pass** | **Pass** | **Pass** | **Pass** | **Pass** | **5/5** |
+| Platform               | CLI-first | Managed/Serverless | Agent-readable docs       | Stable deploy API                 | MCP / Integration      | Total     |
+| ---------------------- | --------- | ------------------ | ------------------------- | --------------------------------- | ---------------------- | --------- |
+| **Cloudflare Workers** | **Pass**  | **Pass**           | **Pass**                  | **Pass**                          | **Pass**               | **5/5**   |
+| **Vercel**             | **Pass**  | **Pass**           | **Pass**                  | **Pass**                          | **Partial** (MCP beta) | **4.5/5** |
+| Netlify                | **Pass**  | **Pass**           | **Pass**                  | **Pass**                          | **Pass**               | **5/5**   |
+| Fly.io                 | **Pass**  | **Pass**           | **Pass**                  | **Pass**                          | **Pass**               | **5/5**   |
+| Railway                | **Pass**  | **Pass**           | **Partial** (no llms.txt) | **Partial** (no rollback command) | **Pass**               | **4/5**   |
+| Render                 | **Pass**  | **Pass**           | **Pass**                  | **Pass**                          | **Pass**               | **5/5**   |
 
 **Hard filters applied:** Q1 (no persistent connections required) — no hard blockers. All six platforms remain eligible. Q2 (minimize cost) penalizes platforms with non-zero baseline costs (Railway $5/mo minimum, Fly.io no permanent free tier). Q3 (existing Cloudflare familiarity) breaks a tie between Cloudflare and Vercel — the Cloudflare familiarity eliminates the Vercel option's DX advantage. Q5 (external providers fine) neutralizes the co-location advantage of Netlify, Railway, and Render.
 
@@ -97,28 +97,31 @@ Six months in, the Astro SSR app is running on Cloudflare Workers, but the devel
 
 ## Risk Register
 
-| Risk | Source | Likelihood | Impact | Mitigation |
-|---|---|---|---|---|
-| CPU limit exceeded on free tier (10ms/invocation) | Devil's advocate | Medium | Medium | Profile dashboard rendering; cache Supabase session checks; move heavy currency conversion to client-side; consider paid plan ($5/mo) only if needed |
-| CommonJS dependencies break at runtime | Devil's advocate | Low | High | Add a Vite plugin rule to error on any unresolved `require()` in the bundle; add a `wrangler dev` smoke test to CI |
-| `--assets` flag instability (beta) | Devil's advocate | Low | Low | Use Workers built-in static serving instead of `--assets`; avoid the beta flag |
-| Workers KV stale reads (60s propagation) | Devil's advocate | Low | Low | Don't use Workers KV for user-specific state; Supabase handles all state |
-| Cloudflare Pages deprecated for SSR | Devil's advocate | Low | Medium | Ensure all deployment goes through `wrangler`, not Pages GUI; add a CI check that Pages-targeted configs fail |
-| Supabase auth middleware adds latency on every request | Unknown unknowns | Medium | Medium | Cache Supabase session with short TTL; profile `/dashboard` page under real load before launch |
-| `@supabase/ssr` cookie verification async overhead at high concurrency | Unknown unknowns | Low | Low | Test at 10+ concurrent users; note that for a solo user MVP this is unlikely to be a problem |
-| v12 docs are misleading for v13 adapter | Unknown unknowns | Medium | Medium | Bookmark the v13 docs: `docs.astro.build/en/guides/integrations-guide/cloudflare/`; write a CLAUDE.md note warning about v12/v13 differences |
-| Workers log retention only 3 days on free tier | Unknown unknowns | Medium | Medium | Set a weekly calendar reminder to check production health; subscribe to Cloudflare email alerts for errors |
-| Non-atomic deploy window (migration + code deploy) | Unknown unknowns | Low | High | Run DB migrations separately before deploys; use a two-step deployment with migration-step + code-step |
+| Risk                                                                   | Source           | Likelihood | Impact | Mitigation                                                                                                                                           |
+| ---------------------------------------------------------------------- | ---------------- | ---------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CPU limit exceeded on free tier (10ms/invocation)                      | Devil's advocate | Medium     | Medium | Profile dashboard rendering; cache Supabase session checks; move heavy currency conversion to client-side; consider paid plan ($5/mo) only if needed |
+| CommonJS dependencies break at runtime                                 | Devil's advocate | Low        | High   | Add a Vite plugin rule to error on any unresolved `require()` in the bundle; add a `wrangler dev` smoke test to CI                                   |
+| `--assets` flag instability (beta)                                     | Devil's advocate | Low        | Low    | Use Workers built-in static serving instead of `--assets`; avoid the beta flag                                                                       |
+| Workers KV stale reads (60s propagation)                               | Devil's advocate | Low        | Low    | Don't use Workers KV for user-specific state; Supabase handles all state                                                                             |
+| Cloudflare Pages deprecated for SSR                                    | Devil's advocate | Low        | Medium | Ensure all deployment goes through `wrangler`, not Pages GUI; add a CI check that Pages-targeted configs fail                                        |
+| Supabase auth middleware adds latency on every request                 | Unknown unknowns | Medium     | Medium | Cache Supabase session with short TTL; profile `/dashboard` page under real load before launch                                                       |
+| `@supabase/ssr` cookie verification async overhead at high concurrency | Unknown unknowns | Low        | Low    | Test at 10+ concurrent users; note that for a solo user MVP this is unlikely to be a problem                                                         |
+| v12 docs are misleading for v13 adapter                                | Unknown unknowns | Medium     | Medium | Bookmark the v13 docs: `docs.astro.build/en/guides/integrations-guide/cloudflare/`; write a CLAUDE.md note warning about v12/v13 differences         |
+| Workers log retention only 3 days on free tier                         | Unknown unknowns | Medium     | Medium | Set a weekly calendar reminder to check production health; subscribe to Cloudflare email alerts for errors                                           |
+| Non-atomic deploy window (migration + code deploy)                     | Unknown unknowns | Low        | High   | Run DB migrations separately before deploys; use a two-step deployment with migration-step + code-step                                               |
 
 ## Getting Started
 
 1. **Install Wrangler** (if not already installed):
+
    ```bash
    npm install -g wrangler
    ```
+
    Confirm version: `wrangler --version` (should be 4.x for the latest features).
 
 2. **Add secrets to Workers**:
+
    ```bash
    wrangler secret put SUPABASE_URL
    # (prompts for value — paste from .dev.vars)
@@ -127,12 +130,15 @@ Six months in, the Astro SSR app is running on Cloudflare Workers, but the devel
    ```
 
 3. **Deploy to production**:
+
    ```bash
    wrangler deploy --env production
    ```
+
    This deploys the current working directory to the `production` Workers environment. The first deploy creates the Worker; subsequent deploys update it in-place with rolling (zero-downtime) replacement.
 
 4. **Verify the deploy**:
+
    ```bash
    wrangler tail bitworth --status error --format json
    # Then open https://bitworth.pages.dev (or your mapped domain) in a browser
@@ -146,6 +152,7 @@ Six months in, the Astro SSR app is running on Cloudflare Workers, but the devel
 ## Out of Scope
 
 The following were not evaluated in this research:
+
 - Docker image configuration
 - CI/CD pipeline setup (GitHub Actions workflow already exists)
 - Production-scale architecture (multi-region, HA, DR)

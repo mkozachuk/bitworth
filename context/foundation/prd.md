@@ -34,16 +34,19 @@ The core insight is that net worth tracking doesn't need bank connections to be 
 ## Success Criteria
 
 ### Primary
+
 - User can sign up, log in, and see their dashboard.
 - User can add/edit/delete asset entries across all categories with amounts in PLN/USD/EUR.
 - User sees a single total net worth number in their chosen display currency, with delta indicators vs. last month and vs. January 1st.
 - User sees a line chart of net worth over time (all saved monthly snapshots).
 
 ### Secondary
+
 - Live crypto pricing auto-fetches BTC/ETH prices.
 - FIRE calculator is a planned future feature (not in MVP scope).
 
 ### Guardrails
+
 - No financial data from any user is accessible to other users — strict account isolation.
 - External API calls (exchange rates, crypto prices) fail gracefully with fallback values — no broken UI.
 
@@ -56,6 +59,7 @@ The core insight is that net worth tracking doesn't need bank connections to be 
 - **Then** they see their total net worth in their chosen currency, with delta indicators vs. last month and vs. January 1st, and a line chart that includes the new snapshot
 
 #### Acceptance Criteria
+
 - Total net worth is a single, prominently displayed number
 - Each asset category shows its subtotal in the display currency
 - The line chart updates to include the new snapshot immediately after saving
@@ -68,6 +72,7 @@ The core insight is that net worth tracking doesn't need bank connections to be 
 - **Then** they see an option to explore the app in demo mode with sample data, and an option to sign up
 
 #### Acceptance Criteria
+
 - Demo mode is accessible without any login or account creation
 - Demo data is clearly labeled as sample data
 - Demo mode shows a realistic set of assets, snapshots, and chart data
@@ -79,6 +84,7 @@ The core insight is that net worth tracking doesn't need bank connections to be 
 - **Then** each asset appears under its category, with its original amount shown, and the totals are correctly converted to their chosen display currency
 
 #### Acceptance Criteria
+
 - Assets are grouped under their category in the UI
 - Each asset shows name, amount, and original currency
 - Crypto assets trigger a live price fetch on entry
@@ -87,6 +93,7 @@ The core insight is that net worth tracking doesn't need bank connections to be 
 ## Functional Requirements
 
 ### Authentication
+
 - FR-001: Visitor can view a landing page with sign up and sign in options. Priority: must-have
 - FR-002: Visitor can run the app in demo mode with pre-populated sample data, without creating an account. Priority: nice-to-have
   > Socrates: Counter-argument considered: "Demo mode with realistic sample data adds implementation complexity for a non-authenticated user." Resolution: demoted to nice-to-have — valuable for visitor evaluation but not blocking the MVP core.
@@ -95,6 +102,7 @@ The core insight is that net worth tracking doesn't need bank connections to be 
 - FR-005: Unauthenticated users cannot access any authenticated route or data. Priority: must-have
 
 ### Asset Management
+
 - FR-006: User can add an asset entry with a name, amount, currency (PLN/USD/EUR), and category. Priority: must-have
 - FR-007: User can edit an existing asset entry (name, amount, currency, category). Priority: must-have
 - FR-008: User can delete an asset entry. Priority: must-have
@@ -102,6 +110,7 @@ The core insight is that net worth tracking doesn't need bank connections to be 
 - FR-010: Liabilities (Loans & Credit) are treated as negative values when calculating net worth. Priority: must-have
 
 ### Net Worth Display
+
 - FR-011: User can set their display currency (PLN, USD, or EUR). All totals are shown in this currency. Priority: must-have
 - FR-012: The app fetches live exchange rates and converts all asset amounts to the display currency. Priority: must-have
 - FR-013: If exchange rate fetching fails, the app falls back to a cached rate or a manual entry — no broken UI. Priority: must-have
@@ -109,11 +118,13 @@ The core insight is that net worth tracking doesn't need bank connections to be 
 - FR-015: The app displays delta indicators: net worth vs. last month's snapshot and vs. January 1st, as both absolute value and percentage. Priority: must-have
 
 ### Historical Data & Snapshots
+
 - FR-016: The app auto-saves a snapshot once per calendar month. Priority: must-have
 - FR-017: User can manually trigger a snapshot save at any time. Priority: must-have
 - FR-018: The app displays a line chart showing net worth at each saved snapshot over time. Priority: must-have
 
 ### Crypto Pricing
+
 - FR-019: When user enters a crypto asset, the app auto-fetches current market price for BTC, ETH, and common altcoins. Priority: must-have
 - FR-020: If crypto price fetching fails, the app falls back to a cached price or manual entry — no broken UI. Priority: must-have
 

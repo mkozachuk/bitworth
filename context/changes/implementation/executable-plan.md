@@ -33,6 +33,7 @@ Developer writes code
 **Tests:** Migration syntax and RLS policy smoke test via `supabase db diff --dry-run` (no unit tests needed for SQL schema — verified by running the migration against local Supabase).
 
 Once Developer completes, sequential passes:
+
 - **Architect** reviews: table design, RLS policies, index choices, trigger logic
 - **BA** verifies: all 5 tables present, 12 asset categories from PRD covered, RLS correct
 - **Tester** verifies: migration runs without error, RLS enforces isolation
@@ -44,6 +45,7 @@ Once Developer completes, sequential passes:
 ## Phase 2: Library Utilities (can run parallel with Phase 3)
 
 **Developer** writes all 6 utility files in `src/lib/`:
+
 - `db.ts` — typed Supabase server client (reuse `createClient` from existing `lib/supabase.ts`)
 - `exchange-rates.ts` — Frankfurter API, cache to `exchange_rates` table
 - `crypto-prices.ts` — CoinGecko API, cache to `crypto_prices` table
@@ -62,6 +64,7 @@ Once Developer completes, sequential passes:
 ## Phase 3: API Routes (can run parallel with Phase 2)
 
 **Developer** writes all API endpoints in `src/pages/api/`:
+
 - `assets/index.ts` — GET + POST
 - `assets/[id].ts` — PUT + DELETE
 - `snapshots/index.ts` — GET + POST
@@ -82,6 +85,7 @@ Once Developer completes, sequential passes:
 Split into two parallel tracks once Phase 3 is done:
 
 **Track A (UI Primitives) — Developer writes:**
+
 - `src/components/ui/card.tsx`
 - `src/components/ui/input.tsx`
 - `src/components/ui/select.tsx`
@@ -89,11 +93,13 @@ Split into two parallel tracks once Phase 3 is done:
 - `src/components/ui/skeleton.tsx`
 
 **Track B (Dashboard Components) — Developer writes:**
+
 - `NetWorthCard.tsx`, `AssetList.tsx`, `AssetForm.tsx`, `NetWorthChart.tsx`
 - `CurrencySelector.tsx`, `SnapshotButton.tsx`, `ErrorBoundary.tsx`
 - `DashboardClient.tsx`, `AuthStatus.tsx`
 
 Sequential passes after each track:
+
 - **Architect** reviews: component APIs, prop types, integration with recharts
 - **BA** verifies: all 7 dashboard components present, all 12 asset categories in form
 - **Tester** verifies: components render, modal opens/closes, chart renders with mock data
@@ -107,6 +113,7 @@ Sequential passes after each track:
 **Developer** rewrites `src/pages/dashboard.astro` and installs `recharts`.
 
 Sequential passes:
+
 - **Architect** reviews: SSR data flow, prop passing to React island
 - **BA** verifies: page shows all data from SSR, no client-side fetching waterfall
 - **Tester** verifies: page renders with real data, skeleton shows during hydration
@@ -133,6 +140,7 @@ Sequential loop: Developer → Architect → BA → Tester.
 **Architect, BA, Tester = spawned general-purpose agents.** Each spawned agent receives full context (implementation plan + code output) and returns a structured review with a pass/fail verdict and specific fix requests.
 
 **Feedback loop pattern:**
+
 ```
 Developer writes code
   → Spawn Architect agent → if issues: Developer fixes → Architect re-reviews
@@ -168,6 +176,7 @@ Final verification      → run build, lint, smoke test
 ## Verification
 
 After all phases:
+
 - `npm run build` passes
 - `npm run lint` passes
 - `npm run test:run` passes (all Vitest tests green)
