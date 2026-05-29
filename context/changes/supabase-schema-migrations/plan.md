@@ -407,7 +407,7 @@ If the migration needs to be revised in development: `supabase db reset` clears 
 
 #### Automated
 
-- [x] 2.1 `supabase db reset` completes without error
+- [x] 2.1 `supabase db reset` completes without error — b463cf5
 
 #### Manual
 
@@ -418,9 +418,9 @@ If the migration needs to be revised in development: `supabase db reset` clears 
 
 #### Automated
 
-- [ ] 3.1 Types generated for all 5 tables: `npx supabase gen types typescript`
-- [ ] 3.2 Browser client factory has no TypeScript errors
-- [ ] 3.3 `npm run typecheck` passes
+- [x] 3.1 Types generated for all 5 tables: `npx supabase gen types typescript`
+- [x] 3.2 Browser client factory has no TypeScript errors
+- [x] 3.3 `npm run typecheck` passes
 
 #### Manual
 
