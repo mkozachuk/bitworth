@@ -395,8 +395,8 @@ If the migration needs to be revised in development: `supabase db reset` clears 
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly: `supabase db push`
-- [x] 1.2 No migration syntax errors
+- [x] 1.1 Migration applies cleanly: `supabase db push` — 3b54ff3
+- [x] 1.2 No migration syntax errors — 3b54ff3
 
 #### Manual
 
@@ -407,7 +407,7 @@ If the migration needs to be revised in development: `supabase db reset` clears 
 
 #### Automated
 
-- [ ] 2.1 `supabase db reset` completes without error
+- [x] 2.1 `supabase db reset` completes without error
 
 #### Manual
 
