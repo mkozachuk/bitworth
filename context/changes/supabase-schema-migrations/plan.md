@@ -400,8 +400,8 @@ If the migration needs to be revised in development: `supabase db reset` clears 
 
 #### Manual
 
-- [x] 1.3 Tables visible in Supabase dashboard with correct structure
-- [x] 1.4 RLS policies active on all 5 tables
+- [x] 1.3 Tables visible in Supabase dashboard with correct structure — 3b54ff3
+- [x] 1.4 RLS policies active on all 5 tables — 3b54ff3
 
 ### Phase 2: Seed Data & Verification
 
@@ -411,8 +411,8 @@ If the migration needs to be revised in development: `supabase db reset` clears 
 
 #### Manual
 
-- [x] 2.2 All 13 categories appear in `asset_categories` table
-- [x] 2.3 `is_liability` flag correct (only `loans_credit` is true)
+- [x] 2.2 All 13 categories appear in `asset_categories` table — b463cf5
+- [x] 2.3 `is_liability` flag correct (only `loans_credit` is true) — b463cf5
 
 ### Phase 3: Type Generation & Browser Client
 
@@ -424,5 +424,5 @@ If the migration needs to be revised in development: `supabase db reset` clears 
 
 #### Manual
 
-- [x] 3.4 `Database` type is importable in TypeScript files
-- [x] 3.5 Browser client returns valid Supabase client from React components
+- [x] 3.4 `Database` type is importable in TypeScript files — 7700417
+- [x] 3.5 Browser client returns valid Supabase client from React components — 7700417
