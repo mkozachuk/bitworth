@@ -4,6 +4,7 @@ import Topbar from "@/components/Topbar.astro";
 import { createClient } from "@/lib/supabase";
 import { getRates } from "@/lib/exchange-rates";
 import { NetWorthDisplay } from "@/components/assets/NetWorthDisplay";
+import { NetWorthChart } from "@/components/NetWorthChart";
 import type { Tables } from "@/lib/database.types";
 
 type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
@@ -30,6 +31,7 @@ const { data: snapshots } = await supabase
   .select()
   .eq("user_id", user.id)
   .order("created_at", { ascending: true });
+
 ---
 
 <Layout title="Dashboard">
@@ -42,13 +44,23 @@ const { data: snapshots } = await supabase
 
       {
         assets && (
-          <NetWorthDisplay
-            assets={assets as AssetWithCategory[]}
-            displayCurrency={displayCurrency}
-            rates={rates}
-            snapshots={snapshots as Tables<"snapshots">[]}
-            client:load
-          />
+          <>
+            <NetWorthDisplay
+              assets={assets as AssetWithCategory[]}
+              displayCurrency={displayCurrency}
+              rates={rates}
+              snapshots={snapshots as Tables<"snapshots">[]}
+              onSnapshotSaved={() => {
+                window.location.reload();
+              }}
+              client:load
+            />
+            <NetWorthChart
+              snapshots={snapshots as Tables<"snapshots">[]}
+              displayCurrency={displayCurrency}
+              client:load
+            />
+          </>
         )
       }
 

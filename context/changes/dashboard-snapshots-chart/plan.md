@@ -295,8 +295,8 @@ No migrations needed — schema already exists. No existing data needs backfilli
 
 #### Automated
 
-- [ ] 2.1 `npm run build` succeeds
-- [ ] 2.2 `npm run lint` passes
+- [x] 2.1 `npm run build` succeeds
+- [x] 2.2 `npm run lint` passes
 
 #### Manual
 
