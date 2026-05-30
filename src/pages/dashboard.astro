@@ -24,6 +24,12 @@ const { data: assets } = await supabase
   .eq("user_id", user.id);
 
 const rates = await getRates(supabase);
+
+const { data: snapshots } = await supabase
+  .from("snapshots")
+  .select()
+  .eq("user_id", user.id)
+  .order("created_at", { ascending: true });
 ---
 
 <Layout title="Dashboard">
@@ -40,6 +46,7 @@ const rates = await getRates(supabase);
             assets={assets as AssetWithCategory[]}
             displayCurrency={displayCurrency}
             rates={rates}
+            snapshots={snapshots as Tables<"snapshots">[]}
             client:load
           />
         )
