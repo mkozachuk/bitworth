@@ -1,7 +1,7 @@
 ---
 change_id: asset-management
 title: Asset management
-status: implemented
+status: impl_reviewed
 created: 2026-05-29
 updated: 2026-05-30
 

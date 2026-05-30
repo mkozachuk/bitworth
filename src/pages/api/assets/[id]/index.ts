@@ -73,13 +73,29 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
   if (crypto_symbol !== null) updates.crypto_symbol = crypto_symbol !== "" ? crypto_symbol : null;
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const { data, error } = await supabase.from("assets").update(updates).eq("id", id).select().single();
+  const { data, error } = await supabase
+    .from("assets")
+    .update(updates)
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .select()
+    .single();
 
   if (error) {
     return new Response(
       JSON.stringify({ error: { code: "UPDATE_FAILED", message: error.message } } satisfies ErrorShape),
       {
         status: 500,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }
+
+  if (!data) {
+    return new Response(
+      JSON.stringify({ error: { code: "NOT_FOUND", message: "Asset not found" } } satisfies ErrorShape),
+      {
+        status: 404,
         headers: { "Content-Type": "application/json" },
       },
     );
@@ -127,7 +143,13 @@ export const DELETE: APIRoute = async ({ params, request, cookies }) => {
     );
   }
 
-  const { error } = await supabase.from("assets").delete().eq("id", id);
+  const { data, error } = await supabase
+    .from("assets")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .select()
+    .single();
 
   if (error) {
     return new Response(
@@ -139,7 +161,17 @@ export const DELETE: APIRoute = async ({ params, request, cookies }) => {
     );
   }
 
-  return new Response(JSON.stringify({ data: null }), {
+  if (!data) {
+    return new Response(
+      JSON.stringify({ error: { code: "NOT_FOUND", message: "Asset not found" } } satisfies ErrorShape),
+      {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }
+
+  return new Response(JSON.stringify({ data: data as Tables<"assets"> }), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });

@@ -17,6 +17,19 @@ export const GET: APIRoute = async ({ request, cookies }) => {
     );
   }
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return new Response(
+      JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Not authenticated" } } satisfies ErrorShape),
+      {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }
+
   const { data, error } = await supabase
     .from("asset_categories")
     .select("*")

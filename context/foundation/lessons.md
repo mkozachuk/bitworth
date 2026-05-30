@@ -8,3 +8,10 @@
 - **Problem**: Flags without an expiry date stay in the codebase permanently. Engineers forget to clean them up after rollout, accumulating dead code paths, technical debt, and feature creep where temporary features become the default state.
 - **Rule**: Every feature flag must include a kill date (calendar or milestone-based) in the flag definition or adjacent comment so the team is forced to make an explicit removal decision when the date arrives.
 - **Applies to**: plan, implement, impl-review
+
+## Fetch chains must handle errors visibly
+
+- **Context**: `src/components/assets/CategorySelect.tsx` — fetch chain that only handles the happy path
+- **Problem**: Fetch chain sets state only on success; on failure, `loading` becomes false with no error indication — silent failure indistinguishable from empty data.
+- **Rule**: Every fetch chain must surface failure to the user: add an error state and render it, or at minimum log it.
+- **Applies to**: implement, impl-review, code review

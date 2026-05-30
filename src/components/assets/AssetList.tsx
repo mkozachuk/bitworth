@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { InboxIcon } from "lucide-react";
+import { InboxIcon, AlertCircle } from "lucide-react";
 import { AssetRow } from "./AssetRow";
 import type { Tables } from "@/lib/database.types";
 
@@ -17,6 +17,7 @@ interface Props {
 export function AssetList({ assets, displayCurrency, rates }: Props) {
   const [filter, setFilter] = useState<FilterTab>("all");
   const [_deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const filtered = assets.filter((a) => {
     if (filter === "assets") return !a.category.is_liability;
@@ -27,11 +28,17 @@ export function AssetList({ assets, displayCurrency, rates }: Props) {
   async function handleDelete(id: string) {
     if (!confirm("Delete this asset? This cannot be undone.")) return;
     setDeletingId(id);
+    setDeleteError(null);
     try {
       const res = await fetch(`/api/assets/${id}`, { method: "DELETE" });
       if (res.ok) {
         window.location.reload();
+      } else {
+        const json = await res.json();
+        setDeleteError(json.error?.message ?? "Delete failed");
       }
+    } catch {
+      setDeleteError("Delete failed");
     } finally {
       setDeletingId(null);
     }
@@ -45,6 +52,12 @@ export function AssetList({ assets, displayCurrency, rates }: Props) {
 
   return (
     <div>
+      {deleteError && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg bg-red-900/30 px-4 py-2 text-sm text-red-300">
+          <AlertCircle className="size-4 shrink-0" />
+          {deleteError}
+        </div>
+      )}
       <div className="mb-4 flex items-center gap-1 border-b border-white/10">
         {tabs.map((tab) => (
           <button

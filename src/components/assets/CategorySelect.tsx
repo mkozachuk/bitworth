@@ -13,13 +13,16 @@ type Category = Tables<"asset_categories">;
 export function CategorySelect({ value, onChange, error }: Props) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     void fetch("/api/categories")
       .then((r) => r.json())
       .then((json: { data?: Category[]; error?: unknown }) => {
         if (json.data) setCategories(json.data);
+        else if (json.error) setFetchError("Failed to load categories");
       })
+      .catch(() => setFetchError("Failed to load categories"))
       .finally(() => {
         setLoading(false);
       });
@@ -75,6 +78,12 @@ export function CategorySelect({ value, onChange, error }: Props) {
           </select>
           <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs text-white/40">▼</span>
         </div>
+      )}
+      {fetchError && (
+        <p className="mt-1 flex items-center gap-1 text-xs text-red-300">
+          <CircleAlert className="size-3" />
+          {fetchError}
+        </p>
       )}
       {error ? (
         <p className="mt-1 flex items-center gap-1 text-xs text-red-300">

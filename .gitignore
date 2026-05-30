@@ -34,3 +34,4 @@ pnpm-debug.log*
 .idea/
 /.env
 /.env.prod
+/.claude/prompts/

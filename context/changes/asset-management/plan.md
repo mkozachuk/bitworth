@@ -381,3 +381,15 @@ No DB migration needed — `assets` table and `exchange_rate_cache` already exis
 
 - [ ] 4.3 Dashboard shows real net worth computed from user assets
 - [ ] 4.4 "Assets" nav link visible and functional when logged in
+
+## Plan Addendum
+
+### Categories API endpoint (discovered during Phase 2)
+
+**File**: `src/pages/api/categories/index.ts`
+
+**Added**: 2026-05-30
+
+`CategorySelect` (Phase 2) needs the full list of categories to render the dropdown. Since `asset_categories` is a seed table, a simple read endpoint suffices. This was not described in the original plan but is a required dependency of Phase 2.
+
+**Contract**: `GET /api/categories` → `{ data?: Tables<'asset_categories'>[], error?: ErrorShape }`. No auth required beyond session check (consistent with other API routes).
