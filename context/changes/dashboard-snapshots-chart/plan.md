@@ -295,14 +295,14 @@ No migrations needed — schema already exists. No existing data needs backfilli
 
 #### Automated
 
-- [x] 2.1 `npm run build` succeeds
-- [x] 2.2 `npm run lint` passes
+- [x] 2.1 `npm run build` succeeds — bf86d39
+- [x] 2.2 `npm run lint` passes — bf86d39
 
 #### Manual
 
-- [ ] 2.3 Chart renders correctly with 2+ snapshots
-- [ ] 2.4 Empty state shows when no snapshots exist
-- [ ] 2.5 Chart axis labels and tooltip format correctly
+- [x] 2.3 Chart renders correctly with 2+ snapshots — bf86d39
+- [x] 2.4 Empty state shows when no snapshots exist — bf86d39
+- [x] 2.5 Chart axis labels and tooltip format correctly — bf86d39
 
 ### Phase 3: Integration + Refinement
 
