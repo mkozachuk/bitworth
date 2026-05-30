@@ -354,13 +354,13 @@ No DB migration needed — `assets` table and `exchange_rate_cache` already exis
 
 #### Automated
 
-- [x] 3.1 `npm run lint` passes
-- [x] 3.2 TypeScript type checking passes
-- [x] 3.3 /dashboard/assets shows asset list + net worth
-- [x] 3.4 /dashboard/assets/new creates asset and redirects to list
-- [x] 3.5 /dashboard/assets/[id]/edit pre-fills form and updates on save
-- [x] 3.6 Non-existent asset ID shows 404 state
-- [x] 3.7 Unauthenticated access redirects to /auth/signin
+- [x] 3.1 `npm run lint` passes — ce4bc54
+- [x] 3.2 TypeScript type checking passes — ce4bc54
+- [x] 3.3 /dashboard/assets shows asset list + net worth — ce4bc54
+- [x] 3.4 /dashboard/assets/new creates asset and redirects to list — ce4bc54
+- [x] 3.5 /dashboard/assets/[id]/edit pre-fills form and updates on save — ce4bc54
+- [x] 3.6 Non-existent asset ID shows 404 state — ce4bc54
+- [x] 3.7 Unauthenticated access redirects to /auth/signin — ce4bc54
 
 #### Manual
 
@@ -374,8 +374,8 @@ No DB migration needed — `assets` table and `exchange_rate_cache` already exis
 
 #### Automated
 
-- [ ] 4.1 `npm run lint` passes
-- [ ] 4.2 TypeScript type checking passes
+- [x] 4.1 `npm run lint` passes
+- [x] 4.2 TypeScript type checking passes
 
 #### Manual
 
