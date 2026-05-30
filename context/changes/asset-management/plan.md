@@ -324,8 +324,8 @@ No DB migration needed — `assets` table and `exchange_rate_cache` already exis
 
 #### Automated
 
-- [x] 1.1 `npm run lint` passes
-- [x] 1.2 TypeScript type checking passes (`npx tsc --noEmit`)
+- [x] 1.1 `npm run lint` passes — a68514f
+- [x] 1.2 TypeScript type checking passes (`npx tsc --noEmit`) — a68514f
 
 #### Manual
 
@@ -340,8 +340,8 @@ No DB migration needed — `assets` table and `exchange_rate_cache` already exis
 
 #### Automated
 
-- [ ] 2.1 `npm run lint` passes
-- [ ] 2.2 TypeScript type checking passes
+- [x] 2.1 `npm run lint` passes
+- [x] 2.2 TypeScript type checking passes
 
 #### Manual
 
