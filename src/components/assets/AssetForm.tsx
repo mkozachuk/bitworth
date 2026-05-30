@@ -8,7 +8,6 @@ import type { Tables } from "@/lib/database.types";
 interface Props {
   asset?: Tables<"assets">;
   mode: "create" | "edit";
-  onSuccess: () => void;
   onCancel?: () => void;
   serverError?: string | null;
 }
@@ -20,7 +19,7 @@ interface FormErrors {
   category_id?: string;
 }
 
-export function AssetForm({ asset, mode, onSuccess, onCancel, serverError }: Props) {
+export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
   const [name, setName] = useState(asset ? asset.name : "");
   const [amount, setAmount] = useState(asset ? String(asset.amount) : "");
   const [currency, setCurrency] = useState<"USD" | "EUR" | "PLN">(
@@ -57,10 +56,8 @@ export function AssetForm({ asset, mode, onSuccess, onCancel, serverError }: Pro
   }
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
-    if (!validate()) {
-      e.preventDefault();
-      return;
-    }
+    e.preventDefault();
+    if (!validate()) return;
     setPending(true);
 
     const form = e.currentTarget;
@@ -78,7 +75,11 @@ export function AssetForm({ asset, mode, onSuccess, onCancel, serverError }: Pro
         return;
       }
 
-      onSuccess();
+      if (mode === "create") {
+        window.location.href = "/dashboard/assets";
+      } else {
+        window.location.href = "/dashboard/assets";
+      }
     } catch {
       e.preventDefault();
       setPending(false);
@@ -86,13 +87,7 @@ export function AssetForm({ asset, mode, onSuccess, onCancel, serverError }: Pro
   }
 
   return (
-    <form
-      method="POST"
-      action={mode === "create" ? "/api/assets" : undefined}
-      onSubmit={handleSubmit}
-      noValidate
-      className="space-y-4"
-    >
+    <form onSubmit={handleSubmit} noValidate className="space-y-4">
       <ServerError message={serverError} />
 
       <div>

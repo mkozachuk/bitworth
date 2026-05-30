@@ -1,0 +1,61 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Topbar from "@/components/Topbar.astro";
+import { createClient } from "@/lib/supabase";
+import { AssetForm } from "@/components/assets/AssetForm";
+import type { Tables } from "@/lib/database.types";
+
+const { user } = Astro.locals;
+
+if (!user) {
+  return Astro.redirect("/auth/signin");
+}
+
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+
+const { id } = Astro.params;
+if (!id) {
+  return new Response(null, { status: 404 });
+}
+
+const { data: asset } = (await supabase
+  .from("assets")
+  .select("*, category:asset_categories(*)")
+  .eq("id", id)
+  .eq("user_id", user.id)
+  .single()) as { data: Tables<"assets"> | null; error: unknown };
+
+if (!asset) {
+  return new Response(null, { status: 404 });
+}
+---
+
+<Layout title="Edit Asset">
+  <div class="bg-cosmic min-h-screen">
+    <Topbar />
+    <div class="mx-auto max-w-md px-4 py-8">
+      <div class="mb-6">
+        <a
+          href="/dashboard/assets"
+          class="text-sm text-purple-300 transition-colors hover:text-purple-100 hover:underline"
+        >
+          &larr; Back to Assets
+        </a>
+      </div>
+
+      <div class="rounded-2xl border border-white/10 bg-white/10 p-8 text-white backdrop-blur-xl">
+        <h1 class="mb-6 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-2xl font-bold text-transparent">
+          Edit Asset
+        </h1>
+        <AssetForm
+          asset={asset}
+          mode="edit"
+          onCancel={() => {
+            window.history.back();
+          }}
+          client:load
+        />
+      </div>
+    </div>
+  </div>
+</Layout>
