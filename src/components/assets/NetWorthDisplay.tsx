@@ -52,14 +52,13 @@ function SaveButton({ onSuccess, onError }: { onSuccess: () => void; onError: (m
     if (state !== "idle") return;
     setState("loading");
     try {
-      const res = await fetch("/api/snapshots", { method: "POST" });
+      const res = await fetch("/api/snapshots", { method: "POST", credentials: "include" });
       if (!res.ok) {
         const json = (await res.json()) as { error?: { message?: string } };
         throw new Error(json.error?.message ?? `HTTP ${res.status}`);
       }
-      setState("saved");
       onSuccess();
-      setTimeout(() => setState("idle"), 2000);
+      window.location.reload();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       setState("error");

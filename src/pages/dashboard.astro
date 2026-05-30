@@ -58,6 +58,9 @@ const { data: snapshots } = await supabase
             <NetWorthChart
               snapshots={snapshots as Tables<"snapshots">[]}
               displayCurrency={displayCurrency}
+              onSaveSnapshot={() => {
+                window.location.reload();
+              }}
               client:load
             />
           </>
