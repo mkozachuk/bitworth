@@ -308,11 +308,11 @@ No migrations needed — schema already exists. No existing data needs backfilli
 
 #### Automated
 
-- [x] 3.1 Full `npm run build` clean
+- [x] 3.1 Full `npm run build` clean — dd9ba8f
 
 #### Manual
 
-- [x] 3.2 Complete end-to-end flow (save → refresh → chart updates)
-- [ ] 3.3 Delta values update correctly after saving
-- [ ] 3.4 Empty state → first save → chart renders
-- [ ] 3.5 Error state surfaced visibly in UI
+- [x] 3.2 Complete end-to-end flow (save → refresh → chart updates) — dd9ba8f
+- [x] 3.3 Delta values update correctly after saving — dd9ba8f
+- [x] 3.4 Empty state → first save → chart renders — dd9ba8f
+- [x] 3.5 Error state surfaced visibly in UI — dd9ba8f
