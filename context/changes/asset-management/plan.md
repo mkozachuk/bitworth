@@ -374,8 +374,8 @@ No DB migration needed — `assets` table and `exchange_rate_cache` already exis
 
 #### Automated
 
-- [x] 4.1 `npm run lint` passes
-- [x] 4.2 TypeScript type checking passes
+- [x] 4.1 `npm run lint` passes — 3bab1c7
+- [x] 4.2 TypeScript type checking passes — 3bab1c7
 
 #### Manual
 
