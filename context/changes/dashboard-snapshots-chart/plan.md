@@ -288,8 +288,8 @@ No migrations needed — schema already exists. No existing data needs backfilli
 
 #### Manual
 
-- [ ] 1.5 NetWorthDisplay shows delta vs last month and vs Jan 1st
-- [ ] 1.6 "Save Snapshot" button visible in card, click cycles through spinner → "Saved!" → revert
+- [x] 1.5 NetWorthDisplay shows delta vs last month and vs Jan 1st — d98dc4e
+- [x] 1.6 "Save Snapshot" button visible in card, click cycles through spinner → "Saved!" → revert — d98dc4e
 
 ### Phase 2: NetWorthChart + Dashboard Updates
 
