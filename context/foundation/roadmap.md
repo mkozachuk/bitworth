@@ -140,7 +140,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 ## Open Roadmap Questions
 
 1. **Exchange rate API** — Which free public API for exchange rates? (Owner: user, by: before F-01) Popular options: frankfurter.app, exchangerate.host, Open Exchange Rates.
-2. **Crypto price API** — Which free public API for crypto prices? (Owner: user, by: before F-01) CoinGecko is the leading candidate (free, no key).
+2. **Crypto price API** — Which free public API for crypto prices? (Owner: user, by: before F-01) Resolved: Binance avgPrice API — CoinGecko returns 403 from Cloudflare Workers at runtime; Binance works without auth.
 3. **Snapshot auto-save trigger** — Should auto-save trigger on first login each calendar month, or on a fixed day-of-month (e.g., 1st)? (Owner: user, by: before S-02) Manual trigger (FR-017) ships regardless.
 4. **Display currency persistence** — Does the display currency preference persist per user across sessions? (Owner: user, by: before F-01) Recommended: yes, per-user in `user_preferences` table.
 5. **Demo mode scope** — Demo mode is nice-to-have per PRD. If time permits, what sample data should it include? (Owner: user, by: before S-02) Parked for now.
