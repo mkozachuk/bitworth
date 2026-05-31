@@ -1,7 +1,7 @@
 ---
 change_id: dashboard-assets-summary
 title: Dashboard assets summary
-status: planned
+status: implemented
 created: 2026-05-31
 updated: 2026-05-31
 archived_at: null

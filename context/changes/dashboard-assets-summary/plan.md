@@ -127,7 +127,7 @@ Import and render `AssetsSummary` in `dashboard.astro` with assets and rates as 
 
 #### Automated
 
-- [ ] 2.1 Linting + type checking passes
+- [x] 2.1 Linting + type checking passes — c1ecf54
 
 #### Manual
 
