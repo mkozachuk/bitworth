@@ -383,17 +383,17 @@ Update asset API endpoints to accept and store the new `quantity` field alongsid
 
 #### Manual
 
-- [ ] 1.4 `GET /api/crypto-price?symbol=BTC` returns USD price
-- [ ] 1.5 `GET /api/crypto-price?symbol=INVALID` returns `COIN_NOT_FOUND`
-- [ ] 1.6 Cache hit returns `isCached: true`
-- [ ] 1.7 Unauthenticated request returns 401
+- [x] 1.4 `GET /api/crypto-price?symbol=BTC` returns USD price — a417e2a
+- [x] 1.5 `GET /api/crypto-price?symbol=INVALID` returns `COIN_NOT_FOUND` — a417e2a
+- [x] 1.6 Cache hit returns `isCached: true` — a417e2a
+- [x] 1.7 Unauthenticated request returns 401 — a417e2a
 
 ### Phase 2: UI — Crypto Symbol Input & Price Preview
 
 #### Automated
 
-- [x] 2.1 TypeScript compiles — c59346a
-- [x] 2.2 Linting passes — c59346a
+- [x] 2.1 TypeScript compiles — a417e2a
+- [x] 2.2 Linting passes — a417e2a
 
 #### Manual
 
@@ -407,8 +407,8 @@ Update asset API endpoints to accept and store the new `quantity` field alongsid
 
 #### Automated
 
-- [x] 3.1 TypeScript compiles — c59346a
-- [x] 3.2 Linting passes — c59346a
+- [x] 3.1 TypeScript compiles — a417e2a
+- [x] 3.2 Linting passes — a417e2a
 
 #### Manual
 
