@@ -64,14 +64,15 @@ export function AssetsSummary({ assets, displayCurrency, rates }: Props) {
                 })}{" "}
                 {displayCurrency}
               </span>
-              <span className="ml-2 text-xs text-white/40">
-                (
-                {row.original.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}{" "}
-                {row.currency})
-              </span>
+              {row.currency !== displayCurrency && (
+                <span className="ml-2 text-xs text-white/40">
+                  ({row.original.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}{" "}
+                  {row.currency})
+                </span>
+              )}
             </div>
           </div>
         ))}
