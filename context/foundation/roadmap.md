@@ -30,7 +30,7 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 | F-01  | supabase-schema-migrations   | (foundation) Supabase schema landed; migrations ready    | —             | NFR-perf, FR-006-020  | done     |
 | S-01  | asset-management             | add/edit/delete assets with currency conversion           | F-01          | US-03, FR-006-010     | done     |
 | S-02  | dashboard-snapshots-chart    | see net worth, deltas, and trend chart from snapshots    | F-01, S-01    | US-01, FR-011-018     | done     |
-| S-03  | crypto-price-fetch           | see live BTC/ETH prices when adding crypto assets         | F-01          | FR-019-020            | proposed |
+| S-03  | crypto-price-fetch           | see live BTC/ETH prices when adding crypto assets         | F-01          | FR-019-020            | done    |
 | S-04  | dashboard-assets-summary     | see assets summary by currency on dashboard              | F-01, S-01, S-02 | —                | planned  |
 
 ## Streams
@@ -125,7 +125,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - —
 - **Risk:** CoinGecko free tier has rate limits. If the user has many crypto assets, concurrent fetches can hit the limit. Mitigant: debounce fetches, cache aggressively per the FR-020 fallback requirement.
-- **Status:** proposed
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -160,3 +160,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **F-01: Supabase schema and migrations** — Implemented 2026-05-29 → `context/changes/supabase-schema-migrations/`. Lesson: —.
 - **S-01: Asset management with currency conversion** — Implemented 2026-05-30 → `context/changes/asset-management/`. Lesson: —.
 - **S-02: Dashboard — net worth display, snapshots, and trend chart** — Implemented 2026-05-31 → `context/changes/dashboard-snapshots-chart/`. Lessons: DB multi-table writes must be atomic; public API endpoints need explicit auth decisions.
+- **S-03: Crypto price fetch on asset entry** — Implemented 2026-06-01 → `context/changes/crypto-price-fetch/`. Note: Binance avgPrice API used instead of CoinGecko (CoinGecko returns 403 from Cloudflare Workers). Lessons: verify API accessibility from deployment target before committing to a provider.
