@@ -143,13 +143,7 @@ export const DELETE: APIRoute = async ({ params, request, cookies }) => {
     );
   }
 
-  const { data, error } = await supabase
-    .from("assets")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", user.id)
-    .select()
-    .single();
+  const { data, error } = await supabase.from("assets").delete().eq("id", id).eq("user_id", user.id).select().single();
 
   if (error) {
     return new Response(

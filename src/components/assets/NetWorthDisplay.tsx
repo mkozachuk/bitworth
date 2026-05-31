@@ -37,8 +37,7 @@ function DeltaIndicator({ label, value, percentage }: { label: string; value: nu
     <div>
       <p className="text-xs tracking-wider text-white/50 uppercase">{label}</p>
       <p className={`mt-1 text-sm font-semibold ${colorClass}`}>
-        {sign}${absValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (
-        {sign}
+        {sign}${absValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({sign}
         {absPct.toFixed(1)}%)
       </p>
     </div>
@@ -63,7 +62,9 @@ function SaveButton({ onSuccess, onError }: { onSuccess: () => void; onError: (m
       const msg = err instanceof Error ? err.message : "Unknown error";
       setState("error");
       onError(msg);
-      setTimeout(() => setState("idle"), 3000);
+      setTimeout(() => {
+        setState("idle");
+      }, 3000);
     }
   }, [state, onSuccess, onError]);
 
@@ -102,11 +103,7 @@ function SaveButton({ onSuccess, onError }: { onSuccess: () => void; onError: (m
           viewBox="0 0 24 24"
         >
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-          />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
         Saving...
       </button>
@@ -123,13 +120,7 @@ function SaveButton({ onSuccess, onError }: { onSuccess: () => void; onError: (m
   );
 }
 
-export function NetWorthDisplay({
-  assets,
-  displayCurrency,
-  rates,
-  snapshots = [],
-  onSnapshotSaved,
-}: Props) {
+export function NetWorthDisplay({ assets, displayCurrency, rates, snapshots = [], onSnapshotSaved }: Props) {
   const [ratesError, setRatesError] = useState<string | null>(null);
   const [snapshotError, setSnapshotError] = useState<string | null>(null);
 
@@ -146,8 +137,12 @@ export function NetWorthDisplay({
     }
     fetch("/api/rates")
       .then((r) => r.json() as Promise<{ rates: Record<Currency, number> }>)
-      .then(({ rates: r }) => sessionStorage.setItem("bw_rates", JSON.stringify(r)))
-      .catch(() => setRatesError("Failed to fetch exchange rates — deltas may be outdated"));
+      .then(({ rates: r }) => {
+        sessionStorage.setItem("bw_rates", JSON.stringify(r));
+      })
+      .catch(() => {
+        setRatesError("Failed to fetch exchange rates — deltas may be outdated");
+      });
   }, []);
 
   const currentNetWorth = (() => {
@@ -169,28 +164,23 @@ export function NetWorthDisplay({
     if (snapshots.length === 0) return { deltaLastMonth: null, deltaJan: null };
 
     // snapshots are ordered ASC by created_at (server query)
-    const sorted = [...snapshots].sort(
-      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-    );
+    const sorted = [...snapshots].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
     const current = sorted[sorted.length - 1]; // newest
     const now = Date.now();
     const MS_25_DAYS = 25 * 24 * 60 * 60 * 1000;
 
-    const lastMonthSnap = sorted.find(
-      (s) => now - new Date(s.created_at).getTime() >= MS_25_DAYS,
-    );
+    const lastMonthSnap = sorted.find((s) => now - new Date(s.created_at).getTime() >= MS_25_DAYS);
     const yearStart = new Date(`${new Date().getFullYear()}-01-01T00:00:00Z`);
     const janSnap = sorted.find((s) => new Date(s.created_at) <= yearStart);
 
     const deltaLM = lastMonthSnap ? current.total_net_worth - lastMonthSnap.total_net_worth : null;
     const deltaJ = janSnap ? current.total_net_worth - janSnap.total_net_worth : null;
 
-    const pctLM = lastMonthSnap && lastMonthSnap.total_net_worth !== 0
-      ? (deltaLM! / Math.abs(lastMonthSnap.total_net_worth)) * 100
-      : null;
-    const pctJ = janSnap && janSnap.total_net_worth !== 0
-      ? (deltaJ! / Math.abs(janSnap.total_net_worth)) * 100
-      : null;
+    const pctLM =
+      lastMonthSnap && lastMonthSnap.total_net_worth !== 0
+        ? (deltaLM! / Math.abs(lastMonthSnap.total_net_worth)) * 100
+        : null;
+    const pctJ = janSnap && janSnap.total_net_worth !== 0 ? (deltaJ! / Math.abs(janSnap.total_net_worth)) * 100 : null;
 
     return {
       deltaLastMonth: deltaLM !== null && pctLM !== null ? { value: deltaLM, pct: pctLM } : null,
@@ -205,9 +195,7 @@ export function NetWorthDisplay({
         <CurrencyBadge currency={displayCurrency} />
       </div>
 
-      {ratesError && (
-        <p className="mb-2 text-xs text-yellow-300/80">{ratesError}</p>
-      )}
+      {ratesError && <p className="mb-2 text-xs text-yellow-300/80">{ratesError}</p>}
 
       <p className={`mb-4 text-4xl font-bold ${currentNetWorth < 0 ? "text-red-300" : "text-white"}`}>
         {currentNetWorth.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
@@ -260,16 +248,16 @@ export function NetWorthDisplay({
         </div>
       )}
 
-      {snapshotError && (
-        <p className="mb-2 text-xs text-red-300">{snapshotError}</p>
-      )}
+      {snapshotError && <p className="mb-2 text-xs text-red-300">{snapshotError}</p>}
 
       <SaveButton
         onSuccess={() => {
           setSnapshotError(null);
           onSnapshotSaved?.();
         }}
-        onError={(msg) => setSnapshotError(`Snapshot failed: ${msg}`)}
+        onError={(msg) => {
+          setSnapshotError(`Snapshot failed: ${msg}`);
+        }}
       />
     </div>
   );

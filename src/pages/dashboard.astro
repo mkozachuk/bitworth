@@ -19,10 +19,7 @@ if (!user) {
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 const displayCurrency: Currency = "USD";
 
-const { data: assets } = await supabase
-  .from("assets")
-  .select("*, category:asset_categories(*)")
-  .eq("user_id", user.id);
+const { data: assets } = await supabase.from("assets").select("*, category:asset_categories(*)").eq("user_id", user.id);
 
 const rates = await getRates(supabase);
 
@@ -31,7 +28,6 @@ const { data: snapshots } = await supabase
   .select()
   .eq("user_id", user.id)
   .order("created_at", { ascending: true });
-
 ---
 
 <Layout title="Dashboard">

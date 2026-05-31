@@ -11,15 +11,17 @@ export const GET: APIRoute = async ({ request, cookies }) => {
   const supabase = createClient(request.headers, cookies);
   if (!supabase) {
     return new Response(
-      JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Not configured" } } satisfies ErrorShape),
+      JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Not authenticated" } } satisfies ErrorShape),
       { status: 401, headers: { "Content-Type": "application/json" } },
     );
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) {
     return new Response(
-      JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Unauthorized" } } satisfies ErrorShape),
+      JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Not authenticated" } } satisfies ErrorShape),
       { status: 401, headers: { "Content-Type": "application/json" } },
     );
   }
@@ -37,25 +39,24 @@ export const GET: APIRoute = async ({ request, cookies }) => {
     );
   }
 
-  return new Response(
-    JSON.stringify({ data }),
-    { status: 200, headers: { "Content-Type": "application/json" } },
-  );
+  return new Response(JSON.stringify({ data }), { status: 200, headers: { "Content-Type": "application/json" } });
 };
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   const supabase = createClient(request.headers, cookies);
   if (!supabase) {
     return new Response(
-      JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Not configured" } } satisfies ErrorShape),
+      JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Not authenticated" } } satisfies ErrorShape),
       { status: 401, headers: { "Content-Type": "application/json" } },
     );
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) {
     return new Response(
-      JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Unauthorized" } } satisfies ErrorShape),
+      JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Not authenticated" } } satisfies ErrorShape),
       { status: 401, headers: { "Content-Type": "application/json" } },
     );
   }
@@ -82,10 +83,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   const displayCurrency = (prefs?.display_currency as "USD" | "EUR" | "PLN") ?? "USD";
 
+  type AssetRow = Tables<"assets"> & { category: Tables<"asset_categories"> };
+
   // Compute net worth via getRates (server-side, can use existing logic)
   const rates = await getRates(supabase);
-
-  type AssetRow = Tables<"assets"> & { category: Tables<"asset_categories"> };
 
   function convertAmount(
     amount: number,
@@ -146,6 +147,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const { error: itemsError } = await supabase.from("snapshot_items").insert(items);
     if (itemsError) {
+      // Compensating delete: roll back the snapshot row so neither insert is partially committed
+      await supabase.from("snapshots").delete().eq("id", snapshot.id);
       return new Response(
         JSON.stringify({ error: { code: "INSERT_FAILED", message: itemsError.message } } satisfies ErrorShape),
         { status: 500, headers: { "Content-Type": "application/json" } },
@@ -153,8 +156,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
   }
 
-  return new Response(
-    JSON.stringify({ data: snapshot as Tables<"snapshots"> }),
-    { status: 201, headers: { "Content-Type": "application/json" } },
-  );
+  return new Response(JSON.stringify({ data: snapshot as Tables<"snapshots"> }), {
+    status: 201,
+    headers: { "Content-Type": "application/json" },
+  });
 };

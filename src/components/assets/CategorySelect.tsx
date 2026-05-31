@@ -22,7 +22,9 @@ export function CategorySelect({ value, onChange, error }: Props) {
         if (json.data) setCategories(json.data);
         else if (json.error) setFetchError("Failed to load categories");
       })
-      .catch(() => setFetchError("Failed to load categories"))
+      .catch(() => {
+        setFetchError("Failed to load categories");
+      })
       .finally(() => {
         setLoading(false);
       });

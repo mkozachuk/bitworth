@@ -71,6 +71,9 @@ const astroConfig = tseslint.config({
     "astro/no-set-html-directive": "error",
     "astro/no-unused-css-selector": "warn",
     "astro/prefer-class-list-directive": "warn",
+    // Disable no-misused-promises for Astro files — astro-eslint-parser triggers
+    // an assertion failure in typescript-eslint 8.x when processing Astro syntax
+    "@typescript-eslint/no-misused-promises": "off",
   },
 });
 

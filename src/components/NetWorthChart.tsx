@@ -1,14 +1,5 @@
 import { useState } from "react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-} from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import type { Tables } from "@/lib/database.types";
 
 type SnapshotRow = Tables<"snapshots">;
@@ -32,7 +23,7 @@ function CustomTooltip({
   currency,
 }: {
   active?: boolean;
-  payload?: Array<{ value: number }>;
+  payload?: { value: number }[];
   label?: string;
   currency: Currency;
 }) {
@@ -73,9 +64,7 @@ export function NetWorthChart({ snapshots, displayCurrency, onSaveSnapshot }: Pr
   if (snapshots.length === 0) {
     return (
       <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
-        <p className="mb-4 text-sm text-white/60">
-          No snapshots yet. Save your first one to see your trend.
-        </p>
+        <p className="mb-4 text-sm text-white/60">No snapshots yet. Save your first one to see your trend.</p>
         <button
           onClick={() => onSaveSnapshot?.()}
           className="rounded-lg bg-purple-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-500"
@@ -89,32 +78,19 @@ export function NetWorthChart({ snapshots, displayCurrency, onSaveSnapshot }: Pr
   return (
     <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-medium tracking-wider text-white/60 uppercase">
-          Net Worth Trend
-        </h2>
+        <h2 className="text-sm font-medium tracking-wider text-white/60 uppercase">Net Worth Trend</h2>
         <span className="text-xs text-white/40">{displayCurrency}</span>
       </div>
 
-      {fetchError && (
-        <p className="mb-2 text-xs text-red-300">{fetchError}</p>
-      )}
+      {fetchError && <p className="mb-2 text-xs text-red-300">{fetchError}</p>}
 
-      <ResponsiveContainer
-        width="100%"
-        height={300}
-        initialDimension={{ width: 600, height: 300 }}
-      >
-        <LineChart
-          data={chartData}
-          margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
-        >
+      <ResponsiveContainer width="100%" height={300} initialDimension={{ width: 600, height: 300 }}>
+        <LineChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
           <CartesianGrid stroke="#ffffff10" strokeDasharray="5 5" />
           <XAxis
             dataKey="date"
             tick={{ fill: "#a1a1aa", fontSize: 12 }}
-            tickFormatter={(v: string) =>
-              new Date(v).toLocaleDateString("en-US", { month: "short" })
-            }
+            tickFormatter={(v: string) => new Date(v).toLocaleDateString("en-US", { month: "short" })}
           />
           <YAxis
             tick={{ fill: "#a1a1aa", fontSize: 12 }}
@@ -125,18 +101,8 @@ export function NetWorthChart({ snapshots, displayCurrency, onSaveSnapshot }: Pr
               })
             }
           />
-          <Tooltip
-            content={
-              <CustomTooltip currency={displayCurrency} />
-            }
-          />
-          <Line
-            type="monotone"
-            dataKey="netWorth"
-            stroke="#a78bfa"
-            dot={false}
-            strokeWidth={2}
-          />
+          <Tooltip content={<CustomTooltip currency={displayCurrency} />} />
+          <Line type="monotone" dataKey="netWorth" stroke="#a78bfa" dot={false} strokeWidth={2} />
           {janNetWorth !== null && (
             <ReferenceLine
               y={janNetWorth}
