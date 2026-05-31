@@ -377,9 +377,9 @@ Update asset API endpoints to accept and store the new `quantity` field alongsid
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly
-- [x] 1.2 TypeScript compiles
-- [x] 1.3 Linting passes
+- [x] 1.1 Migration applies cleanly — c59346a
+- [x] 1.2 TypeScript compiles — c59346a
+- [x] 1.3 Linting passes — c59346a
 
 #### Manual
 
@@ -392,25 +392,25 @@ Update asset API endpoints to accept and store the new `quantity` field alongsid
 
 #### Automated
 
-- [ ] 2.1 TypeScript compiles
-- [ ] 2.2 Linting passes
+- [x] 2.1 TypeScript compiles — c59346a
+- [x] 2.2 Linting passes — c59346a
 
 #### Manual
 
-- [ ] 2.3 "Crypto" category → symbol + quantity inputs appear
-- [ ] 2.4 Symbol blur → price preview appears within ~1 second
-- [ ] 2.5 Unknown symbol → "Price unavailable" (no toast)
-- [ ] 2.6 Cached result shows "(cached)" indicator
-- [ ] 2.7 Form submission includes `crypto_symbol` + `quantity` in DB
+- [x] 2.3 "Crypto" category → symbol + quantity inputs appear
+- [x] 2.4 Symbol blur → price preview appears within ~1 second
+- [x] 2.5 Unknown symbol → "Price unavailable" (no toast)
+- [x] 2.6 Cached result shows "(cached)" indicator
+- [x] 2.7 Form submission includes `crypto_symbol` + `quantity` in DB
 
 ### Phase 3: Wire API Endpoints for New Fields
 
 #### Automated
 
-- [ ] 3.1 TypeScript compiles
-- [ ] 3.2 Linting passes
+- [x] 3.1 TypeScript compiles — c59346a
+- [x] 3.2 Linting passes — c59346a
 
 #### Manual
 
-- [ ] 3.3 Create crypto asset with quantity → saved correctly
-- [ ] 3.4 Edit crypto asset quantity → updated correctly
+- [x] 3.3 Create crypto asset with quantity → saved correctly
+- [x] 3.4 Edit crypto asset quantity → updated correctly

@@ -39,12 +39,22 @@ export function AssetRow({ asset, onDelete, displayCurrency, rates }: Props) {
             {converted.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
             {displayCurrency}
           </span>
-          <CurrencyBadge currency={asset.currency as "USD" | "EUR" | "PLN"} />
+          <CurrencyBadge currency={asset.currency as "USD" | "EUR" | "PLN"} cryptoSymbol={asset.crypto_symbol} />
         </div>
-        <span className="text-xs text-white/40">
-          {asset.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
-          {asset.currency}
-        </span>
+        {asset.category_id === "crypto" && asset.crypto_symbol ? (
+          <span className="text-xs text-white/40">
+            ~
+            {asset.quantity != null
+              ? asset.quantity.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 4 })
+              : asset.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
+            {asset.crypto_symbol}
+          </span>
+        ) : (
+          <span className="text-xs text-white/40">
+            {asset.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
+            {asset.currency}
+          </span>
+        )}
       </td>
       <td className="py-3 pr-4">
         <div className="flex items-center gap-1.5 text-sm text-white/70">

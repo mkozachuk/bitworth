@@ -1,14 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-// Static fallback prices — used when both CoinGecko and DB cache fail
-const STATIC_PRICE: Record<string, number> = {
-  BTC: 95000,
-  ETH: 3000,
-  SOL: 180,
-  ADA: 0.45,
-  BNB: 600,
-};
-
 const CACHE_TTL_SECONDS = 3600;
 
 // Hardcoded coin ID map for top coins
@@ -44,6 +35,17 @@ export interface PriceResult {
   price: number;
   isCached: boolean;
   fetchedAt: string;
+  cachedAge?: string;
+}
+
+function cachedAge(fetchedAt: string): string {
+  const diffMs = Date.now() - new Date(fetchedAt).getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  if (diffSec < 60) return `${diffSec}s ago`;
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  return `${diffHr}h ago`;
 }
 
 interface CoinListEntry {
@@ -66,18 +68,43 @@ async function getCoinId(supabase: SupabaseClient, symbol: string): Promise<stri
 }
 
 async function fetchFromCoinGecko(coinId: string): Promise<number | null> {
-  const url = `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`;
+  // Binance public API — works without auth, no CORS issues from Cloudflare Workers
+  const symbolMap: Record<string, string> = {
+    bitcoin: "BTCUSDT",
+    ethereum: "ETHUSDT",
+    binancecoin: "BNBUSDT",
+    solana: "SOLUSDT",
+    ripple: "XRPUSDT",
+    cardano: "ADAUSDT",
+    avalanche: "AVAXUSDT",
+    dogecoin: "DOGEUSDT",
+    tron: "TRXUSDT",
+    polkadot: "DOTUSDT",
+    chainlink: "LINKUSDT",
+    "matic-network": "MATICUSDT",
+    "shiba-inu": "SHIBUSDT",
+    litecoin: "LTCUSDT",
+    "bitcoin-cash": "BCHUSDT",
+    uniswap: "UNIUSDT",
+    cosmos: "ATOMUSDT",
+    stellar: "XLMUSDT",
+    near: "NEARUSDT",
+    aptos: "APTUSDT",
+    arbitrum: "ARBUSDT",
+    optimism: "OPUSDT",
+    pepe: "PEPEUSDT",
+  };
+
+  const binanceSymbol = symbolMap[coinId];
+  const url = binanceSymbol
+    ? `https://api.binance.com/api/v3/avgPrice?symbol=${binanceSymbol}`
+    : `https://api.binance.com/api/v3/avgPrice?symbol=${coinId.toUpperCase()}USDT`;
+
   const res = await fetch(url);
-  if (res.status === 429) {
-    await new Promise((r) => setTimeout(r, 2000));
-    const retry = await fetch(url);
-    if (!retry.ok) return null;
-    const json = (await retry.json()) as Record<string, Record<string, number | undefined>>;
-    return json[coinId]?.usd ?? null;
-  }
   if (!res.ok) return null;
-  const json = (await res.json()) as Record<string, Record<string, number | undefined>>;
-  return json[coinId]?.usd ?? null;
+  const json = (await res.json()) as { price?: string };
+  const price = parseFloat(json.price ?? "");
+  return isNaN(price) ? null : price;
 }
 
 async function getCachedPrice(
@@ -123,18 +150,18 @@ export async function getPrice(
 
   const cached = await getCachedPrice(supabase, coinId);
   if (cached) {
-    return { price: cached.price, isCached: true, fetchedAt: cached.fetched_at };
+    return {
+      price: cached.price,
+      isCached: true,
+      fetchedAt: cached.fetched_at,
+      cachedAge: cachedAge(cached.fetched_at),
+    };
   }
 
   const fetchedPrice = await fetchFromCoinGecko(coinId);
   if (fetchedPrice !== null) {
     await upsertCache(supabase, coinId, upper, fetchedPrice);
     return { price: fetchedPrice, isCached: false, fetchedAt: new Date().toISOString() };
-  }
-
-  const staticPrice = STATIC_PRICE[upper];
-  if (staticPrice !== undefined) {
-    return { price: staticPrice, isCached: false, fetchedAt: "" };
   }
 
   return { error: { code: "PRICE_UNAVAILABLE", message: `Could not fetch price for "${upper}"` } };
