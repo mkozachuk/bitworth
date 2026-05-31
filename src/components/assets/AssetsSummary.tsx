@@ -56,24 +56,13 @@ export function AssetsSummary({ assets, displayCurrency, rates }: Props) {
         {rows.map((row) => (
           <div key={row.currency} className="flex items-center justify-between">
             <CurrencyBadge currency={row.currency} />
-            <div className="text-right">
-              <span className="text-sm font-semibold text-white">
-                {row.converted.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}{" "}
-                {displayCurrency}
-              </span>
-              {row.currency !== displayCurrency && (
-                <span className="ml-2 text-xs text-white/40">
-                  ({row.original.toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}{" "}
-                  {row.currency})
-                </span>
-              )}
-            </div>
+            <span className="text-sm font-semibold text-white">
+              {row.original.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}{" "}
+              {row.currency}
+            </span>
           </div>
         ))}
       </div>
