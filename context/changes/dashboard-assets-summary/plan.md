@@ -118,10 +118,10 @@ Import and render `AssetsSummary` in `dashboard.astro` with assets and rates as 
 
 #### Manual
 
-- [ ] 1.2 Dashboard renders the card with assets present
-- [ ] 1.3 Card hidden when all totals are zero
-- [ ] 1.4 Rows sorted by largest exposure
-- [ ] 1.5 Only currencies with assets shown
+- [x] 1.2 Dashboard renders the card with assets present
+- [x] 1.3 Card hidden when all totals are zero
+- [x] 1.4 Rows sorted by largest exposure
+- [x] 1.5 Only currencies with assets shown
 
 ### Phase 2: Wire into dashboard page
 
@@ -131,5 +131,5 @@ Import and render `AssetsSummary` in `dashboard.astro` with assets and rates as 
 
 #### Manual
 
-- [ ] 2.2 Dashboard page loads without errors
-- [ ] 2.3 Card visible and correctly computed
+- [x] 2.2 Dashboard page loads without errors
+- [x] 2.3 Card visible and correctly computed
