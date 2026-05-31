@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { createClient } from "@/lib/supabase";
 import { getRates } from "@/lib/exchange-rates";
 import type { Tables } from "@/lib/database.types";
+import type { PostgrestError } from "@supabase/supabase-js";
 
 interface ErrorShape {
   error: { code: string; message: string; context?: unknown };
@@ -81,7 +82,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  const displayCurrency = (prefs?.display_currency as "USD" | "EUR" | "PLN") ?? "USD";
+  const validCurrencies = ["USD", "EUR", "PLN"] as const;
+  const rawCurrency = (prefs as { display_currency?: string } | null)?.display_currency;
+  const displayCurrency: "USD" | "EUR" | "PLN" = validCurrencies.includes(
+    rawCurrency as (typeof validCurrencies)[number],
+  )
+    ? (rawCurrency as "USD" | "EUR" | "PLN")
+    : "USD";
 
   type AssetRow = Tables<"assets"> & { category: Tables<"asset_categories"> };
 
@@ -112,17 +119,18 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const totalNetWorth = totalAssets - totalLiabilities;
 
   // Insert snapshot
-  const { data: snapshot, error: snapshotError } = await supabase
-    .from("snapshots")
-    .insert({
-      user_id: user.id,
-      total_net_worth: totalNetWorth,
-      display_currency: displayCurrency,
-      base_currency: "USD",
-      source: "manual",
-    })
-    .select()
-    .single();
+  const { data: snapshot, error: snapshotError }: { data: Tables<"snapshots"> | null; error: null | PostgrestError } =
+    await supabase
+      .from("snapshots")
+      .insert({
+        user_id: user.id,
+        total_net_worth: totalNetWorth,
+        display_currency: displayCurrency,
+        base_currency: "USD",
+        source: "manual",
+      })
+      .select()
+      .single();
 
   if (snapshotError) {
     return new Response(
@@ -132,7 +140,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   }
 
   // Insert snapshot_items for each asset
-  if (assets && assets.length > 0) {
+  if (assets.length > 0) {
     const items = (assets as AssetRow[]).map((asset, idx) => ({
       snapshot_id: snapshot.id,
       category_id: asset.category_id,
@@ -156,7 +164,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
   }
 
-  return new Response(JSON.stringify({ data: snapshot as Tables<"snapshots"> }), {
+  return new Response(JSON.stringify({ data: snapshot }), {
     status: 201,
     headers: { "Content-Type": "application/json" },
   });

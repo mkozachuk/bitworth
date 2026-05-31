@@ -34,7 +34,8 @@ export function AssetList({ assets, displayCurrency, rates }: Props) {
       if (res.ok) {
         window.location.reload();
       } else {
-        const json = await res.json();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Response.json() is typed as Promise<any> in the Fetch standard library
+        const json: { error?: { message?: string } } = await res.json();
         setDeleteError(json.error?.message ?? "Delete failed");
       }
     } catch {

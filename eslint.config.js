@@ -77,6 +77,15 @@ const astroConfig = tseslint.config({
   },
 });
 
+// Supabase-generated database.types.ts uses conditional type parameter defaults with 'never'
+// that trigger no-redundant-type-constituents; the pattern is structurally required
+const databaseTypesConfig = tseslint.config({
+  files: ["src/lib/database.types.ts"],
+  rules: {
+    "@typescript-eslint/no-redundant-type-constituents": "off",
+  },
+});
+
 export default tseslint.config(
   includeIgnoreFile(gitignorePath),
   baseConfig,
@@ -84,5 +93,6 @@ export default tseslint.config(
   eslintPluginAstro.configs["flat/recommended"],
   ...eslintPluginAstro.configs["flat/jsx-a11y-recommended"],
   astroConfig,
+  databaseTypesConfig,
   eslintPluginPrettier,
 );

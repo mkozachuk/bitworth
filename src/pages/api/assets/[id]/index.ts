@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@/lib/supabase";
 import type { Tables } from "@/lib/database.types";
+import type { PostgrestError } from "@supabase/supabase-js";
 
 interface ErrorShape {
   error: { code: string; message: string; context?: unknown };
@@ -143,7 +144,13 @@ export const DELETE: APIRoute = async ({ params, request, cookies }) => {
     );
   }
 
-  const { data, error } = await supabase.from("assets").delete().eq("id", id).eq("user_id", user.id).select().single();
+  const { data, error }: { data: Tables<"assets"> | null; error: null | PostgrestError } = await supabase
+    .from("assets")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .select()
+    .single();
 
   if (error) {
     return new Response(
@@ -165,7 +172,7 @@ export const DELETE: APIRoute = async ({ params, request, cookies }) => {
     );
   }
 
-  return new Response(JSON.stringify({ data: data as Tables<"assets"> }), {
+  return new Response(JSON.stringify({ data }), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });

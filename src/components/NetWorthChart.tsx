@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import type { Tables } from "@/lib/database.types";
 
@@ -36,7 +35,7 @@ function CustomTooltip({
       <div className="rounded-lg border border-white/10 bg-white/10 p-3 text-white backdrop-blur">
         <p className="text-xs text-white/60">{formattedDate}</p>
         <p className="text-sm font-semibold">
-          {Number(payload[0].value).toLocaleString("en-US", {
+          {payload[0].value.toLocaleString("en-US", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           })}{" "}
@@ -49,17 +48,15 @@ function CustomTooltip({
 }
 
 export function NetWorthChart({ snapshots, displayCurrency, onSaveSnapshot }: Props) {
-  const [fetchError, setFetchError] = useState<string | null>(null);
-
   const chartData: SnapshotPoint[] = snapshots.map((s) => ({
     date: s.created_at,
-    netWorth: Number(s.total_net_worth),
+    netWorth: s.total_net_worth,
   }));
 
   // Find Jan 1st net worth for reference line
   const yearStart = new Date(`${new Date().getFullYear()}-01-01T00:00:00Z`);
   const janSnap = snapshots.find((s) => new Date(s.created_at) <= yearStart);
-  const janNetWorth = janSnap ? Number(janSnap.total_net_worth) : null;
+  const janNetWorth = janSnap ? janSnap.total_net_worth : null;
 
   if (snapshots.length === 0) {
     return (
@@ -81,8 +78,6 @@ export function NetWorthChart({ snapshots, displayCurrency, onSaveSnapshot }: Pr
         <h2 className="text-sm font-medium tracking-wider text-white/60 uppercase">Net Worth Trend</h2>
         <span className="text-xs text-white/40">{displayCurrency}</span>
       </div>
-
-      {fetchError && <p className="mb-2 text-xs text-red-300">{fetchError}</p>}
 
       <ResponsiveContainer width="100%" height={300} initialDimension={{ width: 600, height: 300 }}>
         <LineChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>

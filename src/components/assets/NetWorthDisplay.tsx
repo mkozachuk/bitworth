@@ -163,9 +163,9 @@ export function NetWorthDisplay({ assets, displayCurrency, rates, snapshots = []
   const { deltaLastMonth, deltaJan } = (() => {
     if (snapshots.length === 0) return { deltaLastMonth: null, deltaJan: null };
 
-    // snapshots are ordered ASC by created_at (server query)
     const sorted = [...snapshots].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
     const current = sorted[sorted.length - 1]; // newest
+    // eslint-disable-next-line react-hooks/purity -- Date.now() is intentionally called at render time to determine the current date boundary
     const now = Date.now();
     const MS_25_DAYS = 25 * 24 * 60 * 60 * 1000;
 
@@ -178,9 +178,9 @@ export function NetWorthDisplay({ assets, displayCurrency, rates, snapshots = []
 
     const pctLM =
       lastMonthSnap && lastMonthSnap.total_net_worth !== 0
-        ? (deltaLM! / Math.abs(lastMonthSnap.total_net_worth)) * 100
+        ? (deltaLM / Math.abs(lastMonthSnap.total_net_worth)) * 100
         : null;
-    const pctJ = janSnap && janSnap.total_net_worth !== 0 ? (deltaJ! / Math.abs(janSnap.total_net_worth)) * 100 : null;
+    const pctJ = janSnap && janSnap.total_net_worth !== 0 ? (deltaJ / Math.abs(janSnap.total_net_worth)) * 100 : null;
 
     return {
       deltaLastMonth: deltaLM !== null && pctLM !== null ? { value: deltaLM, pct: pctLM } : null,
