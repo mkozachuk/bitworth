@@ -4,6 +4,7 @@ import Topbar from "@/components/Topbar.astro";
 import { createClient } from "@/lib/supabase";
 import { getRates } from "@/lib/exchange-rates";
 import { NetWorthDisplay } from "@/components/assets/NetWorthDisplay";
+import { AssetsSummary } from "@/components/assets/AssetsSummary";
 import { NetWorthChart } from "@/components/NetWorthChart";
 import type { Tables } from "@/lib/database.types";
 
@@ -49,6 +50,12 @@ const { data: snapshots } = await supabase
               onSnapshotSaved={() => {
                 window.location.reload();
               }}
+              client:load
+            />
+            <AssetsSummary
+              assets={assets as AssetWithCategory[]}
+              displayCurrency={displayCurrency}
+              rates={rates}
               client:load
             />
             <NetWorthChart
