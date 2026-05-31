@@ -31,6 +31,7 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 | S-01  | asset-management             | add/edit/delete assets with currency conversion           | F-01          | US-03, FR-006-010     | done     |
 | S-02  | dashboard-snapshots-chart    | see net worth, deltas, and trend chart from snapshots    | F-01, S-01    | US-01, FR-011-018     | done     |
 | S-03  | crypto-price-fetch           | see live BTC/ETH prices when adding crypto assets         | F-01          | FR-019-020            | proposed |
+| S-04  | dashboard-assets-summary     | see assets summary by currency on dashboard              | F-01, S-01, S-02 | —                | planned  |
 
 ## Streams
 
@@ -40,6 +41,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | ------ | -------------- | --------------------------------------- | ----------------------------------------------------------------- |
 | A      | Core tracking  | `F-01` → `S-01` → `S-02`               | Main path: schema → assets → dashboard with charts                |
 | B      | Crypto pricing | `F-01` → `S-03`                         | Parallel branch after F-01; can run alongside S-01/S-02            |
+| C      | Dashboard UX  | `F-01` → `S-01` → `S-02` → `S-04`    | Builds on S-02 to complete the dashboard view                     |
 
 ## Baseline
 
@@ -100,13 +102,25 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Chart component is not in the baseline. Picking a charting library (Chart.js, Recharts, visx) is a one-time decision that should be made once and applied consistently. NFR §2s-load means chart data must be fetched efficiently, not re-derived on every page load.
 - **Status:** proposed
 
+### S-04: Dashboard assets summary
+
+- **Outcome:** user sees a per-currency breakdown of their assets directly on the dashboard, so they can quickly understand their exposure across currencies without navigating to the assets page.
+- **Change ID:** `dashboard-assets-summary`
+- **PRD refs:** —
+- **Prerequisites:** `F-01`, `S-01`, `S-02`
+- **Parallel with:** `S-03`
+- **Blockers:** —
+- **Unknowns:** —
+- **Risk:** —
+- **Status:** planned
+
 ### S-03: Crypto price fetch on asset entry
 
 - **Outcome:** when user adds or edits a crypto asset, the app auto-fetches current market price for BTC/ETH/altcoins from CoinGecko; if the fetch fails, a cached price or manual entry is used.
 - **Change ID:** `crypto-price-fetch`
 - **PRD refs:** FR-019, FR-020
 - **Prerequisites:** `F-01`
-- **Parallel with:** `S-01`, `S-02`
+- **Parallel with:** `S-01`, `S-02`, `S-04`
 - **Blockers:** —
 - **Unknowns:**
   - —
@@ -121,6 +135,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-01      | asset-management             | Build asset CRUD with currency conversion | yes                   | —                                  |
 | S-02      | dashboard-snapshots-chart    | Dashboard: net worth, deltas, chart      | yes                   | depends on S-01                    |
 | S-03      | crypto-price-fetch           | Live crypto price fetch on asset entry    | yes                   | parallel with S-01 and S-02        |
+| S-04      | dashboard-assets-summary     | Dashboard: assets summary by currency     | yes                   | depends on S-02                    |
 
 ## Open Roadmap Questions
 
