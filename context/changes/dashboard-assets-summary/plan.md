@@ -9,6 +9,7 @@ Add a per-currency assets breakdown widget to the dashboard so users can quickly
 `NetWorthDisplay.tsx` already aggregates assets vs. liabilities totals across all currencies. The dashboard (`dashboard.astro`) fetches all assets server-side and passes them to `NetWorthDisplay`. S-02's snapshot/chart loop is complete. The one thing missing from the dashboard is a per-currency breakout.
 
 Key constraints discovered:
+
 - `dashboard.astro` already has assets data server-side — no new fetch needed for the summary widget.
 - Exchange rates are already fetched in `dashboard.astro` via `getRates()` — available to pass as props.
 - Existing Tailwind patterns: `border-white/10`, `bg-white/5`, `rounded-xl`, `text-white/60` caps labels, `rounded-full` currency badges — follow these exactly.
@@ -113,22 +114,22 @@ Import and render `AssetsSummary` in `dashboard.astro` with assets and rates as 
 
 #### Automated
 
-- [ ] 1.1 Linting passes
+- [x] 1.1 Linting passes — db2ea65
 
 #### Manual
 
-- [ ] 1.2 Dashboard renders the card with assets present
-- [ ] 1.3 Card hidden when all totals are zero
-- [ ] 1.4 Rows sorted by largest exposure
-- [ ] 1.5 Only currencies with assets shown
+- [x] 1.2 Dashboard renders the card with assets present
+- [x] 1.3 Card hidden when all totals are zero
+- [x] 1.4 Rows sorted by largest exposure
+- [x] 1.5 Only currencies with assets shown
 
 ### Phase 2: Wire into dashboard page
 
 #### Automated
 
-- [ ] 2.1 Linting + type checking passes
+- [x] 2.1 Linting + type checking passes — c1ecf54
 
 #### Manual
 
-- [ ] 2.2 Dashboard page loads without errors
-- [ ] 2.3 Card visible and correctly computed
+- [x] 2.2 Dashboard page loads without errors
+- [x] 2.3 Card visible and correctly computed
