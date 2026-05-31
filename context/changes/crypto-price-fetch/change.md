@@ -1,7 +1,7 @@
 ---
 change_id: crypto-price-fetch
 title: Live crypto price fetch on asset entry
-status: planned
+status: implementing
 created: 2026-05-31
 updated: 2026-05-31
 archived_at: null

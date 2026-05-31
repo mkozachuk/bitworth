@@ -377,9 +377,9 @@ Update asset API endpoints to accept and store the new `quantity` field alongsid
 
 #### Automated
 
-- [ ] 1.1 Migration applies cleanly
-- [ ] 1.2 TypeScript compiles
-- [ ] 1.3 Linting passes
+- [x] 1.1 Migration applies cleanly
+- [x] 1.2 TypeScript compiles
+- [x] 1.3 Linting passes
 
 #### Manual
 

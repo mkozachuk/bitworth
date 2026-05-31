@@ -57,6 +57,7 @@ export interface Database {
           id: string;
           name: string;
           notes: string | null;
+          quantity: number | null;
           updated_at: string;
           user_id: string;
         };
@@ -69,6 +70,7 @@ export interface Database {
           id?: string;
           name: string;
           notes?: string | null;
+          quantity?: number | null;
           updated_at?: string;
           user_id: string;
         };
@@ -81,6 +83,7 @@ export interface Database {
           id?: string;
           name?: string;
           notes?: string | null;
+          quantity?: number | null;
           updated_at?: string;
           user_id?: string;
         };
