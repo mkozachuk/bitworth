@@ -3,7 +3,7 @@ project: "BitWorth"
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-06-01
+updated: 2026-06-02
 prd_version: 1
 main_goal: market-feedback
 top_blocker: capacity
@@ -25,25 +25,28 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 
 ## At a glance
 
-| ID    | Change ID                    | Outcome (user can …)                                               | Prerequisites    | PRD refs              | Status   |
-| ----- | ---------------------------- | ------------------------------------------------------------------ | ---------------- | --------------------- | -------- |
+| ID    | Change ID                    | Outcome (user can …)                                                | Prerequisites         | PRD refs              | Status   |
+| ----- | ---------------------------- | ------------------------------------------------------------------- | --------------------- | --------------------- | -------- |
 | F-01  | supabase-schema-migrations   | (foundation) Supabase schema landed; migrations ready    | —             | NFR-perf, FR-006-020  | done     |
 | S-01  | asset-management             | add/edit/delete assets with currency conversion           | F-01          | US-03, FR-006-010     | done     |
 | S-02  | dashboard-snapshots-chart    | see net worth, deltas, and trend chart from snapshots    | F-01, S-01    | US-01, FR-011-018     | done     |
 | S-03  | crypto-price-fetch           | see live BTC/ETH prices when adding crypto assets         | F-01          | FR-019-020            | done    |
 | S-04  | dashboard-assets-summary     | see assets summary by currency on dashboard              | F-01, S-01, S-02 | —                | done     |
 | S-05  | user-settings                | configure display currency and preferences in a settings tab | F-01, S-02    | FR-011            | planned  |
+| S-06  | mobile-refactor              | use the dashboard, assets, and forms comfortably on phone-sized viewports | F-01, S-01, S-02, S-04 | — | planned  |
+| S-07  | asset-list-mobile-reflow    | view and act on every asset in the list on a phone-sized viewport          | F-01, S-01, S-06 | — | planned  |
 
 ## Streams
 
 Navigation aid — groups items that share a Prerequisites chain. Canonical ordering still lives in the dependency graph below; this table is the proposed reading order across parallel tracks.
 
-| Stream | Theme          | Chain                                    | Note                                                              |
-| ------ | -------------- | --------------------------------------- | ----------------------------------------------------------------- |
+| Stream | Theme          | Chain                                    | Note                                                                                    |
+| ------ | -------------- | --------------------------------------- | --------------------------------------------------------------------------------------- |
 | A      | Core tracking  | `F-01` → `S-01` → `S-02`               | Main path: schema → assets → dashboard with charts                |
 | B      | Crypto pricing | `F-01` → `S-03`                         | Parallel branch after F-01; can run alongside S-01/S-02            |
 | C      | Dashboard UX  | `F-01` → `S-01` → `S-02` → `S-04`    | Builds on S-02 to complete the dashboard view                     |
 | D      | User settings | `F-01` → `S-05`                       | Parallel branch after S-02; UI for `user_preferences`              |
+| E      | Responsive UI | `F-01` → `S-06` → `S-07`               | S-06 is the buttons/nav pass; S-07 is the deferred data-list reflow |
 
 ## Baseline
 
@@ -129,6 +132,35 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** `user_preferences.display_currency` is already read by the snapshots API but has no UI. Fragmenting the write path (one surface in the dashboard, another in settings) is the main risk. Mitigant: the settings page is the single source of UI for `user_preferences`; no other surface writes the same fields.
 - **Status:** planned
 
+### S-06: Mobile refactor
+
+- **Outcome:** user can complete the core flows (view dashboard, add/edit/delete assets, sign out) on a phone-sized viewport (~360px wide) without horizontal scrolling, truncated labels, or wrapped buttons.
+- **Change ID:** `mobile-refactor`
+- **PRD refs:** —
+- **Prerequisites:** `F-01`, `S-01`, `S-02`, `S-04`
+- **Parallel with:** `S-05`
+- **Blockers:** —
+- **Unknowns:**
+  - There are two "Sign out" buttons (Topbar + dashboard page). Fixing the duplication is adjacent to the responsive work. (Owner: planner, by: during `/10x-plan`) Recommended: collapse to one in S-06.
+  - AssetList renders as a `<table>`, which won't reflow on narrow viewports. **Out of scope for S-06** (confirmed 2026-06-01) — will land as a separate follow-up slice (likely S-07) once the nav/buttons pass ships.
+- **Risk:** Pure UI refactor on every existing page — high regression risk on desktop if the mobile pass is done without visual diffing at ≥1024px. Mitigant: snapshot/visual check on both viewports in `/10x-implement`. Secondary risk: no shared `Icon` component yet, so mobile-icon swaps will be implemented ad-hoc; consider adding an `IconButton` variant of `src/components/ui/button.tsx` first.
+- **Status:** planned
+
+### S-07: AssetList mobile reflow
+
+- **Outcome:** user can read every asset, switch between All / Assets / Liabilities, and trigger Edit or Delete on a phone-sized viewport (~360px wide) without horizontal scrolling.
+- **Change ID:** `asset-list-mobile-reflow`
+- **PRD refs:** —
+- **Prerequisites:** `F-01`, `S-01`, `S-06`
+- **Parallel with:** —
+- **Blockers:** —
+- **Unknowns:**
+  - Implementation approach: pure-CSS table reflow (e.g. `block sm:table` on the table element + stacked cells) vs. conditional render of a separate card component on `<sm`. (Owner: planner, by: during `/10x-plan`) Recommendation: conditional render — it keeps the desktop table markup untouched and gives S-07 free rein over mobile semantics.
+  - Should the filter tabs (All / Assets / Liabilities) get a mobile treatment in the same slice? They render as 3 small text buttons and may already fit at 360px. (Owner: planner, by: during `/10x-plan`) Recommendation: leave as-is unless a quick check shows overflow.
+  - The empty state ("No assets yet" / "No {filter} found") — keep one or split mobile/desktop. (Owner: planner, by: during `/10x-plan`) Recommendation: keep one.
+- **Risk:** Visual regression on the existing desktop table if the markup changes. Mitigant: keep the `<table>` path for `≥sm` byte-identical; only add a separate mobile view. Secondary risk: a11y — swapping between a `<table>` and a card list must preserve semantic structure. Mitigant: use `<ul>` + `<li>` for the mobile view (it's a list of items, not tabular data on narrow screens), keep `<table>` for desktop.
+- **Status:** planned
+
 ### S-03: Crypto price fetch on asset entry
 
 - **Outcome:** when user adds or edits a crypto asset, the app auto-fetches current market price for BTC/ETH/altcoins from CoinGecko; if the fetch fails, a cached price or manual entry is used.
@@ -144,14 +176,16 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ## Backlog Handoff
 
-| Roadmap ID | Change ID                    | Suggested issue title                     | Ready for `/10x-plan` | Notes                              |
-| --------- | ----------------------------- | ------------------------------------------ | --------------------- | ---------------------------------- |
+| Roadmap ID | Change ID                    | Suggested issue title                     | Ready for `/10x-plan` | Notes                                          |
+| --------- | ----------------------------- | ------------------------------------------ | --------------------- | ---------------------------------------------- |
 | F-01      | supabase-schema-migrations   | Design and migrate Supabase schema        | yes                   | —                                  |
 | S-01      | asset-management             | Build asset CRUD with currency conversion | yes                   | —                                  |
 | S-02      | dashboard-snapshots-chart    | Dashboard: net worth, deltas, chart      | yes                   | depends on S-01                    |
 | S-03      | crypto-price-fetch           | Live crypto price fetch on asset entry    | yes                   | parallel with S-01 and S-02        |
 | S-04      | dashboard-assets-summary     | Dashboard: assets summary by currency     | yes                   | depends on S-02                    |
-| S-05      | user-settings                | Settings: display currency & preferences  | yes                   | depends on S-02                    |
+| S-05      | user-settings                | Settings: display currency & preferences  | yes                   | depends on S-02                         |
+| S-06      | mobile-refactor              | Mobile: responsive UI pass (nav, buttons, forms) | yes                   | depends on S-02; refactor of all authed pages |
+| S-07      | asset-list-mobile-reflow    | AssetList: reflow table to cards on mobile  | yes                   | depends on S-06; data-list reflow deferred from S-06 |
 
 ## Open Roadmap Questions
 
