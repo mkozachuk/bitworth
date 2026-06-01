@@ -25,13 +25,14 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 
 ## At a glance
 
-| ID    | Change ID                    | Outcome (user can …)                                     | Prerequisites | PRD refs              | Status   |
-| ----- | ---------------------------- | -------------------------------------------------------- | ------------- | --------------------- | -------- |
+| ID    | Change ID                    | Outcome (user can …)                                               | Prerequisites    | PRD refs              | Status   |
+| ----- | ---------------------------- | ------------------------------------------------------------------ | ---------------- | --------------------- | -------- |
 | F-01  | supabase-schema-migrations   | (foundation) Supabase schema landed; migrations ready    | —             | NFR-perf, FR-006-020  | done     |
 | S-01  | asset-management             | add/edit/delete assets with currency conversion           | F-01          | US-03, FR-006-010     | done     |
 | S-02  | dashboard-snapshots-chart    | see net worth, deltas, and trend chart from snapshots    | F-01, S-01    | US-01, FR-011-018     | done     |
 | S-03  | crypto-price-fetch           | see live BTC/ETH prices when adding crypto assets         | F-01          | FR-019-020            | done    |
 | S-04  | dashboard-assets-summary     | see assets summary by currency on dashboard              | F-01, S-01, S-02 | —                | done     |
+| S-05  | user-settings                | configure display currency and preferences in a settings tab | F-01, S-02    | FR-011            | planned  |
 
 ## Streams
 
@@ -42,6 +43,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | A      | Core tracking  | `F-01` → `S-01` → `S-02`               | Main path: schema → assets → dashboard with charts                |
 | B      | Crypto pricing | `F-01` → `S-03`                         | Parallel branch after F-01; can run alongside S-01/S-02            |
 | C      | Dashboard UX  | `F-01` → `S-01` → `S-02` → `S-04`    | Builds on S-02 to complete the dashboard view                     |
+| D      | User settings | `F-01` → `S-05`                       | Parallel branch after S-02; UI for `user_preferences`              |
 
 ## Baseline
 
@@ -114,6 +116,19 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** —
 - **Status:** done
 
+### S-05: User settings
+
+- **Outcome:** user opens a dedicated settings tab where they can configure personal preferences — at minimum their default display currency, with room to add further settings (e.g., date format, theme) later — and changes persist across sessions.
+- **Change ID:** `user-settings`
+- **PRD refs:** FR-011
+- **Prerequisites:** `F-01`, `S-02`
+- **Parallel with:** —
+- **Blockers:** —
+- **Unknowns:**
+  - Which settings beyond display currency belong in this tab? (Owner: user, by: before S-05 planning) Ship display currency first; treat the tab as a home for future preferences.
+- **Risk:** `user_preferences.display_currency` is already read by the snapshots API but has no UI. Fragmenting the write path (one surface in the dashboard, another in settings) is the main risk. Mitigant: the settings page is the single source of UI for `user_preferences`; no other surface writes the same fields.
+- **Status:** planned
+
 ### S-03: Crypto price fetch on asset entry
 
 - **Outcome:** when user adds or edits a crypto asset, the app auto-fetches current market price for BTC/ETH/altcoins from CoinGecko; if the fetch fails, a cached price or manual entry is used.
@@ -129,13 +144,14 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ## Backlog Handoff
 
-| Roadmap ID | Change ID                    | Suggested issue title                      | Ready for `/10x-plan` | Notes                              |
-| --------- | ----------------------------- | ----------------------------------------- | --------------------- | ---------------------------------- |
+| Roadmap ID | Change ID                    | Suggested issue title                     | Ready for `/10x-plan` | Notes                              |
+| --------- | ----------------------------- | ------------------------------------------ | --------------------- | ---------------------------------- |
 | F-01      | supabase-schema-migrations   | Design and migrate Supabase schema        | yes                   | —                                  |
 | S-01      | asset-management             | Build asset CRUD with currency conversion | yes                   | —                                  |
 | S-02      | dashboard-snapshots-chart    | Dashboard: net worth, deltas, chart      | yes                   | depends on S-01                    |
 | S-03      | crypto-price-fetch           | Live crypto price fetch on asset entry    | yes                   | parallel with S-01 and S-02        |
 | S-04      | dashboard-assets-summary     | Dashboard: assets summary by currency     | yes                   | depends on S-02                    |
+| S-05      | user-settings                | Settings: display currency & preferences  | yes                   | depends on S-02                    |
 
 ## Open Roadmap Questions
 
