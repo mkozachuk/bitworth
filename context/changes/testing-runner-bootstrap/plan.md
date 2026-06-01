@@ -272,29 +272,29 @@ None for end users. The refactor is internal. The first test does not change any
 
 #### Manual
 
-- [ ] 1.6 Dashboard Net Worth total renders the same value as before the refactor
-- [ ] 1.7 `POST /api/snapshots` creates a new `snapshots` row whose `total_net_worth` matches the displayed total
-- [ ] 1.8 Per-side subtotals (Assets / Liabilities) still sum correctly to the displayed total
-- [ ] 1.9 Chart in `NetWorthChart.tsx` still plots the new snapshot
+- [x] 1.6 Dashboard Net Worth total renders the same value as before the refactor — 4dbd505
+- [x] 1.7 `POST /api/snapshots` creates a new `snapshots` row whose `total_net_worth` matches the displayed total — 4dbd505
+- [x] 1.8 Per-side subtotals (Assets / Liabilities) still sum correctly to the displayed total — 4dbd505
+- [x] 1.9 Chart in `NetWorthChart.tsx` still plots the new snapshot — 4dbd505
 
 ### Phase 2: Test runner + first unit test (commit 2)
 
 #### Automated
 
-- [x] 2.1 `npx vitest --version` exits 0
-- [x] 2.2 `npm run test:run` exits 0 and reports 3 passing tests
-- [x] 2.3 `npm run test:run -- --reporter=verbose` lists the `describe` block and all 3 `it` cases by name
-- [x] 2.4 TypeScript still compiles: `npx tsc --noEmit` exits 0
-- [x] 2.5 ESLint still passes: `npm run lint` exits 0
-- [x] 2.6 Astro build still succeeds: `npm run build` exits 0
-- [x] 2.7 `test-plan.md` §3 row carries the deferral note for the DOM integration test
-- [x] 2.8 `test-plan.md` §6.1 and §6.5 cookbook entries are filled in (no `TBD — see §3 Phase <N>` text remains for Phase 1 sub-sections)
-- [x] 2.9 `package.json` has `vitest` in `devDependencies` and `test` + `test:run` in the `scripts` block
+- [x] 2.1 `npx vitest --version` exits 0 — 405bac5
+- [x] 2.2 `npm run test:run` exits 0 and reports 3 passing tests — 405bac5
+- [x] 2.3 `npm run test:run -- --reporter=verbose` lists the `describe` block and all 3 `it` cases by name — 405bac5
+- [x] 2.4 TypeScript still compiles: `npx tsc --noEmit` exits 0 — 405bac5
+- [x] 2.5 ESLint still passes: `npm run lint` exits 0 — 405bac5
+- [x] 2.6 Astro build still succeeds: `npm run build` exits 0 — 405bac5
+- [x] 2.7 `test-plan.md` §3 row carries the deferral note for the DOM integration test — 405bac5
+- [x] 2.8 `test-plan.md` §6.1 and §6.5 cookbook entries are filled in (no `TBD — see §3 Phase <N>` text remains for Phase 1 sub-sections) — 405bac5
+- [x] 2.9 `package.json` has `vitest` in `devDependencies` and `test` + `test:run` in the `scripts` block — 405bac5
 
 #### Manual
 
-- [ ] 2.10 `npm run test` enters Vitest watch mode and re-runs on file save
-- [ ] 2.11 Mutation: flip the liability sign in `computeNetWorth`; confirm the liability-sign guard test fails; revert
-- [ ] 2.12 Mutation: add `+ 0.0000001` inside `convertAmount`; confirm the clean-oracle test fails; revert
-- [ ] 2.13 `grep -r "from '@/lib/net-worth'" src/components src/pages/api/snapshots` returns 4 hits
-- [ ] 2.14 `test-plan.md` §3 row and §6 cookbook entries read correctly in rendered form
+- [x] 2.10 `npm run test` enters Vitest watch mode and re-runs on file save — 405bac5
+- [x] 2.11 Mutation: flip the liability sign in `computeNetWorth`; confirm the liability-sign guard test fails; revert — 405bac5
+- [x] 2.12 Mutation: add `+ 0.0000001` inside `convertAmount`; confirm the clean-oracle test fails; revert — 405bac5
+- [x] 2.13 `grep -r "from '@/lib/net-worth'" src/components src/pages/api/snapshots` returns 4 hits — 405bac5
+- [x] 2.14 `test-plan.md` §3 row and §6 cookbook entries read correctly in rendered form — 405bac5

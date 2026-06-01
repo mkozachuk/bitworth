@@ -1,9 +1,9 @@
 ---
 change_id: testing-runner-bootstrap
 title: Bootstrap Vitest runner and add first net worth calculation test
-status: implementing
+status: implemented
 created: 2026-06-01
-updated: 2026-06-01
+updated: 2026-06-02
 archived_at: null
 ---
 
