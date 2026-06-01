@@ -1,24 +1,13 @@
 import { CurrencyBadge } from "./CurrencyBadge";
 import type { Tables } from "@/lib/database.types";
+import { convertAmount, type Currency } from "@/lib/net-worth";
 
 type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
-type Currency = "USD" | "EUR" | "PLN";
 
 interface Props {
   assets: AssetWithCategory[];
   displayCurrency: Currency;
   rates: Record<Currency, number>;
-}
-
-function convertAmount(
-  amount: number,
-  fromCurrency: string,
-  toCurrency: Currency,
-  rates: Record<Currency, number>,
-): number {
-  if (fromCurrency === toCurrency) return amount;
-  const inUSD = amount / rates[fromCurrency as Currency];
-  return inUSD * rates[toCurrency];
 }
 
 export function AssetsSummary({ assets, displayCurrency, rates }: Props) {

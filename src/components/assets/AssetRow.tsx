@@ -1,9 +1,9 @@
 import { Pencil, Trash2 } from "lucide-react";
 import { CurrencyBadge } from "./CurrencyBadge";
 import type { Tables } from "@/lib/database.types";
+import { convertAmount, type Currency } from "@/lib/net-worth";
 
 type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
-type Currency = "USD" | "EUR" | "PLN";
 
 interface Props {
   asset: AssetWithCategory;
@@ -12,19 +12,8 @@ interface Props {
   rates: Record<Currency, number>;
 }
 
-function convertAmount(
-  amount: number,
-  fromCurrency: string,
-  toCurrency: Currency,
-  rates: Record<Currency, number>,
-): number {
-  if (fromCurrency === toCurrency) return amount;
-  const inUSD = amount / rates[fromCurrency as Currency];
-  return inUSD * rates[toCurrency];
-}
-
 export function AssetRow({ asset, onDelete, displayCurrency, rates }: Props) {
-  const converted = convertAmount(asset.amount, asset.currency, displayCurrency, rates);
+  const converted = convertAmount(asset.amount, asset.currency as Currency, displayCurrency, rates);
 
   return (
     <tr className="border-b border-white/10 last:border-0">

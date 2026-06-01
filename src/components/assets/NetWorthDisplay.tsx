@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { CurrencyBadge } from "./CurrencyBadge";
 import type { Tables } from "@/lib/database.types";
+import { convertAmount, type Currency } from "@/lib/net-worth";
 
 type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
 type SnapshotRow = Tables<"snapshots">;
-type Currency = "USD" | "EUR" | "PLN";
 
 interface Props {
   assets: AssetWithCategory[];
@@ -12,17 +12,6 @@ interface Props {
   rates: Record<Currency, number>;
   snapshots?: SnapshotRow[];
   onSnapshotSaved?: () => void;
-}
-
-function convertAmount(
-  amount: number,
-  fromCurrency: string,
-  toCurrency: Currency,
-  rates: Record<Currency, number>,
-): number {
-  if (fromCurrency === toCurrency) return amount;
-  const inUSD = amount / rates[fromCurrency as Currency];
-  return inUSD * rates[toCurrency];
 }
 
 type ButtonState = "idle" | "loading" | "saved" | "error";
@@ -149,7 +138,7 @@ export function NetWorthDisplay({ assets, displayCurrency, rates, snapshots = []
     let totalAssets = 0;
     let totalLiabilities = 0;
     for (const asset of assets) {
-      const converted = convertAmount(asset.amount, asset.currency, displayCurrency, rates);
+      const converted = convertAmount(asset.amount, asset.currency as Currency, displayCurrency, rates);
       if (asset.category.is_liability) {
         totalLiabilities += converted;
       } else {
@@ -209,7 +198,7 @@ export function NetWorthDisplay({ assets, displayCurrency, rates, snapshots = []
             +
             {assets
               .filter((a) => !a.category.is_liability)
-              .reduce((sum, a) => sum + convertAmount(a.amount, a.currency, displayCurrency, rates), 0)
+              .reduce((sum, a) => sum + convertAmount(a.amount, a.currency as Currency, displayCurrency, rates), 0)
               .toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
             {displayCurrency}
           </p>
@@ -220,7 +209,7 @@ export function NetWorthDisplay({ assets, displayCurrency, rates, snapshots = []
             -
             {assets
               .filter((a) => a.category.is_liability)
-              .reduce((sum, a) => sum + convertAmount(a.amount, a.currency, displayCurrency, rates), 0)
+              .reduce((sum, a) => sum + convertAmount(a.amount, a.currency as Currency, displayCurrency, rates), 0)
               .toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
             {displayCurrency}
           </p>

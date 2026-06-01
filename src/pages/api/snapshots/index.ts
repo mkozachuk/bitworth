@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@/lib/supabase";
 import { getRates } from "@/lib/exchange-rates";
+import { convertAmount, type Currency } from "@/lib/net-worth";
 import type { Tables } from "@/lib/database.types";
 import type { PostgrestError } from "@supabase/supabase-js";
 
@@ -84,10 +85,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   const validCurrencies = ["USD", "EUR", "PLN"] as const;
   const rawCurrency = (prefs as { display_currency?: string } | null)?.display_currency;
-  const displayCurrency: "USD" | "EUR" | "PLN" = validCurrencies.includes(
-    rawCurrency as (typeof validCurrencies)[number],
-  )
-    ? (rawCurrency as "USD" | "EUR" | "PLN")
+  const displayCurrency: Currency = validCurrencies.includes(rawCurrency as (typeof validCurrencies)[number])
+    ? (rawCurrency as Currency)
     : "USD";
 
   type AssetRow = Tables<"assets"> & { category: Tables<"asset_categories"> };
@@ -95,21 +94,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   // Compute net worth via getRates (server-side, can use existing logic)
   const rates = await getRates(supabase);
 
-  function convertAmount(
-    amount: number,
-    fromCurrency: string,
-    toCurrency: "USD" | "EUR" | "PLN",
-    r: Record<"USD" | "EUR" | "PLN", number>,
-  ): number {
-    if (fromCurrency === toCurrency) return amount;
-    const inUSD = amount / r[fromCurrency as "USD" | "EUR" | "PLN"];
-    return inUSD * r[toCurrency];
-  }
-
   let totalAssets = 0;
   let totalLiabilities = 0;
   for (const asset of assets as AssetRow[]) {
-    const converted = convertAmount(asset.amount, asset.currency, displayCurrency, rates);
+    const converted = convertAmount(asset.amount, asset.currency as Currency, displayCurrency, rates);
     if (asset.category.is_liability) {
       totalLiabilities += converted;
     } else {
@@ -147,9 +135,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       name: asset.name,
       original_amount: asset.amount,
       original_currency: asset.currency,
-      converted_amount: convertAmount(asset.amount, asset.currency, displayCurrency, rates),
+      converted_amount: convertAmount(asset.amount, asset.currency as Currency, displayCurrency, rates),
       display_currency: displayCurrency,
-      exchange_rate_usd: rates[asset.currency as "USD" | "EUR" | "PLN"],
+      exchange_rate_usd: rates[asset.currency as Currency],
       display_order: idx,
     }));
 
