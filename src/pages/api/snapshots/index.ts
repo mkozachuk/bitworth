@@ -127,6 +127,15 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     );
   }
 
+  if (!snapshot) {
+    return new Response(
+      JSON.stringify({
+        error: { code: "INSERT_FAILED", message: "Snapshot insert returned no row" },
+      } satisfies ErrorShape),
+      { status: 500, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
   // Insert snapshot_items for each asset
   if (assets.length > 0) {
     const items = (assets as AssetRow[]).map((asset, idx) => ({

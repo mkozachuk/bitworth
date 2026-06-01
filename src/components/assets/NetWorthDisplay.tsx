@@ -166,10 +166,13 @@ export function NetWorthDisplay({ assets, displayCurrency, rates, snapshots = []
     const deltaJ = janSnap ? current.total_net_worth - janSnap.total_net_worth : null;
 
     const pctLM =
-      lastMonthSnap && lastMonthSnap.total_net_worth !== 0
+      lastMonthSnap && lastMonthSnap.total_net_worth !== 0 && deltaLM !== null
         ? (deltaLM / Math.abs(lastMonthSnap.total_net_worth)) * 100
         : null;
-    const pctJ = janSnap && janSnap.total_net_worth !== 0 ? (deltaJ / Math.abs(janSnap.total_net_worth)) * 100 : null;
+    const pctJ =
+      janSnap && janSnap.total_net_worth !== 0 && deltaJ !== null
+        ? (deltaJ / Math.abs(janSnap.total_net_worth)) * 100
+        : null;
 
     return {
       deltaLastMonth: deltaLM !== null && pctLM !== null ? { value: deltaLM, pct: pctLM } : null,

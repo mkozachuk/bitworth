@@ -264,11 +264,11 @@ None for end users. The refactor is internal. The first test does not change any
 
 #### Automated
 
-- [x] 1.1 TypeScript compiles cleanly: `npx tsc --noEmit` exits 0
-- [x] 1.2 ESLint passes: `npm run lint` exits 0
-- [x] 1.3 Astro build succeeds: `npm run build` exits 0
-- [x] 1.4 The four call sites contain no local declarations of `convertAmount` (grep returns only `src/lib/net-worth.ts`)
-- [x] 1.5 The new module is referenced by all four call sites (grep returns 4 hits)
+- [x] 1.1 TypeScript compiles cleanly: `npx tsc --noEmit` exits 0 — 4dbd505
+- [x] 1.2 ESLint passes: `npm run lint` exits 0 — 4dbd505
+- [x] 1.3 Astro build succeeds: `npm run build` exits 0 — 4dbd505
+- [x] 1.4 The four call sites contain no local declarations of `convertAmount` (grep returns only `src/lib/net-worth.ts`) — 4dbd505
+- [x] 1.5 The new module is referenced by all four call sites (grep returns 4 hits) — 4dbd505
 
 #### Manual
 
@@ -281,15 +281,15 @@ None for end users. The refactor is internal. The first test does not change any
 
 #### Automated
 
-- [ ] 2.1 `npx vitest --version` exits 0
-- [ ] 2.2 `npm run test:run` exits 0 and reports 3 passing tests
-- [ ] 2.3 `npm run test:run -- --reporter=verbose` lists the `describe` block and all 3 `it` cases by name
-- [ ] 2.4 TypeScript still compiles: `npx tsc --noEmit` exits 0
-- [ ] 2.5 ESLint still passes: `npm run lint` exits 0
-- [ ] 2.6 Astro build still succeeds: `npm run build` exits 0
-- [ ] 2.7 `test-plan.md` §3 row carries the deferral note for the DOM integration test
-- [ ] 2.8 `test-plan.md` §6.1 and §6.5 cookbook entries are filled in (no `TBD — see §3 Phase <N>` text remains for Phase 1 sub-sections)
-- [ ] 2.9 `package.json` has `vitest` in `devDependencies` and `test` + `test:run` in the `scripts` block
+- [x] 2.1 `npx vitest --version` exits 0
+- [x] 2.2 `npm run test:run` exits 0 and reports 3 passing tests
+- [x] 2.3 `npm run test:run -- --reporter=verbose` lists the `describe` block and all 3 `it` cases by name
+- [x] 2.4 TypeScript still compiles: `npx tsc --noEmit` exits 0
+- [x] 2.5 ESLint still passes: `npm run lint` exits 0
+- [x] 2.6 Astro build still succeeds: `npm run build` exits 0
+- [x] 2.7 `test-plan.md` §3 row carries the deferral note for the DOM integration test
+- [x] 2.8 `test-plan.md` §6.1 and §6.5 cookbook entries are filled in (no `TBD — see §3 Phase <N>` text remains for Phase 1 sub-sections)
+- [x] 2.9 `package.json` has `vitest` in `devDependencies` and `test` + `test:run` in the `scripts` block
 
 #### Manual
 
