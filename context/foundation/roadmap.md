@@ -25,8 +25,8 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 
 ## At a glance
 
-| ID    | Change ID                    | Outcome (user can …)                                                | Prerequisites         | PRD refs              | Status   |
-| ----- | ---------------------------- | ------------------------------------------------------------------- | --------------------- | --------------------- | -------- |
+| ID    | Change ID                    | Outcome (user can …)                                                  | Prerequisites         | PRD refs              | Status   |
+| ----- | ---------------------------- | --------------------------------------------------------------------- | --------------------- | --------------------- | -------- |
 | F-01  | supabase-schema-migrations   | (foundation) Supabase schema landed; migrations ready    | —             | NFR-perf, FR-006-020  | done     |
 | S-01  | asset-management             | add/edit/delete assets with currency conversion           | F-01          | US-03, FR-006-010     | done     |
 | S-02  | dashboard-snapshots-chart    | see net worth, deltas, and trend chart from snapshots    | F-01, S-01    | US-01, FR-011-018     | done     |
@@ -35,6 +35,7 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 | S-05  | user-settings                | configure display currency and preferences in a settings tab | F-01, S-02    | FR-011            | planned  |
 | S-06  | mobile-refactor              | use the dashboard, assets, and forms comfortably on phone-sized viewports | F-01, S-01, S-02, S-04 | — | planned  |
 | S-07  | asset-list-mobile-reflow    | view and act on every asset in the list on a phone-sized viewport          | F-01, S-01, S-06 | — | planned  |
+| S-08  | pwa-installable              | install the app to a phone's home screen and launch it standalone at /dashboard | F-01, S-06, S-07 | — | planned  |
 
 ## Streams
 
@@ -46,7 +47,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | B      | Crypto pricing | `F-01` → `S-03`                         | Parallel branch after F-01; can run alongside S-01/S-02            |
 | C      | Dashboard UX  | `F-01` → `S-01` → `S-02` → `S-04`    | Builds on S-02 to complete the dashboard view                     |
 | D      | User settings | `F-01` → `S-05`                       | Parallel branch after S-02; UI for `user_preferences`              |
-| E      | Responsive UI | `F-01` → `S-06` → `S-07`               | S-06 is the buttons/nav pass; S-07 is the deferred data-list reflow |
+| E      | Responsive UI | `F-01` → `S-06` → `S-07` → `S-08`       | S-06/S-07 make the app usable on mobile; S-08 ships it as an installable PWA |
 
 ## Baseline
 
@@ -161,6 +162,22 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Visual regression on the existing desktop table if the markup changes. Mitigant: keep the `<table>` path for `≥sm` byte-identical; only add a separate mobile view. Secondary risk: a11y — swapping between a `<table>` and a card list must preserve semantic structure. Mitigant: use `<ul>` + `<li>` for the mobile view (it's a list of items, not tabular data on narrow screens), keep `<table>` for desktop.
 - **Status:** planned
 
+### S-08: PWA / installable mobile app
+
+- **Outcome:** user can install the BitWorth app to their phone's home screen (iOS via Share → Add to Home Screen; Android/Chrome via the install prompt) and launch it as a standalone app — no browser chrome, opens directly to `/dashboard`, full-bleed layout using safe-area insets.
+- **Change ID:** `pwa-installable`
+- **PRD refs:** —
+- **Prerequisites:** `F-01`, `S-06`, `S-07`
+- **Parallel with:** —
+- **Blockers:** —
+- **Unknowns:**
+  - Brand icon source. The repo has only `public/favicon.png` (32×32) and a 1.2 MB marketing `template.png`. PWAs need a 192×192, 512×512, maskable variant, and a 180×180 Apple touch icon. (Owner: user, by: before S-08 planning) Recommendation: ship a placeholder monogram icon set generated from the existing favicon, designer can swap later.
+  - iOS install instructions UX. iOS doesn't fire `beforeinstallprompt` — users must use Share → Add to Home Screen. (Owner: planner, by: during `/10x-plan`) Recommendation: detect iOS + `display-mode !== 'standalone'` and show a dismissible "How to install" banner on first authed visit; hide after dismiss or after install.
+  - Offline fallback. The app requires auth + network for all meaningful data. (Owner: planner, by: during `/10x-plan`) Recommendation: ship a minimal offline fallback page (HTML shell + "You're offline" message) served by the SW. Don't try to cache user data — Supabase auth would be invalid anyway.
+  - Update strategy. Service workers cache the app shell; stale SW can serve old assets. (Owner: planner, by: during `/10x-plan`) Recommendation: Serwist's default `skipWaiting` + `clientsClaim` is fine here; the data is always fresh from Supabase.
+- **Risk:** Cloudflare Workers must serve `sw.js` with the correct `Service-Worker-Allowed` scope header, or the SW won't control the site. Mitigant: Serwist emits the SW with correct scope by default; verify in `/10x-implement` via DevTools → Application → Service Workers on a deploy preview. Secondary risk: stale SW caches old assets after deploy — mitigated by Serwist's per-build version bump. Tertiary risk: iOS PWA has well-known limitations (no push, no background sync, no fullscreen by default) — out of scope for S-08; noted here for awareness.
+- **Status:** planned
+
 ### S-03: Crypto price fetch on asset entry
 
 - **Outcome:** when user adds or edits a crypto asset, the app auto-fetches current market price for BTC/ETH/altcoins from CoinGecko; if the fetch fails, a cached price or manual entry is used.
@@ -176,8 +193,8 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ## Backlog Handoff
 
-| Roadmap ID | Change ID                    | Suggested issue title                     | Ready for `/10x-plan` | Notes                                          |
-| --------- | ----------------------------- | ------------------------------------------ | --------------------- | ---------------------------------------------- |
+| Roadmap ID | Change ID                    | Suggested issue title                      | Ready for `/10x-plan` | Notes                                              |
+| --------- | ----------------------------- | ------------------------------------------- | --------------------- | -------------------------------------------------- |
 | F-01      | supabase-schema-migrations   | Design and migrate Supabase schema        | yes                   | —                                  |
 | S-01      | asset-management             | Build asset CRUD with currency conversion | yes                   | —                                  |
 | S-02      | dashboard-snapshots-chart    | Dashboard: net worth, deltas, chart      | yes                   | depends on S-01                    |
@@ -186,6 +203,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-05      | user-settings                | Settings: display currency & preferences  | yes                   | depends on S-02                         |
 | S-06      | mobile-refactor              | Mobile: responsive UI pass (nav, buttons, forms) | yes                   | depends on S-02; refactor of all authed pages |
 | S-07      | asset-list-mobile-reflow    | AssetList: reflow table to cards on mobile  | yes                   | depends on S-06; data-list reflow deferred from S-06 |
+| S-08      | pwa-installable              | PWA: installable mobile app via @serwist/astro | yes                   | depends on S-06+S-07; installable shell on top of mobile-UI pass |
 
 ## Open Roadmap Questions
 
