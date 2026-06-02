@@ -19,7 +19,7 @@ export function SubmitButton({ pendingText, icon, children }: SubmitButtonProps)
     >
       {pending ? (
         <span className="flex items-center gap-2">
-          <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+          <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white dark:border-white/30 dark:border-t-white" />
           {pendingText}
         </span>
       ) : (

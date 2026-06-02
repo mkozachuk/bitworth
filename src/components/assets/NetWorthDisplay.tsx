@@ -20,11 +20,11 @@ function DeltaIndicator({ label, value, percentage }: { label: string; value: nu
   const isPositive = value >= 0;
   const absValue = Math.abs(value);
   const absPct = Math.abs(percentage);
-  const colorClass = isPositive ? "text-green-300" : "text-red-300";
+  const colorClass = isPositive ? "text-green-600 dark:text-green-300" : "text-red-600 dark:text-red-300";
   const sign = isPositive ? "+" : "-";
   return (
     <div>
-      <p className="text-xs tracking-wider text-white/50 uppercase">{label}</p>
+      <p className="text-xs tracking-wider text-zinc-500 uppercase dark:text-white/50">{label}</p>
       <p className={`mt-1 text-sm font-semibold ${colorClass}`}>
         {sign}${absValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({sign}
         {absPct.toFixed(1)}%)
@@ -61,7 +61,7 @@ function SaveButton({ onSuccess, onError }: { onSuccess: () => void; onError: (m
     return (
       <button
         disabled
-        className="w-full rounded-lg border border-green-500/50 bg-green-500/20 px-4 py-2 text-sm font-medium text-green-300 transition-colors"
+        className="w-full rounded-lg border border-green-500/50 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 transition-colors dark:bg-green-500/20 dark:text-green-300"
       >
         Saved!
       </button>
@@ -72,7 +72,7 @@ function SaveButton({ onSuccess, onError }: { onSuccess: () => void; onError: (m
     return (
       <button
         onClick={handleClick}
-        className="w-full rounded-lg border border-red-500/50 bg-red-500/20 px-4 py-2 text-sm font-medium text-red-300 transition-colors hover:bg-red-500/30"
+        className="w-full rounded-lg border border-red-500/50 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 dark:bg-red-500/20 dark:text-red-300 dark:hover:bg-red-500/30"
       >
         Retry
       </button>
@@ -83,10 +83,10 @@ function SaveButton({ onSuccess, onError }: { onSuccess: () => void; onError: (m
     return (
       <button
         disabled
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-purple-600/50 px-4 py-2 text-sm font-medium text-white/70"
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-purple-600/50 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-white/70"
       >
         <svg
-          className="h-4 w-4 animate-spin text-white/70"
+          className="h-4 w-4 animate-spin text-zinc-700 dark:text-white/70"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
@@ -181,23 +181,27 @@ export function NetWorthDisplay({ assets, displayCurrency, rates, snapshots = []
   })();
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-6">
+    <div className="rounded-xl border border-zinc-200 bg-white/80 p-6 dark:border-white/10 dark:bg-white/5">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-medium tracking-wider text-white/60 uppercase">Net Worth</h2>
+        <h2 className="text-sm font-medium tracking-wider text-zinc-600 uppercase dark:text-white/60">Net Worth</h2>
         <CurrencyBadge currency={displayCurrency} />
       </div>
 
-      {ratesError && <p className="mb-2 text-xs text-yellow-300/80">{ratesError}</p>}
+      {ratesError && <p className="mb-2 text-xs text-yellow-600 dark:text-yellow-300/80">{ratesError}</p>}
 
-      <p className={`mb-4 text-4xl font-bold ${currentNetWorth < 0 ? "text-red-300" : "text-white"}`}>
+      <p
+        className={`mb-4 text-4xl font-bold ${
+          currentNetWorth < 0 ? "text-red-600 dark:text-red-300" : "text-zinc-900 dark:text-white"
+        }`}
+      >
         {currentNetWorth.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
         {displayCurrency}
       </p>
 
-      <div className="mb-4 grid grid-cols-2 gap-4 border-t border-white/10 pt-4">
+      <div className="mb-4 grid grid-cols-2 gap-4 border-t border-zinc-200 pt-4 dark:border-white/10">
         <div>
-          <p className="text-xs tracking-wider text-white/50 uppercase">Assets</p>
-          <p className="mt-1 text-lg font-semibold text-green-300">
+          <p className="text-xs tracking-wider text-zinc-500 uppercase dark:text-white/50">Assets</p>
+          <p className="mt-1 text-lg font-semibold text-green-600 dark:text-green-300">
             +
             {assets
               .filter((a) => !a.category.is_liability)
@@ -207,8 +211,8 @@ export function NetWorthDisplay({ assets, displayCurrency, rates, snapshots = []
           </p>
         </div>
         <div>
-          <p className="text-xs tracking-wider text-white/50 uppercase">Liabilities</p>
-          <p className="mt-1 text-lg font-semibold text-red-300">
+          <p className="text-xs tracking-wider text-zinc-500 uppercase dark:text-white/50">Liabilities</p>
+          <p className="mt-1 text-lg font-semibold text-red-600 dark:text-red-300">
             -
             {assets
               .filter((a) => a.category.is_liability)
@@ -220,27 +224,27 @@ export function NetWorthDisplay({ assets, displayCurrency, rates, snapshots = []
       </div>
 
       {snapshots.length > 0 && (
-        <div className="mb-4 grid grid-cols-2 gap-4 border-t border-white/10 pt-4">
+        <div className="mb-4 grid grid-cols-2 gap-4 border-t border-zinc-200 pt-4 dark:border-white/10">
           {deltaLastMonth ? (
             <DeltaIndicator label="vs Last Month" value={deltaLastMonth.value} percentage={deltaLastMonth.pct} />
           ) : (
             <div>
-              <p className="text-xs tracking-wider text-white/50 uppercase">vs Last Month</p>
-              <p className="mt-1 text-sm text-white/40">No baseline</p>
+              <p className="text-xs tracking-wider text-zinc-500 uppercase dark:text-white/50">vs Last Month</p>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-white/40">No baseline</p>
             </div>
           )}
           {deltaJan ? (
             <DeltaIndicator label="vs Jan 1st" value={deltaJan.value} percentage={deltaJan.pct} />
           ) : (
             <div>
-              <p className="text-xs tracking-wider text-white/50 uppercase">vs Jan 1st</p>
-              <p className="mt-1 text-sm text-white/40">No baseline</p>
+              <p className="text-xs tracking-wider text-zinc-500 uppercase dark:text-white/50">vs Jan 1st</p>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-white/40">No baseline</p>
             </div>
           )}
         </div>
       )}
 
-      {snapshotError && <p className="mb-2 text-xs text-red-300">{snapshotError}</p>}
+      {snapshotError && <p className="mb-2 text-xs text-red-600 dark:text-red-300">{snapshotError}</p>}
 
       <SaveButton
         onSuccess={() => {

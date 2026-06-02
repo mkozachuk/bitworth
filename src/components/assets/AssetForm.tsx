@@ -97,7 +97,7 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
       <ServerError message={serverError} />
 
       <div>
-        <label htmlFor="name" className="mb-1 block text-sm text-blue-100/80">
+        <label htmlFor="name" className="mb-1 block text-sm text-zinc-700 dark:text-blue-100/80">
           Name
         </label>
         <input
@@ -110,20 +110,20 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
             clearError("name");
           }}
           placeholder="e.g. Savings account"
-          className="w-full rounded-lg border bg-white/10 px-3 py-2 text-white placeholder-white/40 transition-colors focus:ring-2 focus:outline-none"
+          className="w-full rounded-lg border bg-white px-3 py-2 text-zinc-900 placeholder-zinc-500 transition-colors focus:ring-2 focus:outline-none dark:bg-white/10 dark:text-white dark:placeholder-white/40"
           style={
             errors.name
               ? { borderColor: "rgb(148 163 184 / 0.6)", boxShadow: "0 0 0 2px rgba(248,113,113,0.4)" }
-              : { borderColor: "rgba(255,255,255,0.2)", boxShadow: "0 0 0 2px rgba(192,132,252,0.4)" }
+              : { borderColor: "rgb(212 212 216)", boxShadow: "0 0 0 2px rgba(192,132,252,0.4)" }
           }
         />
-        {errors.name && <p className="mt-1 text-xs text-red-300">{errors.name}</p>}
+        {errors.name && <p className="mt-1 text-xs text-red-600 dark:text-red-300">{errors.name}</p>}
       </div>
 
       {categoryId !== "crypto" && (
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label htmlFor="amount" className="mb-1 block text-sm text-blue-100/80">
+            <label htmlFor="amount" className="mb-1 block text-sm text-zinc-700 dark:text-blue-100/80">
               Amount
             </label>
             <input
@@ -138,18 +138,18 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
                 clearError("amount");
               }}
               placeholder="0.00"
-              className="w-full rounded-lg border bg-white/10 px-3 py-2 text-white placeholder-white/40 transition-colors focus:ring-2 focus:outline-none"
+              className="w-full rounded-lg border bg-white px-3 py-2 text-zinc-900 placeholder-zinc-500 transition-colors focus:ring-2 focus:outline-none dark:bg-white/10 dark:text-white dark:placeholder-white/40"
               style={
                 errors.amount
                   ? { borderColor: "rgb(148 163 184 / 0.6)", boxShadow: "0 0 0 2px rgba(248,113,113,0.4)" }
-                  : { borderColor: "rgba(255,255,255,0.2)", boxShadow: "0 0 0 2px rgba(192,132,252,0.4)" }
+                  : { borderColor: "rgb(212 212 216)", boxShadow: "0 0 0 2px rgba(192,132,252,0.4)" }
               }
             />
-            {errors.amount && <p className="mt-1 text-xs text-red-300">{errors.amount}</p>}
+            {errors.amount && <p className="mt-1 text-xs text-red-600 dark:text-red-300">{errors.amount}</p>}
           </div>
 
           <div>
-            <label htmlFor="currency" className="mb-1 block text-sm text-blue-100/80">
+            <label htmlFor="currency" className="mb-1 block text-sm text-zinc-700 dark:text-blue-100/80">
               Currency
             </label>
             <div className="relative">
@@ -161,22 +161,22 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
                   setCurrency(e.target.value as "USD" | "EUR" | "PLN");
                   clearError("currency");
                 }}
-                className="w-full appearance-none rounded-lg border bg-white/10 px-3 py-2 pr-8 text-white transition-colors focus:ring-2 focus:outline-none"
+                className="w-full appearance-none rounded-lg border bg-white px-3 py-2 pr-8 text-zinc-900 transition-colors focus:ring-2 focus:outline-none dark:bg-white/10 dark:text-white"
                 style={
                   errors.currency
                     ? { borderColor: "rgb(148 163 184 / 0.6)", boxShadow: "0 0 0 2px rgba(248,113,113,0.4)" }
-                    : { borderColor: "rgba(255,255,255,0.2)", boxShadow: "0 0 0 2px rgba(192,132,252,0.4)" }
+                    : { borderColor: "rgb(212 212 216)", boxShadow: "0 0 0 2px rgba(192,132,252,0.4)" }
                 }
               >
                 <option value="USD">USD — US Dollar</option>
                 <option value="EUR">EUR — Euro</option>
                 <option value="PLN">PLN — Polish Zloty</option>
               </select>
-              <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs text-white/40">
+              <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs text-zinc-500 dark:text-white/40">
                 ▼
               </span>
             </div>
-            {errors.currency && <p className="mt-1 text-xs text-red-300">{errors.currency}</p>}
+            {errors.currency && <p className="mt-1 text-xs text-red-600 dark:text-red-300">{errors.currency}</p>}
           </div>
         </div>
       )}
@@ -191,9 +191,9 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
       />
 
       {categoryId === "crypto" && (
-        <div className="space-y-4 rounded-lg border border-white/10 bg-white/5 p-4">
+        <div className="space-y-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-white/10 dark:bg-white/5">
           <div>
-            <label htmlFor="crypto_symbol" className="mb-1 block text-sm text-blue-100/80">
+            <label htmlFor="crypto_symbol" className="mb-1 block text-sm text-zinc-700 dark:text-blue-100/80">
               Crypto Symbol
             </label>
             <input
@@ -241,22 +241,26 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
                   });
               }}
               placeholder="BTC, ETH, SOL..."
-              className="w-full rounded-lg border bg-white/10 px-3 py-2 text-white placeholder-white/40 transition-colors focus:ring-2 focus:outline-none"
-              style={{ borderColor: "rgba(255,255,255,0.2)", boxShadow: "0 0 0 2px rgba(192,132,252,0.4)" }}
+              className="w-full rounded-lg border bg-white px-3 py-2 text-zinc-900 placeholder-zinc-500 transition-colors focus:ring-2 focus:outline-none dark:bg-white/10 dark:text-white dark:placeholder-white/40"
+              style={{ borderColor: "rgb(212 212 216)", boxShadow: "0 0 0 2px rgba(192,132,252,0.4)" }}
             />
-            {priceStatus === "loading" && <p className="mt-1 text-xs text-white/50">Fetching price…</p>}
+            {priceStatus === "loading" && (
+              <p className="mt-1 text-xs text-zinc-500 dark:text-white/50">Fetching price…</p>
+            )}
             {(priceStatus === "success" || priceStatus === "cached") && cryptoPrice && (
-              <p className="mt-1 text-xs text-white/70">
+              <p className="mt-1 text-xs text-zinc-700 dark:text-white/70">
                 {cryptoSymbol} — ${cryptoPrice.price.toLocaleString()}
                 {priceStatus === "cached" && ` (cached · ${(cryptoPrice as { cachedAge?: string }).cachedAge ?? ""})`}
               </p>
             )}
-            {priceStatus === "error" && <p className="mt-1 text-xs text-white/40">Price unavailable</p>}
+            {priceStatus === "error" && (
+              <p className="mt-1 text-xs text-zinc-500 dark:text-white/40">Price unavailable</p>
+            )}
           </div>
 
           <div>
-            <label htmlFor="quantity" className="mb-1 block text-sm text-blue-100/80">
-              Quantity <span className="text-white/40">(e.g., 0.5 BTC)</span>
+            <label htmlFor="quantity" className="mb-1 block text-sm text-zinc-700 dark:text-blue-100/80">
+              Quantity <span className="text-zinc-500 dark:text-white/40">(e.g., 0.5 BTC)</span>
             </label>
             <input
               id="quantity"
@@ -275,17 +279,19 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
                   }
                 }
               }}
-              className="w-full rounded-lg border bg-white/10 px-3 py-2 text-white placeholder-white/40 transition-colors focus:ring-2 focus:outline-none"
-              style={{ borderColor: "rgba(255,255,255,0.2)", boxShadow: "0 0 0 2px rgba(192,132,252,0.4)" }}
+              className="w-full rounded-lg border bg-white px-3 py-2 text-zinc-900 placeholder-zinc-500 transition-colors focus:ring-2 focus:outline-none dark:bg-white/10 dark:text-white dark:placeholder-white/40"
+              style={{ borderColor: "rgb(212 212 216)", boxShadow: "0 0 0 2px rgba(192,132,252,0.4)" }}
             />
             {cryptoPrice && (
-              <p className="mt-1 text-xs text-white/40">Enter quantity below — total value auto-calculates</p>
+              <p className="mt-1 text-xs text-zinc-500 dark:text-white/40">
+                Enter quantity below — total value auto-calculates
+              </p>
             )}
           </div>
 
           <div>
-            <label htmlFor="amount" className="mb-1 block text-sm text-blue-100/80">
-              Total Value (USD) <span className="text-white/40">— auto</span>
+            <label htmlFor="amount" className="mb-1 block text-sm text-zinc-700 dark:text-blue-100/80">
+              Total Value (USD) <span className="text-zinc-500 dark:text-white/40">— auto</span>
             </label>
             <input
               id="amount"
@@ -296,7 +302,7 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
               value={amount}
               readOnly
               placeholder="0.00"
-              className="w-full cursor-not-allowed rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-white/70 placeholder-white/40 transition-colors"
+              className="w-full cursor-not-allowed rounded-lg border border-zinc-300 bg-zinc-100 px-3 py-2 text-zinc-700 placeholder-zinc-500 transition-colors dark:border-white/20 dark:bg-white/5 dark:text-white/70 dark:placeholder-white/40"
             />
             <input type="hidden" name="currency" value="USD" />
           </div>
@@ -304,8 +310,8 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
       )}
 
       <div>
-        <label htmlFor="notes" className="mb-1 block text-sm text-blue-100/80">
-          Notes <span className="text-white/40">(optional)</span>
+        <label htmlFor="notes" className="mb-1 block text-sm text-zinc-700 dark:text-blue-100/80">
+          Notes <span className="text-zinc-500 dark:text-white/40">(optional)</span>
         </label>
         <textarea
           id="notes"
@@ -316,7 +322,7 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
           }}
           placeholder="Any additional notes..."
           rows={3}
-          className="w-full resize-none rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-white/40 transition-colors focus:ring-2 focus:ring-purple-400 focus:outline-none"
+          className="w-full resize-none rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 placeholder-zinc-500 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-white/20 dark:bg-white/10 dark:text-white dark:placeholder-white/40"
         />
       </div>
 
@@ -342,7 +348,7 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-white/20 px-4 py-2 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:border-white/20 dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
           >
             Cancel
           </button>

@@ -419,10 +419,10 @@ Per test-plan §6.4 ceiling pattern, add a per-handler integration test for the 
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly
-- [x] 1.2 `npm run lint` passes
-- [x] 1.3 TypeScript type checking passes
-- [x] 1.4 `npx astro sync` regenerates `database.types.ts` with `theme`
+- [x] 1.1 Migration applies cleanly — 5707780
+- [x] 1.2 `npm run lint` passes — 5707780
+- [x] 1.3 TypeScript type checking passes — 5707780
+- [x] 1.4 `npx astro sync` regenerates `database.types.ts` with `theme` — 5707780
 
 #### Manual
 
@@ -434,9 +434,9 @@ Per test-plan §6.4 ceiling pattern, add a per-handler integration test for the 
 
 #### Automated
 
-- [ ] 2.1 `npm run lint` passes
-- [ ] 2.2 TypeScript type checking passes
-- [ ] 2.3 `grep` for unpaired `bg-white/`, `text-white/`, `border-white/` returns zero
+- [x] 2.1 `npm run lint` passes
+- [x] 2.2 TypeScript type checking passes
+- [x] 2.3 `grep` for unpaired `bg-white/`, `text-white/`, `border-white/` returns zero
 
 #### Manual
 

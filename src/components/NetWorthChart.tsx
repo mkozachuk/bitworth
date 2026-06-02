@@ -32,8 +32,8 @@ function CustomTooltip({
       ? date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
       : label;
     return (
-      <div className="rounded-lg border border-white/10 bg-white/10 p-3 text-white backdrop-blur">
-        <p className="text-xs text-white/60">{formattedDate}</p>
+      <div className="rounded-lg border border-zinc-200 bg-white/95 p-3 text-zinc-900 backdrop-blur dark:border-white/10 dark:bg-white/10 dark:text-white">
+        <p className="text-xs text-zinc-600 dark:text-white/60">{formattedDate}</p>
         <p className="text-sm font-semibold">
           {payload[0].value.toLocaleString("en-US", {
             minimumFractionDigits: 2,
@@ -60,8 +60,10 @@ export function NetWorthChart({ snapshots, displayCurrency, onSaveSnapshot }: Pr
 
   if (snapshots.length === 0) {
     return (
-      <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
-        <p className="mb-4 text-sm text-white/60">No snapshots yet. Save your first one to see your trend.</p>
+      <div className="mt-6 rounded-2xl border border-zinc-200 bg-white/80 p-8 text-center dark:border-white/10 dark:bg-white/5">
+        <p className="mb-4 text-sm text-zinc-600 dark:text-white/60">
+          No snapshots yet. Save your first one to see your trend.
+        </p>
         <button
           onClick={() => onSaveSnapshot?.()}
           className="rounded-lg bg-purple-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-500"
@@ -73,22 +75,24 @@ export function NetWorthChart({ snapshots, displayCurrency, onSaveSnapshot }: Pr
   }
 
   return (
-    <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6">
+    <div className="mt-6 rounded-2xl border border-zinc-200 bg-white/80 p-6 dark:border-white/10 dark:bg-white/5">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-medium tracking-wider text-white/60 uppercase">Net Worth Trend</h2>
-        <span className="text-xs text-white/40">{displayCurrency}</span>
+        <h2 className="text-sm font-medium tracking-wider text-zinc-600 uppercase dark:text-white/60">
+          Net Worth Trend
+        </h2>
+        <span className="text-xs text-zinc-500 dark:text-white/40">{displayCurrency}</span>
       </div>
 
       <ResponsiveContainer width="100%" height={300} initialDimension={{ width: 600, height: 300 }}>
         <LineChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-          <CartesianGrid stroke="#ffffff10" strokeDasharray="5 5" />
+          <CartesianGrid stroke="var(--border)" strokeDasharray="5 5" />
           <XAxis
             dataKey="date"
-            tick={{ fill: "#a1a1aa", fontSize: 12 }}
+            tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
             tickFormatter={(v: string) => new Date(v).toLocaleDateString("en-US", { month: "short" })}
           />
           <YAxis
-            tick={{ fill: "#a1a1aa", fontSize: 12 }}
+            tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
             tickFormatter={(v: number) =>
               v.toLocaleString("en-US", {
                 minimumFractionDigits: 0,
@@ -97,15 +101,15 @@ export function NetWorthChart({ snapshots, displayCurrency, onSaveSnapshot }: Pr
             }
           />
           <Tooltip content={<CustomTooltip currency={displayCurrency} />} />
-          <Line type="monotone" dataKey="netWorth" stroke="#a78bfa" dot={false} strokeWidth={2} />
+          <Line type="monotone" dataKey="netWorth" stroke="var(--chart-1)" dot={false} strokeWidth={2} />
           {janNetWorth !== null && (
             <ReferenceLine
               y={janNetWorth}
-              stroke="#4ade80"
+              stroke="var(--chart-2)"
               strokeDasharray="3 3"
               label={{
                 value: "Start",
-                fill: "#4ade80",
+                fill: "var(--chart-2)",
                 position: "insideTopRight",
               }}
             />
