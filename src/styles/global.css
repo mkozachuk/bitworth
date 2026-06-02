@@ -114,6 +114,10 @@
   background-image: linear-gradient(to bottom, #0a0e1a, #0f1529, #0a0e1a);
 }
 
+@utility bg-cosmic-light {
+  background-image: linear-gradient(to bottom, var(--background), oklch(0.97 0.01 250), var(--background));
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

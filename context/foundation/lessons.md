@@ -77,3 +77,13 @@
 **Applies to**: Any handler with partial-write semantics where the short-circuit is not the obvious default.
 
 **Open — product question**: Should the handler skip the parent insert entirely when `assets.length === 0`, or is a zero-value snapshot a deliberate artifact of "user clicked save"? The test pins the current behavior; the product call is open.
+
+## SECURITY DEFINER functions need an explicit `SET search_path`
+
+**Context**: supabase/migrations/20260529190856_initial_schema.sql:121-127 — the `on_auth_user_created` trigger function is `SECURITY DEFINER` and references the unqualified table name `user_preferences`. There is no `SET search_path` on the function.
+
+**Problem**: Postgres defaults SECURITY DEFINER functions to a "safe" search_path of `pg_catalog, pg_temp`. An unqualified `user_preferences` resolves to nothing inside the function, so every signup fails with `ERROR: relation "user_preferences" does not exist`. The pre-existing `user_preferences` was created with a prior search_path assumption and survived only because the bug had not been triggered in production yet — `supabase db reset` rebuilt the schema from scratch and surfaced it. Closed in `supabase/migrations/20260603130000_fix_on_auth_user_created_search_path.sql` (recreates the function with `SET search_path = public, pg_temp`).
+
+**Rule**: Every `SECURITY DEFINER` function must either (a) include `SET search_path = <schema>, pg_temp` in its definition or (b) fully qualify every table reference (`public.user_preferences`). The default search_path for SECURITY DEFINER is not the caller's — Postgres strips the caller's mutable schemas as a defense against search_path attacks, so the function effectively lives in `pg_catalog, pg_temp` unless told otherwise.
+
+**Applies to**: Any new trigger or helper marked `SECURITY DEFINER` in `supabase/migrations/`. Also any `SECURITY INVOKER` function that relies on the caller's search_path (less common, but if the caller's role has been customized, prefer explicit settings).

@@ -97,6 +97,30 @@ export interface Database {
           },
         ];
       };
+      crypto_price_cache: {
+        Row: {
+          coin_id: string;
+          coin_symbol: string;
+          fetched_at: string;
+          id: string;
+          price_usd: number;
+        };
+        Insert: {
+          coin_id: string;
+          coin_symbol: string;
+          fetched_at?: string;
+          id?: string;
+          price_usd: number;
+        };
+        Update: {
+          coin_id?: string;
+          coin_symbol?: string;
+          fetched_at?: string;
+          id?: string;
+          price_usd?: number;
+        };
+        Relationships: [];
+      };
       exchange_rate_cache: {
         Row: {
           base_currency: string;
@@ -212,18 +236,21 @@ export interface Database {
         Row: {
           created_at: string;
           display_currency: string;
+          theme: string;
           updated_at: string;
           user_id: string;
         };
         Insert: {
           created_at?: string;
           display_currency?: string;
+          theme?: string;
           updated_at?: string;
           user_id: string;
         };
         Update: {
           created_at?: string;
           display_currency?: string;
+          theme?: string;
           updated_at?: string;
           user_id?: string;
         };
@@ -231,7 +258,12 @@ export interface Database {
       };
     };
     Views: Record<never, never>;
-    Functions: Record<never, never>;
+    Functions: {
+      upsert_crypto_price_cache: {
+        Args: { p_coin_id: string; p_coin_symbol: string; p_price_usd: number };
+        Returns: undefined;
+      };
+    };
     Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;
   };
