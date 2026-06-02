@@ -109,10 +109,12 @@ How to add new tests in this project. Each sub-section is filled in once the rel
 
 ### 6.2 Adding an integration test
 
-- **Location**: TBD — see §3 Phase 2 for handler-level integration test placement.
-- **Mocking policy**: only mock at the network edge (MSW for HTTP, in-memory Supabase stub). Never mock internal modules.
-- **Reference test**: TBD — see §3 Phase 2.
-- **Run locally**: TBD — see §3 Phase 2.
+- **Location**: co-located with the handler under test. Test file is `<handler-path>/index.test.ts` (e.g., `src/pages/api/assets/index.test.ts`). The contract test is the exception: `src/pages/api/api-auth-contract.test.ts` lives at the surface under audit, not next to a single handler.
+- **Mocking policy**: Mock at the request boundary. Pass a real `Request` to the handler; the handler's own `supabase.auth.getUser()` runs against the request; the mock for `createClient` returns a client whose `auth.getUser()` returns `{user: null}` when the `Cookie` header is missing. Varying only the URL while keeping the auth boundary mocked to "always user A" passes for both the bug and the fix — it proves nothing.
+- **Documented exception**: `getRates` from `@/lib/exchange-rates` is mocked via `vi.mock("@/lib/exchange-rates", ...)` in the snapshot POST test because the helper is in-process. The "never mock internal modules" rule bends here for one helper; MSW setup is heavier than the problem.
+- **`vi.mock("@/lib/supabase", ...)` is per-file boilerplate** because `src/lib/supabase.ts` imports from `astro:env/server`, which is a virtual module that does not resolve under Vitest. The shared factory lives at `src/test-utils/supabase-mock.ts`.
+- **Reference test**: `src/pages/api/snapshots/index.test.ts` — the 6-scenario snapshot POST pattern.
+- **Run locally**: `npm run test:run` (one-shot) or `npm run test` (watch). No env vars required.
 
 ### 6.3 Adding an e2e test
 
@@ -121,8 +123,10 @@ How to add new tests in this project. Each sub-section is filled in once the rel
 ### 6.4 Adding a test for a new API endpoint
 
 - **Test type**: integration (preferred). The contract test from §3 Phase 2 is the floor; per-handler integration tests stack on top.
-- **Pattern**: TBD — see §3 Phase 2.
-- **Reference test**: `src/pages/api/api-auth-contract.test.ts` (Phase 2).
+- **Pattern**:
+  - **Floor**: `src/pages/api/api-auth-contract.test.ts` — every new route gets caught by the directory walk. The test requires either `supabase.auth.getUser()` (the canonical auth check) or a public-route comment matching `/\/\*?[\s\S]*?(intentionally (unauthenticated|public)|public route|explicit design decision)/i`. `auth/` endpoints are exempt from the auth-or-comment rule but must still call `createClient` (positive assertion).
+  - **Ceiling**: per-handler integration test in `<handler-path>/index.test.ts`, using `src/test-utils/supabase-mock.ts`. The mock factory records every chainable method call into `recorded` (and per-builder `__recorded`) for assertions like "did the handler filter by user_id".
+- **Reference test**: `src/pages/api/api-auth-contract.test.ts` (contract floor); `src/pages/api/snapshots/index.test.ts` (per-handler ceiling).
 - **When to add e2e instead**: only if the endpoint's failure mode requires the full deployed shape (auth + cookie + handler crossing).
 
 ### 6.5 Adding a test for the net worth calculation / currency conversion
@@ -138,7 +142,7 @@ How to add new tests in this project. Each sub-section is filled in once the rel
 
 ### 6.6 Per-rollout-phase notes
 
-(Appended as phases ship.)
+**Phase 2 — Critical-path API integration (change: `testing-critical-path-api-integration`).** Shipped 5 per-handler integration tests (Risks #2, #3) plus 1 directory-walking contract test (Risk #5). Shared test seam at `src/test-utils/supabase-mock.ts`. The contract test (`src/pages/api/api-auth-contract.test.ts`) walks `src/pages/api/` recursively and asserts every `.ts` file either calls `supabase.auth.getUser()` or matches the documented public-route regex; `auth/` endpoints are exempt but must call `createClient`. The per-handler tests assert: (a) `.eq("user_id", user.id)` is in the chain for the 5 authenticated handlers; (b) the PUT update payload for `/api/assets/[id]` does NOT contain `user_id` (the structural-property pin for the USING-only RLS gap); (c) the snapshot POST has 6 named scenarios including the lesson §1 worst case (both items insert and compensating delete fail). Documented `vi.mock` exception for `@/lib/exchange-rates` in §6.2. RLS `WITH CHECK` migration shipped under `supabase/migrations/<timestamp>_rls_with_check.sql` to close the USING-only gap at the database layer.
 
 ## 7. What We Deliberately Don't Test
 

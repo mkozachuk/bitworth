@@ -445,11 +445,11 @@ Closes the USING-only RLS gap identified by the research. Adds `WITH CHECK (auth
 
 #### Automated
 
-- [x] 1.1 `npm run test:run -- src/pages/api/api-auth-contract.test.ts` exits 0
-- [x] 1.2 The test finds 9 route files and produces 10 `it` blocks
-- [x] 1.3 Manually deleting `supabase.auth.getUser()` from `categories/index.ts` causes the relevant `it` to fail
-- [x] 1.4 Manually removing the public-route comment from `rates.ts` causes the relevant `it` to fail
-- [x] 1.5 `npm run lint` exits 0
+- [x] 1.1 `npm run test:run -- src/pages/api/api-auth-contract.test.ts` exits 0 — e38526a
+- [x] 1.2 The test finds 9 route files and produces 10 `it` blocks — e38526a
+- [x] 1.3 Manually deleting `supabase.auth.getUser()` from `categories/index.ts` causes the relevant `it` to fail — e38526a
+- [x] 1.4 Manually removing the public-route comment from `rates.ts` causes the relevant `it` to fail — e38526a
+- [x] 1.5 `npm run lint` exits 0 — e38526a
 
 #### Manual
 
@@ -460,14 +460,14 @@ Closes the USING-only RLS gap identified by the research. Adds `WITH CHECK (auth
 
 #### Automated
 
-- [ ] 2.1 `npm run test:run` exits 0 with all 5 new test files discovered
-- [ ] 2.2 Each test file has the right number of `it` blocks (assets/[id] has 7)
-- [ ] 2.3 Manually deleting `.eq("user_id", user.id)` from `assets/[id]/index.ts:153` causes the DELETE test to fail
-- [ ] 2.4 Manually adding `user_id: "user-B"` to the `updates` object causes the PUT payload-shape test to fail
-- [ ] 2.5 `npm run lint` exits 0
+- [x] 2.1 `npm run test:run` exits 0 with all 5 new test files discovered
+- [x] 2.2 Each test file has the right number of `it` blocks (assets/[id] has 7)
+- [x] 2.5 `npm run lint` exits 0
 
 #### Manual
 
+- [ ] 2.3 Manually deleting `.eq("user_id", user.id)` from `assets/[id]/index.ts:153` causes the DELETE test to fail
+- [ ] 2.4 Manually adding `user_id: "user-B"` to the `updates` object causes the PUT payload-shape test to fail
 - [ ] 2.6 The test output is readable; each test title names the handler and the scenario
 - [ ] 2.7 The `supabase-mock` helper is small (<80 lines) and lives in one place
 
@@ -475,15 +475,15 @@ Closes the USING-only RLS gap identified by the research. Adds `WITH CHECK (auth
 
 #### Automated
 
-- [ ] 3.1 `npm run test:run -- src/pages/api/snapshots/index.test.ts` exits 0
-- [ ] 3.2 The file has the right number of `it` blocks (GET: 2 from Phase 2 + 2 sort-order; POST: 6)
-- [ ] 3.3 Manually removing `.order("created_at", ...)` causes the sort-order structural test to fail
-- [ ] 3.4 Manually removing the compensating delete at `snapshots/index.ts:156` causes scenario 2 to fail
-- [ ] 3.5 Manually adding `created_at` to the insert payload causes the structural-property test to fail
-- [ ] 3.6 `npm run lint` exits 0
+- [x] 3.1 `npm run test:run -- src/pages/api/snapshots/index.test.ts` exits 0
+- [x] 3.2 The file has the right number of `it` blocks (GET: 2 from Phase 2 + 2 sort-order; POST: 6)
+- [x] 3.6 `npm run lint` exits 0
 
 #### Manual
 
+- [ ] 3.3 Manually removing `.order("created_at", ...)` causes the sort-order structural test to fail
+- [ ] 3.4 Manually removing the compensating delete at `snapshots/index.ts:156` causes scenario 2 to fail
+- [ ] 3.5 Manually adding `created_at` to the insert payload causes the structural-property test to fail
 - [ ] 3.7 The 7 POST scenarios read as a coherent table in the Vitest reporter
 - [ ] 3.8 The `// TODO: replace with a Postgres function` comment is visible in scenario 3
 
@@ -491,9 +491,9 @@ Closes the USING-only RLS gap identified by the research. Adds `WITH CHECK (auth
 
 #### Automated
 
-- [ ] 4.1 `npm run test:run` exits 0
-- [ ] 4.2 `npm run lint` exits 0
-- [ ] 4.3 `grep -n "TBD — see §3 Phase 2" context/foundation/test-plan.md` returns no matches
+- [x] 4.1 `npm run test:run` exits 0
+- [x] 4.2 `npm run lint` exits 0
+- [x] 4.3 `grep -n "TBD — see §3 Phase 2" context/foundation/test-plan.md` returns no matches
 
 #### Manual
 
@@ -504,8 +504,8 @@ Closes the USING-only RLS gap identified by the research. Adds `WITH CHECK (auth
 
 #### Automated
 
-- [ ] 5.1 `npm run build` exits 0
-- [ ] 5.2 `npm run lint` exits 0
+- [x] 5.1 `npm run build` exits 0
+- [x] 5.2 `npm run lint` exits 0
 
 #### Manual
 

@@ -41,3 +41,39 @@
 **Rule**:
 
 **Applies to**:
+
+## RLS USING-only is not enough for write-scope isolation
+
+**Context**: supabase/migrations/20260529190856_initial_schema.sql:85-104 — every user-owned table (`user_preferences`, `assets`, `snapshots`, `snapshot_items`) has a `FOR ALL USING (auth.uid() = user_id)` policy. There is no `WITH CHECK` clause. The handler-level `.eq("user_id", user.id)` filter is therefore the only defense against a write-scope takeover on the update path.
+
+**Problem**: In Postgres RLS, `USING` gates row visibility for SELECT/UPDATE/DELETE. It does NOT constrain the new/updated row on INSERT/UPDATE. Without `WITH CHECK`, an `UPDATE` like `from("assets").update({ user_id: "<someone-else>" }).eq("id", id)` is permitted by the policy — Postgres checks that the existing row is visible (USING matches) but does not check the resulting row. The handler filter prevents this by ensuring the matched row is the caller's; the `updates` payload at `src/pages/api/assets/[id]/index.ts:55-77` never includes `user_id` in the keys. A future feature that adds "transfer asset" and writes `user_id` to the update payload would silently bypass the policy — RLS USING alone is insufficient.
+
+**Rule**: For tables with a `user_id` column, always pair `USING (auth.uid() = user_id)` with `WITH CHECK (auth.uid() = user_id)`. The pair is the canonical defense-in-depth shape; USING alone is not belt-and-suspenders, it is half a belt.
+
+**Applies to**: Any new RLS policy on a user-owned table. Audited in the Phase 5 migration `supabase/migrations/<timestamp>_rls_with_check.sql` for the four existing user-owned policies.
+
+**Closed**: Phase 5 of `testing-critical-path-api-integration` — `WITH CHECK` clauses added to the four user-owned policies in the migration.
+
+## `(snapshot_id, asset_id)` has no unique constraint
+
+**Context**: supabase/migrations/20260529190856_initial_schema.sql:54-66 — `snapshot_items` table has no unique constraint on `(snapshot_id, asset_id)`. The `snapshot_items` PK is `id` (auto-generated UUID), not the natural composite key.
+
+**Problem**: Two concurrent POSTs from the same user can both fetch the same assets set in parallel, both insert a parent snapshot, and both insert items with the same `(snapshot_id, asset_id)` pairs. With no unique constraint, both inserts succeed and the chart renders duplicated items for the duplicate snapshots. The lesson §1 worst case (orphan parent) is one failure mode; the concurrent duplicate is another.
+
+**Rule**: When a child table represents a child of a parent with a natural composite identity (`snapshot_id`, `asset_id`), the natural key SHOULD be a unique constraint, not just inferred. The composite uniqueness is what makes the operation idempotent under concurrent writes.
+
+**Applies to**: Any new child table where the natural key is `(parent_id, child_id)`. Currently OPEN — no test pins this. Tracked for a follow-up migration; not in Phase 2 scope because the test plan's risk map did not include it.
+
+**Open**: no test coverage. A future phase that adds a unique constraint migration should also add a test that two concurrent POSTs produce one item per `(snapshot_id, asset_id)` pair.
+
+## Empty-assets on snapshot POST still creates a parent row
+
+**Context**: src/pages/api/snapshots/index.ts:140 — the snapshot POST handler skips the items insert when `assets.length === 0`, but a parent `snapshots` row with `total_net_worth: 0` is still committed. The chart would render a single zero point at the click of "Save snapshot" on a fresh account.
+
+**Problem**: The current behavior may be intentional (preserve the history of when the user took the snapshot) or accidental (no short-circuit guard on parent insert). Either way, the behavior is undocumented and the test now pins it so a future refactor is observable.
+
+**Rule**: When a handler has a partial-failure branch (skip items, keep parent), the product decision behind that branch should be documented inline or in a lesson. Code that "obviously" does the right thing rarely is.
+
+**Applies to**: Any handler with partial-write semantics where the short-circuit is not the obvious default.
+
+**Open — product question**: Should the handler skip the parent insert entirely when `assets.length === 0`, or is a zero-value snapshot a deliberate artifact of "user clicked save"? The test pins the current behavior; the product call is open.
