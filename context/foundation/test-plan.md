@@ -53,7 +53,7 @@ Each row is a discrete rollout phase that will open its own change folder via `/
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|------------------|----------------|------------|--------|----------------|
 | 1 | Runner bootstrap + first critical-path unit | Bootstrap Vitest and ship the first unit test on the net worth calculation. | #1 | unit | complete | `context/changes/testing-runner-bootstrap/` |
-| 2 | Critical-path API integration | Integration tests on `/api/assets/[id]/` and `/api/snapshots/`, plus the auth-decision contract on `/api/*`. | #2, #3, #5 | integration (handler + Supabase stub) + contract | not started | — |
+| 2 | Critical-path API integration | Integration tests on `/api/assets/[id]/` and `/api/snapshots/`, plus the auth-decision contract on `/api/*`. | #2, #3, #5 | integration (handler + Supabase stub) + contract | change opened | `context/changes/testing-critical-path-api-integration/` |
 | 3 | External API failure & cache integrity | Unit tests on the rates/crypto fetcher and cache read/write for failure paths. | #4, #6 | unit (with `fetch` stub) + small integration on dashboard fallback render | not started | — |
 | 4 | Quality-gates wiring | Wire lint + typecheck + Vitest unit/integration into CI; document local run command. | #5 (contract enforced in CI) | CI config | not started | — |
 
@@ -122,6 +122,7 @@ How to add new tests in this project. Each sub-section is filled in once the rel
 
 - **Test type**: integration (preferred). The contract test from §3 Phase 2 is the floor; per-handler integration tests stack on top.
 - **Pattern**: TBD — see §3 Phase 2.
+- **Reference test**: `src/pages/api/api-auth-contract.test.ts` (Phase 2).
 - **When to add e2e instead**: only if the endpoint's failure mode requires the full deployed shape (auth + cookie + handler crossing).
 
 ### 6.5 Adding a test for the net worth calculation / currency conversion

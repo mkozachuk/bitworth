@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { NetWorthAsset } from "./net-worth";
-import { computeNetWorth } from "./net-worth";
+import type { NetWorthAsset } from "@/lib/net-worth";
+import { computeNetWorth } from "@/lib/net-worth";
 
 // Pins the post-refactor behaviour of computeNetWorth against an independent
 // oracle. Each test case derives its expected value from first principles

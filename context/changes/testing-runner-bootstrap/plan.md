@@ -147,7 +147,7 @@ Install Vitest, write the first unit test against the extracted `computeNetWorth
 
 **Intent**: Add `vitest` as a devDependency and the two run scripts (`test` for watch mode, `test:run` for one-shot CI use).
 
-**Contract**: The `scripts` block gains two entries: `"test": "vitest"` and `"test:run": "vitest run"`. The `devDependencies` block gains `"vitest": "^3.2.0"`. No changes to `dependencies` or to the existing scripts.
+**Contract**: The `scripts` block gains two entries: `"test": "vitest"` and `"test:run": "vitest run"`. The `devDependencies` block gains `"vitest": "^3.2.6"`. No changes to `dependencies` or to the existing scripts.
 
 **File**: `vitest.config.ts` (NEW at repo root)
 

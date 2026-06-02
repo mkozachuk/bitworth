@@ -32,7 +32,7 @@
   - Tradeoff: None for current code. If a future route needs a browser client, a fresh module should be written with `astro:env/client` imports (or the public anon key from a `PUBLIC_*` env var).
   - Confidence: HIGH — grep proves zero callers.
   - Blind spot: None significant.
-- **Decision**: PENDING
+- **Decision**: SKIPPED — file kept despite latent env-var boundary bug; reviewer (user) declined the delete.
 
 ### F2 — Vitest version drift between plan.md (`^3.2.0`) and lockfile (`^3.2.6`)
 
@@ -46,7 +46,7 @@
   - Tradeoff: None — both ranges are semver-compatible.
   - Confidence: HIGH.
   - Blind spot: None significant.
-- **Decision**: PENDING
+- **Decision**: FIXED — amended plan.md to `^3.2.6`.
 
 ### F3 — `as Currency` casts proliferate at 7 call sites (documented compromise)
 
@@ -60,7 +60,7 @@
   - Tradeoff: Minor — one comment + one lessons.md entry.
   - Confidence: MEDIUM — depends on whether future maintainers read lessons.md.
   - Blind spot: Not all 7 casts are visible from one entry point; future renames of the cast target could leave stale comments.
-- **Decision**: PENDING
+- **Decision**: FIXED — added the WHY comment on `convertAmount` and the "Currency cast boundary" entry in context/foundation/lessons.md.
 
 ### F4 — `AssetRow.tsx:31` redefines the `Currency` literal union inline
 
@@ -70,7 +70,7 @@
 - **Location**: src/components/assets/AssetRow.tsx:31
 - **Detail**: The file imports `type Currency` from `@/lib/net-worth` (line 4) and uses it on line 16, but line 31 hardcodes the literal union: `asset.currency as "USD" | "EUR" | "PLN"`. This is the third copy of the same definition (after the local redeclaration that was just removed from `NetWorthDisplay.tsx`, and the canonical one in `exchange-rates.ts`). Replace with `as Currency` to keep a single source of truth.
 - **Fix**: Change line 31 from `as "USD" | "EUR" | "PLN"` to `as Currency`.
-- **Decision**: PENDING
+- **Decision**: FIXED — replaced inline union with `as Currency` in AssetRow.tsx:31.
 
 ### F5 — `vitest.config.ts` does not actually verify the `@/*` path alias works
 
@@ -80,7 +80,7 @@
 - **Location**: vitest.config.ts:1-8; src/lib/net-worth.test.ts:2-3
 - **Detail**: The plan claims Vite 7 auto-resolves tsconfig paths; in fact Vite 7 does NOT do this by default and the community uses `vite-tsconfig-paths` for it. The single test file uses a relative import (`./net-worth`), not the `@/*` alias, so the alias resolution is unverified end-to-end. The next test that imports across directories (e.g. a `src/components/` test) will surface this. Risk is contained by the §6.1 cookbook's co-location rule, but a future cross-directory test will hit it.
 - **Fix**: Add `vite-tsconfig-paths` to devDependencies and include it in vitest.config.ts. Or document the limitation in the §6.1 cookbook entry.
-- **Decision**: PENDING
+- **Decision**: FIXED + ACCEPTED-AS-RULE: "Vitest needs `vite-tsconfig-paths` for the `@/*` alias to resolve" — added plugin to vitest.config.ts and devDep `vite-tsconfig-paths@^5.1.4`; appended lessons.md entry (Rule/Applies-to left as placeholders for user to fill).
 
 ### F6 — `net-worth.test.ts` uses relative import instead of the project `@/*` alias
 
@@ -90,7 +90,7 @@
 - **Location**: src/lib/net-worth.test.ts:2-3
 - **Detail**: `import { computeNetWorth } from "./net-worth"` rather than `import { computeNetWorth } from "@/lib/net-worth"`. All 4 production call sites use the alias. Minor inconsistency.
 - **Fix**: Switch to `@/lib/net-worth` (and verify the alias works — see F5).
-- **Decision**: PENDING
+- **Decision**: FIXED — switched test imports to `@/lib/net-worth` (alias now resolves via F5's vite-tsconfig-paths).
 
 ### F7 — Phase 2 tsc fixes are bundled with the test bootstrap commit
 
@@ -100,7 +100,7 @@
 - **Location**: commit 405bac5 (9 files)
 - **Detail**: The Phase 2 commit bundles 3 unrelated tsc fixes (supabase-browser.ts, NetWorthDisplay.tsx null guards, snapshots/index.ts null guard) with the test bootstrap work. Each fix is individually correct and the commit message documents the bundle, so this is acceptable, but it makes bisection harder later. A split into `chore: fix pre-existing tsc errors` + `feat: vitest + first unit test` would be cleaner.
 - **Fix**: Leave as-is (already committed; the bundle is documented).
-- **Decision**: PENDING
+- **Decision**: SKIPPED — already committed; the bundle is documented.
 
 ### F8 — `NetWorthDisplay.tsx` IIFE duplicates `computeNetWorth`'s loop
 
@@ -110,7 +110,7 @@
 - **Location**: src/components/assets/NetWorthDisplay.tsx:137-149, 199-202, 210-213
 - **Detail**: The IIFE at 137-149 re-implements the same `totalAssets - totalLiabilities` loop that `computeNetWorth` already encapsulates, just to expose `totalAssets` and `totalLiabilities` separately. The two `.filter().reduce()` calls at 199-202 and 210-213 separately compute the same totals a third and fourth time. This is the exact duplication the extraction was meant to eliminate. Out of scope for Phase 1 (the plan explicitly scoped the refactor to "drop the local `convertAmount` helper"), but a future refactor should have `computeNetWorth` return `{ totalAssets, totalLiabilities, netWorth }`.
 - **Fix**: Out of scope for this change. Add a note to the `net-worth.ts` JSDoc.
-- **Decision**: PENDING
+- **Decision**: FIXED — added TODO JSDoc on computeNetWorth pointing at the future breakdown-return-type refactor (with file:line references to the duplication).
 
 ### F9 — Risk #1 protection ceiling (DOM integration test) is deferred, not lost
 
@@ -120,7 +120,7 @@
 - **Location**: context/foundation/test-plan.md:64
 - **Detail**: Phase 1 delivered the unit test floor on `computeNetWorth`; the §2 row #1 risk response guidance also calls for a "small integration test on the dashboard render of the total," which is deferred (no DOM tooling in Phase 1). The deferral is captured in test-plan.md line 64 and §3 row 1 status is `complete`. Future `/10x-test-plan --refresh` invocations must preserve the deferral note.
 - **Fix**: No code change. Note for the next test-plan refresh.
-- **Decision**: PENDING
+- **Decision**: SKIPPED — no code change; deferral note already captured in test-plan.md:64.
 
 ## Plan-Drift Sub-Agent Notes
 

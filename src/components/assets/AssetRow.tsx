@@ -28,7 +28,7 @@ export function AssetRow({ asset, onDelete, displayCurrency, rates }: Props) {
             {converted.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
             {displayCurrency}
           </span>
-          <CurrencyBadge currency={asset.currency as "USD" | "EUR" | "PLN"} cryptoSymbol={asset.crypto_symbol} />
+          <CurrencyBadge currency={asset.currency as Currency} cryptoSymbol={asset.crypto_symbol} />
         </div>
         {asset.category_id === "crypto" && asset.crypto_symbol ? (
           <span className="text-xs text-white/40">
