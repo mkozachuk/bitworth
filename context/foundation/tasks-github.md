@@ -2,7 +2,7 @@
 project: BitWorth
 derived_from: context/foundation/roadmap.md
 created: 2026-05-26
-updated: 2026-06-02
+updated: 2026-06-03
 ---
 
 # GitHub Issues — Roadmap Mapping
@@ -36,8 +36,8 @@ updated: 2026-06-02
 | S-01 | `asset-management` | [#3](https://github.com/mkozachuk/bitworth/issues/3) | [Slice] S-01: Asset management with currency conversion | M2: Core tracking | OPEN |
 | S-02 | `dashboard-snapshots-chart` | [#4](https://github.com/mkozachuk/bitworth/issues/4) | [Slice] S-02: Dashboard — net worth display, snapshots, and trend chart | M3: Dashboard | OPEN |
 | S-03 | `crypto-price-fetch` | [#5](https://github.com/mkozachuk/bitworth/issues/5) | [Slice] S-03: Crypto price fetch on asset entry | M4: Crypto integration | OPEN |
-| S-05 | `user-settings` | [#14](https://github.com/mkozachuk/bitworth/issues/14) | [Slice] S-05: User settings — display currency & preferences | — | OPEN |
-| S-06 | `mobile-refactor` | [#15](https://github.com/mkozachuk/bitworth/issues/15) | [Slice] S-06: Mobile refactor — responsive UI pass (nav, buttons, forms) | — | OPEN |
+| S-05 | `user-settings` | [#14](https://github.com/mkozachuk/bitworth/issues/14) | [Slice] S-05: User settings — display currency & preferences | — | CLOSED |
+| S-06 | `mobile-refactor` | [#15](https://github.com/mkozachuk/bitworth/issues/15) | [Slice] S-06: Mobile refactor — responsive UI pass (nav, buttons, forms) | — | CLOSED |
 | S-07 | `asset-list-mobile-reflow` | [#16](https://github.com/mkozachuk/bitworth/issues/16) | [Slice] S-07: AssetList mobile reflow — table to cards on phone viewports | — | OPEN |
 | S-08 | `pwa-installable` | [#17](https://github.com/mkozachuk/bitworth/issues/17) | [Slice] S-08: PWA — installable mobile app via @serwist/astro | — | OPEN |
 
