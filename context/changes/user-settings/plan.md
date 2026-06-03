@@ -480,10 +480,10 @@ Per test-plan §6.4 ceiling pattern, add a per-handler integration test for the 
 
 #### Automated
 
-- [x] 5.1 `npm run test:run` — all 8 scenarios pass, no regression
-- [x] 5.2 `npm run lint` passes
-- [x] 5.3 TypeScript type checking passes
+- [x] 5.1 `npm run test:run` — all 8 scenarios pass, no regression — 8717995
+- [x] 5.2 `npm run lint` passes — 8717995
+- [x] 5.3 TypeScript type checking passes — 8717995
 
 #### Manual
 
-- [ ] 5.4 Test file contains visible `.eq('user_id', user.id)` structural pin
+- [x] 5.4 Test file contains visible `.eq('user_id', user.id)` structural pin — 8717995
