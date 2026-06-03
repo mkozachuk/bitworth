@@ -447,10 +447,10 @@ Per test-plan §6.4 ceiling pattern, add a per-handler integration test for the 
 
 #### Automated
 
-- [x] 3.1 `npm run lint` passes
-- [x] 3.2 TypeScript type checking passes
-- [x] 3.3 Contract test passes for the new route
-- [x] 3.4 New topbar `Settings` link has matching `dark:` companion
+- [x] 3.1 `npm run lint` passes — ed00a3e
+- [x] 3.2 TypeScript type checking passes — ed00a3e
+- [x] 3.3 Contract test passes for the new route — ed00a3e
+- [x] 3.4 New topbar `Settings` link has matching `dark:` companion — ed00a3e
 
 #### Manual
 
