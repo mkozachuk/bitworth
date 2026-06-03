@@ -726,10 +726,10 @@ If a future slice wants to unit-test the install-button's `beforeinstallprompt` 
 
 #### Automated
 
-- [x] 6.1 `src/components/InstallInstructionsModal.tsx` exists
-- [x] 6.2 `DashboardLayout.astro` renders `<InstallInstructionsModal client:load />`
-- [x] 6.3 `npm run build` passes
-- [x] 6.4 `npm run lint` passes
+- [x] 6.1 `src/components/InstallInstructionsModal.tsx` exists — 5ac8670
+- [x] 6.2 `DashboardLayout.astro` renders `<InstallInstructionsModal client:load />` — 5ac8670
+- [x] 6.3 `npm run build` passes — 5ac8670
+- [x] 6.4 `npm run lint` passes — 5ac8670
 
 #### Manual
 
