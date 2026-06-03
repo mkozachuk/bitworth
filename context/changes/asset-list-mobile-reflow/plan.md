@@ -320,13 +320,13 @@ No data migration. No schema changes. No API changes. The mobile card is a pure 
 
 #### Automated
 
-- [x] 2.1 `npm run lint` passes
-- [x] 2.2 `npm run build` passes
-- [x] 2.3 Grep over `AssetCard.tsx` for `text-zinc-` and `border-zinc-` returns zero hits without a `dark:` sibling on the same class string.
-- [x] 2.4 Desktop (`≥sm`) path in `AssetList.tsx` is unchanged from end of Phase 1.
+- [x] 2.1 `npm run lint` passes — c5d9ef9
+- [x] 2.2 `npm run build` passes — c5d9ef9
+- [x] 2.3 Grep over `AssetCard.tsx` for `text-zinc-` and `border-zinc-` returns zero hits without a `dark:` sibling on the same class string. — c5d9ef9
+- [x] 2.4 Desktop (`≥sm`) path in `AssetList.tsx` is unchanged from end of Phase 1. — c5d9ef9
 
 #### Manual
 
-- [ ] 2.5 360px in light + dark mode — spacing, contrast, and `(liability)` / crypto subline all read clearly.
-- [ ] 2.6 Long-name + long-note asset at 360px — name and notes truncate cleanly with an ellipsis.
-- [ ] 2.7 `git diff` on `AssetList.tsx` since end of Phase 1 is empty.
+- [x] 2.5 360px in light + dark mode — spacing, contrast, and `(liability)` / crypto subline all read clearly. — c5d9ef9
+- [x] 2.6 Long-name + long-note asset at 360px — name and notes truncate cleanly with an ellipsis. — c5d9ef9
+- [x] 2.7 `git diff` on `AssetList.tsx` since end of Phase 1 is empty. — c5d9ef9
