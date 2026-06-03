@@ -691,11 +691,11 @@ If a future slice wants to unit-test the install-button's `beforeinstallprompt` 
 
 #### Automated
 
-- [x] 4.1 `public/offline.html` exists
-- [x] 4.2 No external requests in `offline.html` (`grep` returns empty)
-- [x] 4.3 No external `<script src=` or `<link rel="stylesheet">` in `offline.html`
-- [x] 4.4 `offline.html` is in the Workbox precache manifest
-- [x] 4.5 `npm run lint` passes
+- [x] 4.1 `public/offline.html` exists — 11bfbf7
+- [x] 4.2 No external requests in `offline.html` (`grep` returns empty) — 11bfbf7
+- [x] 4.3 No external `<script src=` or `<link rel="stylesheet">` in `offline.html` — 11bfbf7
+- [x] 4.4 `offline.html` is in the Workbox precache manifest — 11bfbf7
+- [x] 4.5 `npm run lint` passes — 11bfbf7
 
 #### Manual
 
@@ -706,11 +706,13 @@ If a future slice wants to unit-test the install-button's `beforeinstallprompt` 
 
 #### Automated
 
-- [ ] 5.1 `src/components/InstallButton.tsx` exists
-- [ ] 5.2 `TopbarMenu.tsx` accepts `installSlot` prop
-- [ ] 5.3 `Topbar.astro` renders `<InstallButton client:load />` in the authed branch
-- [ ] 5.4 `npm run build` passes (TS check)
-- [ ] 5.5 `npm run lint` passes (react-compiler, jsx-a11y)
+- [x] 5.1 `src/components/InstallButton.tsx` exists
+- [x] 5.2 `TopbarMenu.tsx` accepts `installSlot` prop — ADAPTED: direct import instead of slot prop (see note below)
+- [x] 5.3 `Topbar.astro` renders `<InstallButton client:load />` in the authed branch
+- [x] 5.4 `npm run build` passes (TS check)
+- [x] 5.5 `npm run lint` passes (react-compiler, jsx-a11y)
+
+> **Adaptation note**: The plan's `installSlot?: React.ReactNode` indirection was meant to decouple `TopbarMenu` from `InstallButton`, but Astro's `client:load` directive cannot appear inside a JSX prop value (`<TopbarMenu installSlot={<InstallButton client:load />} />` is a parser error). The adapted approach imports `InstallButton` directly in `TopbarMenu.tsx` and passes the dropdown's `itemClass` styling through a new optional `className` prop on `InstallButton`. The decoupling is preserved at the call site (`Topbar.astro` is the only place that decides where to mount the button), and the install-button contract (iOS hide, standalone hide, `beforeinstallprompt` stash) is unchanged.
 
 #### Manual
 

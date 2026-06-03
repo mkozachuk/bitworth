@@ -3,6 +3,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Menu, LayoutDashboard, FileText, Settings, LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import InstallButton from "@/components/InstallButton";
 
 interface Props {
   user: { email?: string };
@@ -61,6 +62,9 @@ export default function TopbarMenu({ user }: Props) {
               </a>
             </DropdownMenu.Item>
             <DropdownMenu.Separator className="my-1 h-px bg-zinc-200 dark:bg-white/10" />
+            <DropdownMenu.Item asChild>
+              <InstallButton className={itemClass} />
+            </DropdownMenu.Item>
             <DropdownMenu.Item asChild>
               <form method="POST" action="/api/auth/signout" className="m-0">
                 <button type="submit" className={itemClass}>
