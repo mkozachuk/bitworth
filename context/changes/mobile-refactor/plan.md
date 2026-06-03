@@ -328,25 +328,25 @@ Widen the asset form pages (`new.astro`, `edit.astro`) from `max-w-md` (448px) t
 
 #### Automated
 
-- [x] 1.1 `npm run lint` passes
-- [x] 1.2 `npm run build` passes
-- [x] 1.3 `package.json` contains `"@radix-ui/react-dropdown-menu"` in `dependencies`
-- [x] 1.4 Grep `dashboard.astro` for `/api/auth/signout` returns a single hit
+- [x] 1.1 `npm run lint` passes — 8c7a58a
+- [x] 1.2 `npm run build` passes — 8c7a58a
+- [x] 1.3 `package.json` contains `"@radix-ui/react-dropdown-menu"` in `dependencies` — 8c7a58a
+- [x] 1.4 Grep `dashboard.astro` for `/api/auth/signout` returns a single hit — 8c7a58a
 
 #### Manual
 
-- [ ] 1.5 `/dashboard` at 1280px: duplicate sign-out button below content is gone; Topbar sign-out still works
-- [ ] 1.6 `/dashboard` at 360px: page renders identically to pre-phase-1 state
+- [x] 1.5 `/dashboard` at 1280px: duplicate sign-out button below content is gone; Topbar sign-out still works — 8c7a58a
+- [x] 1.6 `/dashboard` at 360px: page renders identically to pre-phase-1 state — 8c7a58a
 
 ### Phase 2: Topbar refactor
 
 #### Automated
 
-- [ ] 2.1 `npm run lint` passes
-- [ ] 2.2 `npm run build` passes
-- [ ] 2.3 `npx astro check` passes
-- [ ] 2.4 Grep `Topbar.astro` for `TopbarMenu` returns one import + one usage
-- [ ] 2.5 Grep `TopbarMenu.tsx` for `@radix-ui/react-dropdown-menu` and `<form method="POST" action="/api/auth/signout"` each return one hit
+- [x] 2.1 `npm run lint` passes
+- [x] 2.2 `npm run build` passes
+- [x] 2.3 `npx astro check` passes
+- [x] 2.4 Grep `Topbar.astro` for `TopbarMenu` returns one import + one usage
+- [x] 2.5 Grep `TopbarMenu.tsx` for `@radix-ui/react-dropdown-menu` and `<form method="POST" action="/api/auth/signout"` each return one hit
 
 #### Manual
 
