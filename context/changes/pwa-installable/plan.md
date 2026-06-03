@@ -649,7 +649,7 @@ If a future slice wants to unit-test the install-button's `beforeinstallprompt` 
 
 #### Manual
 
-- [ ] 1.6 Monogram is legible at 512×512 (or designer asset swapped in)
+- [x] 1.6 Monogram is legible at 512×512 (or designer asset swapped in) — 10ff63d (designer asset swapped)
 
 ### Phase 2: vite-plugin-pwa wiring + service worker
 
@@ -726,10 +726,10 @@ If a future slice wants to unit-test the install-button's `beforeinstallprompt` 
 
 #### Automated
 
-- [ ] 6.1 `src/components/InstallInstructionsModal.tsx` exists
-- [ ] 6.2 `DashboardLayout.astro` renders `<InstallInstructionsModal client:load />`
-- [ ] 6.3 `npm run build` passes
-- [ ] 6.4 `npm run lint` passes
+- [x] 6.1 `src/components/InstallInstructionsModal.tsx` exists
+- [x] 6.2 `DashboardLayout.astro` renders `<InstallInstructionsModal client:load />`
+- [x] 6.3 `npm run build` passes
+- [x] 6.4 `npm run lint` passes
 
 #### Manual
 
