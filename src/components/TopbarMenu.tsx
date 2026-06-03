@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Menu, LayoutDashboard, FileText, Settings, LogOut } from "lucide-react";
 
@@ -11,11 +12,27 @@ const itemClass =
   "flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-purple-600 outline-none transition-colors hover:bg-zinc-100 hover:text-purple-800 focus-visible:bg-zinc-100 data-[highlighted]:bg-zinc-100 dark:text-purple-300 dark:hover:bg-white/10 dark:hover:text-purple-100 dark:focus-visible:bg-white/10 dark:data-[highlighted]:bg-white/10";
 
 export default function TopbarMenu({ user }: Props) {
+  const [open, setOpen] = useState(false);
+  const pointerDownHandledRef = useRef(false);
+
   return (
     <div>
-      <DropdownMenu.Root>
+      <DropdownMenu.Root open={open} onOpenChange={setOpen}>
         <DropdownMenu.Trigger asChild>
-          <Button variant="ghost" size="icon" aria-label={user.email ? `Open menu for ${user.email}` : "Open menu"}>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={user.email ? `Open menu for ${user.email}` : "Open menu"}
+            onPointerDown={() => {
+              pointerDownHandledRef.current = true;
+            }}
+            onClick={() => {
+              if (!pointerDownHandledRef.current) {
+                setOpen((prev) => !prev);
+              }
+              pointerDownHandledRef.current = false;
+            }}
+          >
             <Menu className="size-5" />
           </Button>
         </DropdownMenu.Trigger>
