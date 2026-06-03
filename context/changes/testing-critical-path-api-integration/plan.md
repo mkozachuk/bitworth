@@ -481,11 +481,11 @@ Closes the USING-only RLS gap identified by the research. Adds `WITH CHECK (auth
 
 #### Manual
 
-- [ ] 3.3 Manually removing `.order("created_at", ...)` causes the sort-order structural test to fail
-- [ ] 3.4 Manually removing the compensating delete at `snapshots/index.ts:156` causes scenario 2 to fail
-- [ ] 3.5 Manually adding `created_at` to the insert payload causes the structural-property test to fail
-- [ ] 3.7 The 7 POST scenarios read as a coherent table in the Vitest reporter
-- [ ] 3.8 The `// TODO: replace with a Postgres function` comment is visible in scenario 3
+- [x] 3.3 Manually removing `.order("created_at", ...)` causes the sort-order structural test to fail
+- [x] 3.4 Manually removing the compensating delete at `snapshots/index.ts:156` causes scenario 2 to fail
+- [x] 3.5 Manually adding `created_at` to the insert payload causes the structural-property test to fail
+- [x] 3.7 The 7 POST scenarios read as a coherent table in the Vitest reporter
+- [x] 3.8 The `// TODO: replace with a Postgres function` comment is visible in scenario 3
 
 ### Phase 4: Cookbook + lessons sync
 
