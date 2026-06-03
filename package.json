@@ -57,8 +57,10 @@
     "supabase": "^2.100.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.60.0",
+    "vite-plugin-pwa": "^1.3.0",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.6",
+    "workbox-window": "^7.4.1",
     "wrangler": "^4.90.0"
   },
   "overrides": {

@@ -641,11 +641,11 @@ If a future slice wants to unit-test the install-button's `beforeinstallprompt` 
 
 #### Automated
 
-- [x] 1.1 All icon files exist at the expected paths
-- [x] 1.2 `public/manifest.webmanifest` is valid JSON
-- [x] 1.3 `.assetsignore` includes `sw.js`, `sw.js.map`, `workbox-*.js`
-- [x] 1.4 `npm run build` passes
-- [x] 1.5 `npm run lint` passes
+- [x] 1.1 All icon files exist at the expected paths — 1aedc70
+- [x] 1.2 `public/manifest.webmanifest` is valid JSON — 1aedc70
+- [x] 1.3 `.assetsignore` includes `sw.js`, `sw.js.map`, `workbox-*.js` — 1aedc70
+- [x] 1.4 `npm run build` passes — 1aedc70
+- [x] 1.5 `npm run lint` passes — 1aedc70
 
 #### Manual
 
@@ -655,14 +655,14 @@ If a future slice wants to unit-test the install-button's `beforeinstallprompt` 
 
 #### Automated
 
-- [ ] 2.1 `vite-plugin-pwa`, `workbox-window`, (optional) `sharp` added to devDependencies
-- [ ] 2.2 `src/integrations/pwa.ts` exists with the VitePWA config
-- [ ] 2.3 `src/sw.ts` placeholder exists
-- [ ] 2.4 `astro.config.mjs` imports and wires the `pwa()` integration
-- [ ] 2.5 `dist/sw.js` is emitted by `npm run build`
-- [ ] 2.6 `dist/manifest.webmanifest` is emitted by `npm run build`
-- [ ] 2.7 TypeScript checks pass (`npm run build`)
-- [ ] 2.8 `npm run lint` passes
+- [x] 2.1 `vite-plugin-pwa`, `workbox-window`, (optional) `sharp` added to devDependencies
+- [x] 2.2 `src/integrations/pwa.ts` exists with the VitePWA config
+- [x] 2.3 `src/sw.ts` placeholder exists
+- [x] 2.4 `astro.config.mjs` imports and wires the `pwa()` integration
+- [x] 2.5 `dist/sw.js` is emitted by `npm run build`
+- [x] 2.6 `dist/manifest.webmanifest` is emitted by `npm run build`
+- [x] 2.7 TypeScript checks pass (`npm run build`)
+- [x] 2.8 `npm run lint` passes
 
 #### Manual
 

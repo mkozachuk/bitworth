@@ -1,0 +1,33 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Topbar from "@/components/Topbar.astro";
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<Layout title={title}>
+  <div class="bg-cosmic-light dark:bg-cosmic min-h-screen">
+    <Topbar />
+    <slot />
+  </div>
+  <script>
+    // Register the service worker only on authed routes. Loaded by the
+    // DashboardLayout (which is mounted by every /dashboard/* page).
+    if ("serviceWorker" in navigator && import.meta.env.PROD) {
+      import("workbox-window")
+        .then(({ Workbox }) => {
+          const wb = new Workbox("/sw.js");
+          wb.register().catch((err: unknown) => {
+            console.warn("Service worker registration failed:", err);
+          });
+        })
+        .catch((err: unknown) => {
+          console.warn("workbox-window import failed:", err);
+        });
+    }
+  </script>
+</Layout>
