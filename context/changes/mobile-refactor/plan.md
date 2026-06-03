@@ -350,10 +350,10 @@ Widen the asset form pages (`new.astro`, `edit.astro`) from `max-w-md` (448px) t
 
 #### Manual
 
-- [ ] 2.6 `/dashboard` at 360px: truncated email + menu trigger, no horizontal scroll, menu opens/closes/Sign out works
-- [ ] 2.7 `/dashboard` at 1280px: byte-identical to pre-phase-2 state
-- [ ] 2.8 Mobile menu nav items (Dashboard / Assets / Settings) navigate correctly
-- [ ] 2.9 `/dashboard` at 768px (md breakpoint): desktop nav visible, menu trigger hidden
+- [x] 2.6 `/dashboard` at 360px: truncated email + menu trigger, no horizontal scroll, menu opens/closes/Sign out works — 2631ada
+- [x] 2.7 `/dashboard` at 1280px: byte-identical to pre-phase-2 state — 2631ada
+- [x] 2.8 Mobile menu nav items (Dashboard / Assets / Settings) navigate correctly — 2631ada
+- [x] 2.9 `/dashboard` at 768px (md breakpoint): desktop nav visible, menu trigger hidden — 2631ada
 
 ### Phase 3: Component grids
 
@@ -377,13 +377,13 @@ Widen the asset form pages (`new.astro`, `edit.astro`) from `max-w-md` (448px) t
 
 #### Automated
 
-- [x] 4.1 `npm run lint` passes
-- [x] 4.2 `npm run build` passes
-- [x] 4.3 Grep `new.astro` and `edit.astro` for `max-w-md` returns zero hits
-- [x] 4.4 Grep `new.astro` and `edit.astro` for `max-w-lg` returns one hit each
+- [x] 4.1 `npm run lint` passes — 2631ada
+- [x] 4.2 `npm run build` passes — 2631ada
+- [x] 4.3 Grep `new.astro` and `edit.astro` for `max-w-md` returns zero hits — 2631ada
+- [x] 4.4 Grep `new.astro` and `edit.astro` for `max-w-lg` returns one hit each — 2631ada
 
 #### Manual
 
-- [ ] 4.5 Asset new/edit at 360px: identical to pre-phase-4 state
-- [ ] 4.6 Asset new/edit at 1280px: 512px-wide centered container
-- [ ] 4.7 Asset new/edit at 768px: 512px container centered with wider empty sides
+- [x] 4.5 Asset new/edit at 360px: identical to pre-phase-4 state — 2631ada
+- [x] 4.6 Asset new/edit at 1280px: 512px-wide centered container — 2631ada
+- [x] 4.7 Asset new/edit at 768px: 512px container centered with wider empty sides — 2631ada
