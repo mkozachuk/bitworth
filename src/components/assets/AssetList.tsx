@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { InboxIcon, AlertCircle } from "lucide-react";
 import { AssetRow } from "./AssetRow";
+import { AssetCard } from "./AssetCard";
 import type { Tables } from "@/lib/database.types";
 
 type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
@@ -89,18 +90,33 @@ export function AssetList({ assets, displayCurrency, rates }: Props) {
           </p>
         </div>
       ) : (
-        <table className="w-full">
-          <thead>
-            <tr className="text-left text-xs tracking-wider text-zinc-500 uppercase dark:text-white/40">
-              <th className="pr-4 pb-3 font-medium">Name</th>
-              <th className="pr-4 pb-3 font-medium">Amount</th>
-              <th className="pr-4 pb-3 font-medium">Category</th>
-              <th className="pb-3 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+        <>
+          <div className="hidden sm:block">
+            <table className="w-full">
+              <thead>
+                <tr className="text-left text-xs tracking-wider text-zinc-500 uppercase dark:text-white/40">
+                  <th className="pr-4 pb-3 font-medium">Name</th>
+                  <th className="pr-4 pb-3 font-medium">Amount</th>
+                  <th className="pr-4 pb-3 font-medium">Category</th>
+                  <th className="pb-3 font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((asset) => (
+                  <AssetRow
+                    key={asset.id}
+                    asset={asset}
+                    onDelete={handleDelete}
+                    displayCurrency={displayCurrency}
+                    rates={rates}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <ul role="list" className="sm:hidden">
             {filtered.map((asset) => (
-              <AssetRow
+              <AssetCard
                 key={asset.id}
                 asset={asset}
                 onDelete={handleDelete}
@@ -108,8 +124,8 @@ export function AssetList({ assets, displayCurrency, rates }: Props) {
                 rates={rates}
               />
             ))}
-          </tbody>
-        </table>
+          </ul>
+        </>
       )}
     </div>
   );
