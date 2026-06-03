@@ -121,7 +121,7 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
       </div>
 
       {categoryId !== "crypto" && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="amount" className="mb-1 block text-sm text-zinc-700 dark:text-blue-100/80">
               Amount
@@ -326,7 +326,7 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
         />
       </div>
 
-      <div className="flex gap-3 pt-2">
+      <div className="flex flex-col gap-3 pt-2 sm:flex-row">
         <Button
           type="submit"
           disabled={pending}
