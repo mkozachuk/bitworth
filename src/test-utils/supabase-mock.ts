@@ -144,3 +144,11 @@ export function createCookiesStub() {
     headers: vi.fn(() => [] as { name: string; value: string }[]),
   };
 }
+
+// Find the first recorded call matching `method` and `args` (deep-compared
+// via JSON). The cross-tenant / sort-order assertions all want this
+// shape: "did the chain include .eq('user_id', user.id)?" Returns
+// undefined if no match.
+export function findCall(recorded: RecordedCall[], method: string, args: unknown[]): RecordedCall | undefined {
+  return recorded.find((c) => c.method === method && JSON.stringify(c.args) === JSON.stringify(args));
+}
