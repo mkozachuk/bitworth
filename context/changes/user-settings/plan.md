@@ -434,9 +434,9 @@ Per test-plan §6.4 ceiling pattern, add a per-handler integration test for the 
 
 #### Automated
 
-- [x] 2.1 `npm run lint` passes
-- [x] 2.2 TypeScript type checking passes
-- [x] 2.3 `grep` for unpaired `bg-white/`, `text-white/`, `border-white/` returns zero
+- [x] 2.1 `npm run lint` passes — 51bf8f4
+- [x] 2.2 TypeScript type checking passes — 51bf8f4
+- [x] 2.3 `grep` for unpaired `bg-white/`, `text-white/`, `border-white/` returns zero — 51bf8f4
 
 #### Manual
 
@@ -447,10 +447,10 @@ Per test-plan §6.4 ceiling pattern, add a per-handler integration test for the 
 
 #### Automated
 
-- [ ] 3.1 `npm run lint` passes
-- [ ] 3.2 TypeScript type checking passes
-- [ ] 3.3 Contract test passes for the new route
-- [ ] 3.4 New topbar `Settings` link has matching `dark:` companion
+- [x] 3.1 `npm run lint` passes
+- [x] 3.2 TypeScript type checking passes
+- [x] 3.3 Contract test passes for the new route
+- [x] 3.4 New topbar `Settings` link has matching `dark:` companion
 
 #### Manual
 
