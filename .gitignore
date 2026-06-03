@@ -35,3 +35,9 @@ pnpm-debug.log*
 /.env
 /.env.prod
 /.claude/prompts/
+
+# PWA design-tool working files (Xcode AppIcon, Android mipmap-*).
+# Source assets dropped here by the designer are derived into the PWA
+# variants under public/icons/ and public/ via the icon-derivation step.
+# See context/changes/pwa-installable/plan.md (Phase 1).
+/public/icons/app_icons/
