@@ -497,8 +497,8 @@ Closes the USING-only RLS gap identified by the research. Adds `WITH CHECK (auth
 
 #### Manual
 
-- [x] 4.4 A new contributor can write a similar integration test from §6.2 / §6.4 / §6.6 alone
-- [x] 4.5 The three new lessons each cite file:line and mark their state (closed / open)
+- [x] 4.4 A new contributor can write a similar integration test from §6.2 / §6.4 / §6.6 alone — 8bff44f
+- [x] 4.5 The three new lessons each cite file:line and mark their state (closed / open) — 8bff44f
 
 ### Phase 5: RLS WITH CHECK migration
 
@@ -509,6 +509,6 @@ Closes the USING-only RLS gap identified by the research. Adds `WITH CHECK (auth
 
 #### Manual
 
-- [ ] 5.3 `psql` INSERT with a foreign `user_id` returns a policy violation error
-- [ ] 5.4 `psql` INSERT with a foreign `snapshot_id` on `snapshot_items` returns a policy violation error
-- [ ] 5.5 The local dashboard at `http://localhost:54323` still loads the current user's assets
+- [x] 5.3 `psql` INSERT with a foreign `user_id` returns a policy violation error
+- [x] 5.4 `psql` INSERT with a foreign `snapshot_id` on `snapshot_items` returns a policy violation error
+- [x] 5.5 The local dashboard at `http://localhost:54323` still loads the current user's assets
