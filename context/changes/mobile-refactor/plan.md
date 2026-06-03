@@ -342,11 +342,11 @@ Widen the asset form pages (`new.astro`, `edit.astro`) from `max-w-md` (448px) t
 
 #### Automated
 
-- [x] 2.1 `npm run lint` passes
-- [x] 2.2 `npm run build` passes
-- [x] 2.3 `npx astro check` passes
-- [x] 2.4 Grep `Topbar.astro` for `TopbarMenu` returns one import + one usage
-- [x] 2.5 Grep `TopbarMenu.tsx` for `@radix-ui/react-dropdown-menu` and `<form method="POST" action="/api/auth/signout"` each return one hit
+- [x] 2.1 `npm run lint` passes — cb79ceb
+- [x] 2.2 `npm run build` passes — cb79ceb
+- [x] 2.3 `npx astro check` passes — cb79ceb
+- [x] 2.4 Grep `Topbar.astro` for `TopbarMenu` returns one import + one usage — cb79ceb
+- [x] 2.5 Grep `TopbarMenu.tsx` for `@radix-ui/react-dropdown-menu` and `<form method="POST" action="/api/auth/signout"` each return one hit — cb79ceb
 
 #### Manual
 
@@ -359,12 +359,12 @@ Widen the asset form pages (`new.astro`, `edit.astro`) from `max-w-md` (448px) t
 
 #### Automated
 
-- [ ] 3.1 `npm run lint` passes
-- [ ] 3.2 `npm run build` passes
-- [ ] 3.3 Grep `AssetForm.tsx` for `grid-cols-2` returns zero hits
-- [ ] 3.4 Grep `NetWorthDisplay.tsx` for `grid-cols-2` returns zero hits
-- [ ] 3.5 Grep `AssetForm.tsx` for `grid-cols-1 sm:grid-cols-2` returns one hit
-- [ ] 3.6 Grep `NetWorthDisplay.tsx` for `grid-cols-1 sm:grid-cols-2` returns two hits
+- [x] 3.1 `npm run lint` passes
+- [x] 3.2 `npm run build` passes
+- [x] 3.3 Grep `AssetForm.tsx` for `grid-cols-2` returns zero hits
+- [x] 3.4 Grep `NetWorthDisplay.tsx` for `grid-cols-2` returns zero hits
+- [x] 3.5 Grep `AssetForm.tsx` for `grid-cols-1 sm:grid-cols-2` returns one hit
+- [x] 3.6 Grep `NetWorthDisplay.tsx` for `grid-cols-1 sm:grid-cols-2` returns two hits
 
 #### Manual
 

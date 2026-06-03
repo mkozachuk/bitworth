@@ -198,7 +198,7 @@ export function NetWorthDisplay({ assets, displayCurrency, rates, snapshots = []
         {displayCurrency}
       </p>
 
-      <div className="mb-4 grid grid-cols-2 gap-4 border-t border-zinc-200 pt-4 dark:border-white/10">
+      <div className="mb-4 grid grid-cols-1 gap-4 border-t border-zinc-200 pt-4 sm:grid-cols-2 dark:border-white/10">
         <div>
           <p className="text-xs tracking-wider text-zinc-500 uppercase dark:text-white/50">Assets</p>
           <p className="mt-1 text-lg font-semibold text-green-600 dark:text-green-300">
@@ -224,7 +224,7 @@ export function NetWorthDisplay({ assets, displayCurrency, rates, snapshots = []
       </div>
 
       {snapshots.length > 0 && (
-        <div className="mb-4 grid grid-cols-2 gap-4 border-t border-zinc-200 pt-4 dark:border-white/10">
+        <div className="mb-4 grid grid-cols-1 gap-4 border-t border-zinc-200 pt-4 sm:grid-cols-2 dark:border-white/10">
           {deltaLastMonth ? (
             <DeltaIndicator label="vs Last Month" value={deltaLastMonth.value} percentage={deltaLastMonth.pct} />
           ) : (
