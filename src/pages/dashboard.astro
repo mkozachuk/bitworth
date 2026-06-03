@@ -18,7 +18,7 @@ if (!user) {
 }
 
 const supabase = createClient(Astro.request.headers, Astro.cookies);
-const displayCurrency: Currency = "USD";
+const displayCurrency: Currency = Astro.locals.displayCurrency ?? "USD";
 
 const { data: assets } = await supabase.from("assets").select("*, category:asset_categories(*)").eq("user_id", user.id);
 

@@ -464,10 +464,10 @@ Per test-plan §6.4 ceiling pattern, add a per-handler integration test for the 
 
 #### Automated
 
-- [ ] 4.1 `npm run lint` passes
-- [ ] 4.2 TypeScript type checking passes
-- [ ] 4.3 Existing tests pass
-- [ ] 4.4 No hardcoded `"USD"` remains in `src/pages`
+- [x] 4.1 `npm run lint` passes
+- [x] 4.2 TypeScript type checking passes
+- [x] 4.3 Existing tests pass
+- [x] 4.4 No hardcoded `"USD"` remains in `src/pages`
 
 #### Manual
 
