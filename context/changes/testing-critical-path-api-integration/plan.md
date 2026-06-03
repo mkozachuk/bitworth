@@ -453,8 +453,8 @@ Closes the USING-only RLS gap identified by the research. Adds `WITH CHECK (auth
 
 #### Manual
 
-- [ ] 1.6 The 10 `it` block titles in the Vitest reporter clearly map to file paths
-- [ ] 1.7 The error message reads naturally and tells a new contributor exactly what to do
+- [x] 1.6 The 10 `it` block titles in the Vitest reporter clearly map to file paths
+- [x] 1.7 The error message reads naturally and tells a new contributor exactly what to do
 
 ### Phase 2: Cross-tenant integration tests (Risk #2)
 
