@@ -71,8 +71,8 @@ export function createSupabaseMock(opts: CreateSupabaseMockOptions): CreateSupab
     if (existing) return existing;
 
     const builderRecords: RecordedCall[] = [];
-    const builder: MockSupabaseBuilder = new Proxy(
-      { __table: table, __recorded: builderRecords },
+    const builder: MockSupabaseBuilder = new Proxy<MockSupabaseBuilder>(
+      { __table: table, __recorded: builderRecords } as unknown as MockSupabaseBuilder,
       {
         get(target, prop: string | symbol): unknown {
           if (prop === "__table") return table;
