@@ -1,5 +1,6 @@
 ---
 import TopbarMenu from "@/components/TopbarMenu";
+import InstallButton from "@/components/InstallButton";
 
 const { user } = Astro.locals;
 ---
@@ -30,6 +31,7 @@ const { user } = Astro.locals;
           >
             Settings
           </a>
+          <InstallButton client:load />
           <form method="POST" action="/api/auth/signout" class="hidden sm:block">
             <button
               type="submit"
