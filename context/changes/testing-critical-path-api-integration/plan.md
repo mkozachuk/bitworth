@@ -481,11 +481,11 @@ Closes the USING-only RLS gap identified by the research. Adds `WITH CHECK (auth
 
 #### Manual
 
-- [x] 3.3 Manually removing `.order("created_at", ...)` causes the sort-order structural test to fail
-- [x] 3.4 Manually removing the compensating delete at `snapshots/index.ts:156` causes scenario 2 to fail
-- [x] 3.5 Manually adding `created_at` to the insert payload causes the structural-property test to fail
-- [x] 3.7 The 7 POST scenarios read as a coherent table in the Vitest reporter
-- [x] 3.8 The `// TODO: replace with a Postgres function` comment is visible in scenario 3
+- [x] 3.3 Manually removing `.order("created_at", ...)` causes the sort-order structural test to fail — 55f93f6
+- [x] 3.4 Manually removing the compensating delete at `snapshots/index.ts:156` causes scenario 2 to fail — 55f93f6
+- [x] 3.5 Manually adding `created_at` to the insert payload causes the structural-property test to fail — 55f93f6
+- [x] 3.7 The 7 POST scenarios read as a coherent table in the Vitest reporter — 55f93f6
+- [x] 3.8 The `// TODO: replace with a Postgres function` comment is visible in scenario 3 — 55f93f6
 
 ### Phase 4: Cookbook + lessons sync
 
@@ -497,8 +497,8 @@ Closes the USING-only RLS gap identified by the research. Adds `WITH CHECK (auth
 
 #### Manual
 
-- [ ] 4.4 A new contributor can write a similar integration test from §6.2 / §6.4 / §6.6 alone
-- [ ] 4.5 The three new lessons each cite file:line and mark their state (closed / open)
+- [x] 4.4 A new contributor can write a similar integration test from §6.2 / §6.4 / §6.6 alone
+- [x] 4.5 The three new lessons each cite file:line and mark their state (closed / open)
 
 ### Phase 5: RLS WITH CHECK migration
 
