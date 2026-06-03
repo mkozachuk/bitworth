@@ -302,28 +302,28 @@ No data migration. No schema changes. No API changes. The mobile card is a pure 
 
 #### Automated
 
-- [x] 1.1 `npm run lint` passes
-- [x] 1.2 `npm run build` passes
-- [x] 1.3 `git diff` on `src/components/assets/AssetList.tsx` shows changes only to the new import, the wrapper around the existing `<table>`, and the new sibling `<ul>`. The `<table>` element's attributes and its child `<thead>` / `<tbody>` are unchanged.
-- [x] 1.4 `src/components/assets/AssetCard.tsx` exists and exports a default React component.
+- [x] 1.1 `npm run lint` passes — 21ee2d4
+- [x] 1.2 `npm run build` passes — 21ee2d4
+- [x] 1.3 `git diff` on `src/components/assets/AssetList.tsx` shows changes only to the new import, the wrapper around the existing `<table>`, and the new sibling `<ul>`. The `<table>` element's attributes and its child `<thead>` / `<tbody>` are unchanged. — 21ee2d4
+- [x] 1.4 `src/components/assets/AssetCard.tsx` exists and exports a default React component. — 21ee2d4
 
 #### Manual
 
-- [x] 1.5 Open `/dashboard/assets` at a 1280px viewport — desktop table renders byte-identically to the pre-S-07 baseline.
-- [x] 1.6 Open `/dashboard/assets` at 360px — each asset renders as a card with the agreed field order, truncation, and Edit/Delete footer. No horizontal scroll.
-- [x] 1.7 Filter tabs (All / Assets / Liabilities) at 360px — list updates and active tab underline remains visible.
-- [x] 1.8 Empty state at 360px — centered "No assets yet" / "No {filter} found" message.
-- [x] 1.9 Press-and-hold feedback at 360px — subtle background tint on press; card itself not tappable to navigate.
-- [x] 1.10 Resize 360px ↔ 1280px — branch swap happens at `sm:` breakpoint with no console hydration mismatch.
+- [x] 1.5 Open `/dashboard/assets` at a 1280px viewport — desktop table renders byte-identically to the pre-S-07 baseline. — 21ee2d4
+- [x] 1.6 Open `/dashboard/assets` at 360px — each asset renders as a card with the agreed field order, truncation, and Edit/Delete footer. No horizontal scroll. — 21ee2d4
+- [x] 1.7 Filter tabs (All / Assets / Liabilities) at 360px — list updates and active tab underline remains visible. — 21ee2d4
+- [x] 1.8 Empty state at 360px — centered "No assets yet" / "No {filter} found" message. — 21ee2d4
+- [x] 1.9 Press-and-hold feedback at 360px — subtle background tint on press; card itself not tappable to navigate. — 21ee2d4
+- [x] 1.10 Resize 360px ↔ 1280px — branch swap happens at `sm:` breakpoint with no console hydration mismatch. — 21ee2d4
 
 ### Phase 2: Visual polish + dark-mode parity
 
 #### Automated
 
-- [ ] 2.1 `npm run lint` passes
-- [ ] 2.2 `npm run build` passes
-- [ ] 2.3 Grep over `AssetCard.tsx` for `text-zinc-` and `border-zinc-` returns zero hits without a `dark:` sibling on the same class string.
-- [ ] 2.4 Desktop (`≥sm`) path in `AssetList.tsx` is unchanged from end of Phase 1.
+- [x] 2.1 `npm run lint` passes
+- [x] 2.2 `npm run build` passes
+- [x] 2.3 Grep over `AssetCard.tsx` for `text-zinc-` and `border-zinc-` returns zero hits without a `dark:` sibling on the same class string.
+- [x] 2.4 Desktop (`≥sm`) path in `AssetList.tsx` is unchanged from end of Phase 1.
 
 #### Manual
 
