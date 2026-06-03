@@ -655,14 +655,14 @@ If a future slice wants to unit-test the install-button's `beforeinstallprompt` 
 
 #### Automated
 
-- [x] 2.1 `vite-plugin-pwa`, `workbox-window`, (optional) `sharp` added to devDependencies
-- [x] 2.2 `src/integrations/pwa.ts` exists with the VitePWA config
-- [x] 2.3 `src/sw.ts` placeholder exists
-- [x] 2.4 `astro.config.mjs` imports and wires the `pwa()` integration
-- [x] 2.5 `dist/sw.js` is emitted by `npm run build`
-- [x] 2.6 `dist/manifest.webmanifest` is emitted by `npm run build`
-- [x] 2.7 TypeScript checks pass (`npm run build`)
-- [x] 2.8 `npm run lint` passes
+- [x] 2.1 `vite-plugin-pwa`, `workbox-window`, (optional) `sharp` added to devDependencies — aebee6f
+- [x] 2.2 `src/integrations/pwa.ts` exists with the VitePWA config — aebee6f
+- [x] 2.3 `src/sw.ts` placeholder exists — aebee6f
+- [x] 2.4 `astro.config.mjs` imports and wires the `pwa()` integration — aebee6f
+- [x] 2.5 `dist/sw.js` is emitted by `npm run build` — aebee6f
+- [x] 2.6 `dist/manifest.webmanifest` is emitted by `npm run build` — aebee6f
+- [x] 2.7 TypeScript checks pass (`npm run build`) — aebee6f
+- [x] 2.8 `npm run lint` passes — aebee6f
 
 #### Manual
 
@@ -674,12 +674,12 @@ If a future slice wants to unit-test the install-button's `beforeinstallprompt` 
 
 #### Automated
 
-- [ ] 3.1 All 6 PWA meta/link tags present in `Layout.astro` `<head>`
-- [ ] 3.2 Viewport meta includes `viewport-fit=cover`
-- [ ] 3.3 Inline `data-installed` script present
-- [ ] 3.4 `--safe-top` / `--safe-bottom` CSS variables defined in `global.css`
-- [ ] 3.5 `npm run build` passes
-- [ ] 3.6 `npm run lint` passes
+- [x] 3.1 All 6 PWA meta/link tags present in `Layout.astro` `<head>`
+- [x] 3.2 Viewport meta includes `viewport-fit=cover`
+- [x] 3.3 Inline `data-installed` script present
+- [x] 3.4 `--safe-top` / `--safe-bottom` CSS variables defined in `global.css`
+- [x] 3.5 `npm run build` passes
+- [x] 3.6 `npm run lint` passes
 
 #### Manual
 
