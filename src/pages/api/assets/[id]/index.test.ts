@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createSupabaseMock, createCookiesStub, type RecordedCall } from "@/test-utils/supabase-mock";
+import { createSupabaseMock, createCookiesStub, findCall } from "@/test-utils/supabase-mock";
 
 // Per-handler integration test for /api/assets/[id] PUT and DELETE.
 // The compound `id + user_id` filter is the cross-tenant defense (Risk #2
@@ -21,10 +21,6 @@ import { PUT, DELETE } from "@/pages/api/assets/[id]/index";
 
 const userA = "user-A";
 const assetId = "asset-b";
-
-function findCall(recorded: RecordedCall[], method: string, args: unknown[]): RecordedCall | undefined {
-  return recorded.find((c) => c.method === method && JSON.stringify(c.args) === JSON.stringify(args));
-}
 
 describe("PUT /api/assets/[id]", () => {
   it("uses a compound id+user_id filter", async () => {

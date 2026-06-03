@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createSupabaseMock, createCookiesStub, type RecordedCall } from "@/test-utils/supabase-mock";
+import { createSupabaseMock, createCookiesStub, findCall } from "@/test-utils/supabase-mock";
 
 // Mock at the request boundary. The handler's own `supabase.auth.getUser()`
 // runs against the Request; the mock's getUser returns a user when the
@@ -21,10 +21,6 @@ const userA = "user-A";
 
 function makeRequest(url: string, init: RequestInit = {}): Request {
   return new Request(url, init);
-}
-
-function findCall(recorded: RecordedCall[], method: string, args: unknown[]): RecordedCall | undefined {
-  return recorded.find((c) => c.method === method && JSON.stringify(c.args) === JSON.stringify(args));
 }
 
 describe("GET /api/assets", () => {

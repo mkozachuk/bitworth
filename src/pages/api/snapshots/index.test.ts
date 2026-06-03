@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createSupabaseMock, createCookiesStub, type RecordedCall } from "@/test-utils/supabase-mock";
+import { createSupabaseMock, createCookiesStub, findCall } from "@/test-utils/supabase-mock";
 
 // /api/snapshots is the only handler exercising Risks #2 AND #3 together:
 // the GET filter (cross-tenant) AND the POST atomicity (orphan worst case
@@ -68,10 +68,6 @@ const parentSnapshot = {
   note: null,
   created_at: "2026-01-01T00:00:00.000Z",
 };
-
-function findCall(recorded: RecordedCall[], method: string, args: unknown[]): RecordedCall | undefined {
-  return recorded.find((c) => c.method === method && JSON.stringify(c.args) === JSON.stringify(args));
-}
 
 describe("GET /api/snapshots", () => {
   it("filters by user_id and 200s on authenticated request", async () => {
