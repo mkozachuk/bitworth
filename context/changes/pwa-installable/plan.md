@@ -674,12 +674,12 @@ If a future slice wants to unit-test the install-button's `beforeinstallprompt` 
 
 #### Automated
 
-- [x] 3.1 All 6 PWA meta/link tags present in `Layout.astro` `<head>`
-- [x] 3.2 Viewport meta includes `viewport-fit=cover`
-- [x] 3.3 Inline `data-installed` script present
-- [x] 3.4 `--safe-top` / `--safe-bottom` CSS variables defined in `global.css`
-- [x] 3.5 `npm run build` passes
-- [x] 3.6 `npm run lint` passes
+- [x] 3.1 All 6 PWA meta/link tags present in `Layout.astro` `<head>` — f2e5600
+- [x] 3.2 Viewport meta includes `viewport-fit=cover` — f2e5600
+- [x] 3.3 Inline `data-installed` script present — f2e5600
+- [x] 3.4 `--safe-top` / `--safe-bottom` CSS variables defined in `global.css` — f2e5600
+- [x] 3.5 `npm run build` passes — f2e5600
+- [x] 3.6 `npm run lint` passes — f2e5600
 
 #### Manual
 
@@ -691,11 +691,11 @@ If a future slice wants to unit-test the install-button's `beforeinstallprompt` 
 
 #### Automated
 
-- [ ] 4.1 `public/offline.html` exists
-- [ ] 4.2 No external requests in `offline.html` (`grep` returns empty)
-- [ ] 4.3 No external `<script src=` or `<link rel="stylesheet">` in `offline.html`
-- [ ] 4.4 `offline.html` is in the Workbox precache manifest
-- [ ] 4.5 `npm run lint` passes
+- [x] 4.1 `public/offline.html` exists
+- [x] 4.2 No external requests in `offline.html` (`grep` returns empty)
+- [x] 4.3 No external `<script src=` or `<link rel="stylesheet">` in `offline.html`
+- [x] 4.4 `offline.html` is in the Workbox precache manifest
+- [x] 4.5 `npm run lint` passes
 
 #### Manual
 

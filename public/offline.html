@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0a0a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="BitWorth" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+    <title>BitWorth — Offline</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        min-height: 100%;
+        background: #0a0a0a;
+        color: #e4e4e7;
+        font-family:
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Oxygen,
+          Ubuntu,
+          Cantarell,
+          "Helvetica Neue",
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding:
+          calc(env(safe-area-inset-top, 0px) + 1.5rem)
+          1.5rem
+          calc(env(safe-area-inset-bottom, 0px) + 1.5rem)
+          1.5rem;
+        min-height: 100vh;
+      }
+
+      .card {
+        max-width: 28rem;
+        width: 100%;
+        text-align: center;
+        background: #18181b;
+        border: 1px solid #27272a;
+        border-radius: 0.75rem;
+        padding: 2.5rem 1.5rem;
+      }
+
+      .icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 4rem;
+        height: 4rem;
+        margin: 0 auto 1.5rem;
+        border-radius: 9999px;
+        background: rgba(167, 139, 250, 0.1);
+        color: #a78bfa;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+        line-height: 2rem;
+        font-weight: 600;
+        margin: 0 0 0.75rem;
+        color: #fafafa;
+      }
+
+      p {
+        font-size: 0.9375rem;
+        line-height: 1.5rem;
+        margin: 0 0 2rem;
+        color: #a1a1aa;
+      }
+
+      .retry {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        min-height: 2.75rem;
+        padding: 0.625rem 1.25rem;
+        font-size: 0.9375rem;
+        font-weight: 500;
+        color: #0a0a0a;
+        background: #a78bfa;
+        border: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: background 150ms ease;
+      }
+
+      .retry:hover {
+        background: #c4b5fd;
+      }
+
+      .retry:active {
+        background: #8b5cf6;
+      }
+
+      .retry:focus-visible {
+        outline: 2px solid #c4b5fd;
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card" role="main">
+      <div class="icon" aria-hidden="true">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M2 8.82a15 15 0 0 1 20 0" />
+          <path d="M5 12.86a10 10 0 0 1 14 0" />
+          <path d="M8.5 16.43a5 5 0 0 1 7 0" />
+          <line x1="2" y1="2" x2="22" y2="22" />
+        </svg>
+      </div>
+      <h1>You're offline</h1>
+      <p>BitWorth needs a connection to load your dashboard. Reconnect and try again.</p>
+      <button type="button" class="retry" onclick="location.reload()">Retry</button>
+    </main>
+  </body>
+</html>
