@@ -1,9 +1,9 @@
 ---
 change_id: testing-critical-path-api-integration
 title: Critical-path API integration tests
-status: implementing
+status: implemented
 created: 2026-06-02
-updated: 2026-06-02
+updated: 2026-06-03
 archived_at: null
 ---
 
