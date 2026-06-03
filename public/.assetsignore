@@ -1,2 +1,5 @@
 _worker.js
 _routes.json
+sw.js
+sw.js.map
+workbox-*.js
