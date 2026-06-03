@@ -359,28 +359,28 @@ Widen the asset form pages (`new.astro`, `edit.astro`) from `max-w-md` (448px) t
 
 #### Automated
 
-- [x] 3.1 `npm run lint` passes
-- [x] 3.2 `npm run build` passes
-- [x] 3.3 Grep `AssetForm.tsx` for `grid-cols-2` returns zero hits
-- [x] 3.4 Grep `NetWorthDisplay.tsx` for `grid-cols-2` returns zero hits
-- [x] 3.5 Grep `AssetForm.tsx` for `grid-cols-1 sm:grid-cols-2` returns one hit
-- [x] 3.6 Grep `NetWorthDisplay.tsx` for `grid-cols-1 sm:grid-cols-2` returns two hits
+- [x] 3.1 `npm run lint` passes — 0b96b37
+- [x] 3.2 `npm run build` passes — 0b96b37
+- [x] 3.3 Grep `AssetForm.tsx` for `grid-cols-2` returns zero hits — 0b96b37
+- [x] 3.4 Grep `NetWorthDisplay.tsx` for `grid-cols-2` returns zero hits — 0b96b37
+- [x] 3.5 Grep `AssetForm.tsx` for `grid-cols-1 sm:grid-cols-2` returns one hit — 0b96b37
+- [x] 3.6 Grep `NetWorthDisplay.tsx` for `grid-cols-1 sm:grid-cols-2` returns two hits — 0b96b37
 
 #### Manual
 
-- [ ] 3.7 `/dashboard/assets/new` at 360px: form fields stack, no horizontal scroll
-- [ ] 3.8 `/dashboard` at 360px: Net Worth card stacks Assets/Liabilities + deltas
-- [ ] 3.9 Asset new/edit + dashboard at 1280px: byte-identical to pre-phase-3 state (grids side-by-side)
-- [ ] 3.10 Asset form validation still works end-to-end
+- [x] 3.7 `/dashboard/assets/new` at 360px: form fields stack, no horizontal scroll — 0b96b37
+- [x] 3.8 `/dashboard` at 360px: Net Worth card stacks Assets/Liabilities + deltas — 0b96b37
+- [x] 3.9 Asset new/edit + dashboard at 1280px: byte-identical to pre-phase-3 state (grids side-by-side) — 0b96b37
+- [x] 3.10 Asset form validation still works end-to-end — 0b96b37
 
 ### Phase 4: Form page widths
 
 #### Automated
 
-- [ ] 4.1 `npm run lint` passes
-- [ ] 4.2 `npm run build` passes
-- [ ] 4.3 Grep `new.astro` and `edit.astro` for `max-w-md` returns zero hits
-- [ ] 4.4 Grep `new.astro` and `edit.astro` for `max-w-lg` returns one hit each
+- [x] 4.1 `npm run lint` passes
+- [x] 4.2 `npm run build` passes
+- [x] 4.3 Grep `new.astro` and `edit.astro` for `max-w-md` returns zero hits
+- [x] 4.4 Grep `new.astro` and `edit.astro` for `max-w-lg` returns one hit each
 
 #### Manual
 
