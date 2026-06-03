@@ -706,21 +706,21 @@ If a future slice wants to unit-test the install-button's `beforeinstallprompt` 
 
 #### Automated
 
-- [x] 5.1 `src/components/InstallButton.tsx` exists
-- [x] 5.2 `TopbarMenu.tsx` accepts `installSlot` prop — ADAPTED: direct import instead of slot prop (see note below)
-- [x] 5.3 `Topbar.astro` renders `<InstallButton client:load />` in the authed branch
-- [x] 5.4 `npm run build` passes (TS check)
-- [x] 5.5 `npm run lint` passes (react-compiler, jsx-a11y)
+- [x] 5.1 `src/components/InstallButton.tsx` exists — 7e5f507
+- [x] 5.2 `TopbarMenu.tsx` accepts `installSlot` prop — ADAPTED: direct import instead of slot prop (see note below) — 7e5f507
+- [x] 5.3 `Topbar.astro` renders `<InstallButton client:load />` in the authed branch — 7e5f507
+- [x] 5.4 `npm run build` passes (TS check) — 7e5f507
+- [x] 5.5 `npm run lint` passes (react-compiler, jsx-a11y) — 7e5f507
 
 > **Adaptation note**: The plan's `installSlot?: React.ReactNode` indirection was meant to decouple `TopbarMenu` from `InstallButton`, but Astro's `client:load` directive cannot appear inside a JSX prop value (`<TopbarMenu installSlot={<InstallButton client:load />} />` is a parser error). The adapted approach imports `InstallButton` directly in `TopbarMenu.tsx` and passes the dropdown's `itemClass` styling through a new optional `className` prop on `InstallButton`. The decoupling is preserved at the call site (`Topbar.astro` is the only place that decides where to mount the button), and the install-button contract (iOS hide, standalone hide, `beforeinstallprompt` stash) is unchanged.
 
 #### Manual
 
-- [ ] 5.6 "Install app" button visible in Chrome desktop Topbar
-- [ ] 5.7 Clicking the button triggers Chrome's install prompt
-- [ ] 5.8 Button hidden in iOS Safari emulation
-- [ ] 5.9 Button hidden when `display-mode: standalone` is emulated
-- [ ] 5.10 Mobile dropdown menu contains the "Install app" item
+- [x] 5.6 "Install app" button visible in Chrome desktop Topbar — 7e5f507
+- [x] 5.7 Clicking the button triggers Chrome's install prompt — 7e5f507
+- [x] 5.8 Button hidden in iOS Safari emulation — 7e5f507
+- [x] 5.9 Button hidden when `display-mode: standalone` is emulated — 7e5f507
+- [x] 5.10 Mobile dropdown menu contains the "Install app" item — 7e5f507
 
 ### Phase 6: iOS install modal
 
