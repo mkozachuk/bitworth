@@ -199,12 +199,12 @@ After all three phases land, the cross-phase success criteria are:
 
 #### Automated
 
-- [x] 3.1 `src/pages/api/api-auth-contract.test.ts` opens with a comment block that names Risk #5, references the test plan, and notes CI enforcement via `npm run test:ci`
-- [x] 3.2 `context/foundation/test-plan.md` §3 or §5 reflects that the Phase 4 gate is wired (the §3 table's Phase 4 row Status flips from "change opened" to "complete"; §5's rows for "lint + typecheck" / "unit + integration" / "contract on /api/* auth" move from "required" to "enforced" or get a "(enforced in CI)" annotation)
-- [x] 3.3 `npm run test:ci` still passes (60/60 tests, including the contract test)
-- [x] 3.4 `npm run lint` still passes (the new comment in the contract test file is just a comment, no style impact)
-- [x] 3.5 `npm run typecheck` still passes (the new comment in the contract test file is just a comment, no type impact)
-- [x] 3.6 `npm run build` still passes
+- [x] 3.1 `src/pages/api/api-auth-contract.test.ts` opens with a comment block that names Risk #5, references the test plan, and notes CI enforcement via `npm run test:ci` — 6a0f494
+- [x] 3.2 `context/foundation/test-plan.md` §3 or §5 reflects that the Phase 4 gate is wired (the §3 table's Phase 4 row Status flips from "change opened" to "complete"; §5's rows for "lint + typecheck" / "unit + integration" / "contract on /api/* auth" move from "required" to "enforced" or get a "(enforced in CI)" annotation) — 6a0f494
+- [x] 3.3 `npm run test:ci` still passes (60/60 tests, including the contract test) — 6a0f494
+- [x] 3.4 `npm run lint` still passes (the new comment in the contract test file is just a comment, no style impact) — 6a0f494
+- [x] 3.5 `npm run typecheck` still passes (the new comment in the contract test file is just a comment, no type impact) — 6a0f494
+- [x] 3.6 `npm run build` still passes — 6a0f494
 
 #### Manual
 
