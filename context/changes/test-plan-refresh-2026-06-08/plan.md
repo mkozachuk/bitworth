@@ -407,25 +407,25 @@ Wire Playwright into the CI workflow so the e2e gate is enforced on every PR. Th
 
 #### Automated
 
-- [x] 1.1 TypeScript compiles (`npm run typecheck`)
-- [x] 1.2 Existing tests unaffected (`npm run test:ci`)
-- [x] 1.3 Playwright installed (`npx playwright --version`)
+- [x] 1.1 TypeScript compiles (`npm run typecheck`) — 25a9ae3
+- [x] 1.2 Existing tests unaffected (`npm run test:ci`) — 25a9ae3
+- [x] 1.3 Playwright installed (`npx playwright --version`) — 25a9ae3
 
 #### Manual
 
-- [ ] 1.4 Playwright browser installs without errors
-- [ ] 1.5 `npm run test:e2e` reports no test files found
+- [x] 1.4 Playwright browser installs without errors — 25a9ae3
+- [x] 1.5 `npm run test:e2e` reports no test files found — 25a9ae3
 
 ### Phase 2: DOM Hydration Test
 
 #### Automated
 
-- [ ] 2.1 DOM test passes in test:ci (`npm run test:ci`)
-- [ ] 2.2 TypeScript compiles (`npm run typecheck`)
+- [x] 2.1 DOM test passes in test:ci (`npm run test:ci`)
+- [x] 2.2 TypeScript compiles (`npm run typecheck`)
 
 #### Manual
 
-- [ ] 2.3 Verify happy-dom environment active in verbose output
+- [x] 2.3 Verify happy-dom environment active in verbose output
 
 ### Phase 3: Playwright E2E Tests
 
