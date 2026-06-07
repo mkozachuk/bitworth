@@ -10,7 +10,12 @@ import { join, relative, sep } from "node:path";
 // future signin/signup that ships with no client at all.
 //
 // Anchored in lessons.md §2 (public API endpoints need explicit auth
-// decisions) and test-plan §2 Risk #5.
+// decisions) and test-plan §2 Risk #5. Pinned as a CI gate in
+// test-plan §3 Phase 4: this file is picked up by Vitest's default
+// `include: src/**/*.test.ts` glob, so it runs on every PR via
+// `npm run test:ci` in .github/workflows/ci.yml. A new `/api/*` route
+// that skips the auth decision is caught at PR time, not on manual
+// review.
 
 const API_ROOT = join(process.cwd(), "src/pages/api");
 const AUTH_CHECK = "supabase.auth.getUser()";
