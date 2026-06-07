@@ -5,3 +5,8 @@ declare namespace App {
     displayCurrency: "USD" | "EUR" | "PLN" | null;
   }
 }
+
+interface Navigator {
+  // iOS Safari only — true when the page is launched as a home-screen PWA.
+  readonly standalone?: boolean;
+}
