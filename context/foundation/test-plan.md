@@ -55,7 +55,7 @@ Each row is a discrete rollout phase that will open its own change folder via `/
 | 1 | Runner bootstrap + first critical-path unit | Bootstrap Vitest and ship the first unit test on the net worth calculation. | #1 | unit | complete | `context/changes/testing-runner-bootstrap/` |
 | 2 | Critical-path API integration | Integration tests on `/api/assets/[id]/` and `/api/snapshots/`, plus the auth-decision contract on `/api/*`. | #2, #3, #5 | integration (handler + Supabase stub) + contract | complete | `context/changes/testing-critical-path-api-integration/` |
 | 3 | External API failure & cache integrity | Unit tests on the rates/crypto fetcher and cache read/write for failure paths. | #4, #6 | unit (with `fetch` stub) + small integration on dashboard fallback render | complete | `context/changes/testing-external-api-failure-cache/` |
-| 4 | Quality-gates wiring | Wire lint + typecheck + Vitest unit/integration into CI; document local run command. | #5 (contract enforced in CI) | CI config | not started | — |
+| 4 | Quality-gates wiring | Wire lint + typecheck + Vitest unit/integration into CI; document local run command. | #5 (contract enforced in CI) | CI config | complete | `context/changes/testing-quality-gates-wiring/` |
 
 **Why no AI-native phase.** Risks are all deterministic correctness (data, auth, external API failure). The project has no AI surface, and visual snapshot tests are explicitly out of scope (see §7). Classic-only is the right call here.
 
@@ -87,9 +87,9 @@ The full set of gates that must pass before a change reaches production. "Requir
 
 | Gate                          | Where              | Required?                   | Catches                                       |
 |-------------------------------|--------------------|------------------------------|-----------------------------------------------|
-| lint + typecheck              | local + CI         | required                     | syntactic / type drift                        |
-| unit + integration            | local + CI         | required after §3 Phase 1    | logic regressions                             |
-| contract on `/api/*` auth     | local + CI         | required after §3 Phase 2    | new routes shipping without an explicit auth decision |
+| lint + typecheck              | local + CI         | enforced (CI gate — Phase 4) | syntactic / type drift                        |
+| unit + integration            | local + CI         | enforced (CI gate — Phase 4) | logic regressions                             |
+| contract on `/api/*` auth     | local + CI         | enforced (CI gate — Phase 4) | new routes shipping without an explicit auth decision |
 | e2e on critical flows         | CI on PR           | planned                      | broken critical user paths (deferred — no Playwright MCP in session) |
 | post-edit hook                | local (agent loop) | recommended                  | regressions at edit time                      |
 | visual diff (deterministic)   | CI on PR           | not used                     | — (out of scope per §7)                       |
