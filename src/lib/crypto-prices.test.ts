@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseMock, findCall } from "@/test-utils/supabase-mock";
 import { getPrice } from "@/lib/crypto-prices";
+
+// The mock factory exposes only the methods the SUT touches (from/rpc/auth).
+// Cast at the call site so tsc accepts the structural mock as a real client.
+const asClient = (c: ReturnType<typeof createSupabaseMock>["client"]): SupabaseClient => c as unknown as SupabaseClient;
 
 // Pins the `getPrice` orchestrator's failure paths and the cache write
 // invariant for Risk #4 (crypto path) and Risk #6 (cache not poisoned).
@@ -28,7 +33,7 @@ describe("getPrice", () => {
       },
     });
 
-    const result = await getPrice(m.client, "BTC");
+    const result = await getPrice(asClient(m.client), "BTC");
 
     expect(result).toEqual({
       price: 50000,
@@ -50,7 +55,7 @@ describe("getPrice", () => {
       new Response(JSON.stringify({ price: "50000" }), { status: 200 }),
     );
 
-    const result = await getPrice(m.client, "BTC");
+    const result = await getPrice(asClient(m.client), "BTC");
 
     expect(result).toMatchObject({ price: 50000, isCached: false });
     expect(fetch as ReturnType<typeof vi.fn>).toHaveBeenCalledTimes(1);
@@ -67,7 +72,7 @@ describe("getPrice", () => {
       new Response(JSON.stringify({ price: "50000" }), { status: 200 }),
     );
 
-    const result = await getPrice(m.client, "BTC");
+    const result = await getPrice(asClient(m.client), "BTC");
 
     expect(result).toMatchObject({ price: 50000, isCached: false });
     expect(
@@ -87,7 +92,7 @@ describe("getPrice", () => {
     });
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(new Response("upstream down", { status: 503 }));
 
-    const result = await getPrice(m.client, "BTC");
+    const result = await getPrice(asClient(m.client), "BTC");
 
     expect(result).toEqual({
       error: { code: "PRICE_UNAVAILABLE", message: 'Could not fetch price for "BTC"' },
@@ -104,7 +109,7 @@ describe("getPrice", () => {
     });
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(new Response("not json", { status: 200 }));
 
-    await expect(getPrice(m.client, "BTC")).rejects.toThrow();
+    await expect(getPrice(asClient(m.client), "BTC")).rejects.toThrow();
     expect(m.recorded.filter((c) => c.method === "rpc").length).toBe(0);
   });
 });

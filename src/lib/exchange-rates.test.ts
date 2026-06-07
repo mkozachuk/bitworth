@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseMock } from "@/test-utils/supabase-mock";
 import { getRates } from "@/lib/exchange-rates";
+
+// The mock factory exposes only the methods the SUT touches (from/rpc/auth).
+// Cast at the call site so tsc accepts the structural mock as a real client.
+const asClient = (c: ReturnType<typeof createSupabaseMock>["client"]): SupabaseClient => c as unknown as SupabaseClient;
 
 // Pins the defensive `try/catch` fallback in `getRates` (Risk #4's rates
 // path) and the cache fast-path optimization. `getRates` imports
@@ -28,7 +33,7 @@ describe("getRates", () => {
     });
     (fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("network down"));
 
-    const result = await getRates(m.client);
+    const result = await getRates(asClient(m.client));
 
     expect(result).toEqual({ USD: 1.0, EUR: 0.92, PLN: 3.85 });
   });
@@ -42,7 +47,7 @@ describe("getRates", () => {
     });
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(new Response("service unavailable", { status: 503 }));
 
-    const result = await getRates(m.client);
+    const result = await getRates(asClient(m.client));
 
     expect(result).toEqual({ USD: 1.0, EUR: 0.92, PLN: 3.85 });
   });
@@ -56,7 +61,7 @@ describe("getRates", () => {
     });
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(new Response("not json", { status: 200 }));
 
-    const result = await getRates(m.client);
+    const result = await getRates(asClient(m.client));
 
     expect(result).toEqual({ USD: 1.0, EUR: 0.92, PLN: 3.85 });
   });
@@ -69,7 +74,7 @@ describe("getRates", () => {
       },
     });
 
-    const result = await getRates(m.client);
+    const result = await getRates(asClient(m.client));
 
     expect(fetch as ReturnType<typeof vi.fn>).not.toHaveBeenCalled();
     // USD is the base short-circuit (1.0); EUR = 1/0.92; PLN = 0.92/EUR-rate; both rates are 0.92 here.
