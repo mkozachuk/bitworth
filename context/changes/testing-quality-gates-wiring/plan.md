@@ -172,11 +172,11 @@ After all three phases land, the cross-phase success criteria are:
 
 #### Automated
 
-- [x] 1.1 `npm run typecheck` exists in `package.json` and exits 0 on the current working tree
-- [x] 1.2 `.github/workflows/ci.yml` contains a `npm run typecheck` step positioned after `npx astro sync` and before `npm run lint`
-- [x] 1.3 `npm run lint` still passes (no regression from the yml edit)
-- [x] 1.4 `npm run build` still passes (no regression from the yml edit)
-- [x] 1.5 `npm run test:run` still passes (60/60 tests)
+- [x] 1.1 `npm run typecheck` exists in `package.json` and exits 0 on the current working tree — 961669f
+- [x] 1.2 `.github/workflows/ci.yml` contains a `npm run typecheck` step positioned after `npx astro sync` and before `npm run lint` — 961669f
+- [x] 1.3 `npm run lint` still passes (no regression from the yml edit) — 961669f
+- [x] 1.4 `npm run build` still passes (no regression from the yml edit) — 961669f
+- [x] 1.5 `npm run test:run` still passes (60/60 tests) — 961669f
 
 #### Manual
 
@@ -186,10 +186,10 @@ After all three phases land, the cross-phase success criteria are:
 
 #### Automated
 
-- [ ] 2.1 `npm run test:ci` exists in `package.json` and exits 0 on the current working tree (60/60 tests pass)
-- [ ] 2.2 `.github/workflows/ci.yml` contains a `npm run test:ci` step positioned after `npm run lint` and before `npm run build`
-- [ ] 2.3 `npm run build` still passes (no regression from the yml edit)
-- [ ] 2.4 `npm run lint` still passes (no regression)
+- [x] 2.1 `npm run test:ci` exists in `package.json` and exits 0 on the current working tree (60/60 tests pass)
+- [x] 2.2 `.github/workflows/ci.yml` contains a `npm run test:ci` step positioned after `npm run lint` and before `npm run build`
+- [x] 2.3 `npm run build` still passes (no regression from the yml edit)
+- [x] 2.4 `npm run lint` still passes (no regression)
 
 #### Manual
 
