@@ -115,8 +115,10 @@ export function createSupabaseMock(opts: CreateSupabaseMockOptions): CreateSupab
       }),
     },
     from,
-    // eslint-disable-next-line @typescript-eslint/require-await
-    rpc: async () => ({ data: null, error: null }),
+    rpc: (name: string, args: unknown) => {
+      recorded.push({ method: "rpc", args: [name, args] });
+      return Promise.resolve({ data: null, error: null });
+    },
   };
 
   return {
