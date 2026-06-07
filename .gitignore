@@ -41,3 +41,8 @@ pnpm-debug.log*
 # variants under public/icons/ and public/ via the icon-derivation step.
 # See context/changes/pwa-installable/plan.md (Phase 1).
 /public/icons/app_icons/
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
