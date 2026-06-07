@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-06-02 (Phase 1: complete)
+> Last updated: 2026-06-07 (Phase 3: complete)
 
 ## 1. Strategy
 
@@ -53,8 +53,8 @@ Each row is a discrete rollout phase that will open its own change folder via `/
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|------------------|----------------|------------|--------|----------------|
 | 1 | Runner bootstrap + first critical-path unit | Bootstrap Vitest and ship the first unit test on the net worth calculation. | #1 | unit | complete | `context/changes/testing-runner-bootstrap/` |
-| 2 | Critical-path API integration | Integration tests on `/api/assets/[id]/` and `/api/snapshots/`, plus the auth-decision contract on `/api/*`. | #2, #3, #5 | integration (handler + Supabase stub) + contract | implementing | `context/changes/testing-critical-path-api-integration/` |
-| 3 | External API failure & cache integrity | Unit tests on the rates/crypto fetcher and cache read/write for failure paths. | #4, #6 | unit (with `fetch` stub) + small integration on dashboard fallback render | not started | — |
+| 2 | Critical-path API integration | Integration tests on `/api/assets/[id]/` and `/api/snapshots/`, plus the auth-decision contract on `/api/*`. | #2, #3, #5 | integration (handler + Supabase stub) + contract | complete | `context/changes/testing-critical-path-api-integration/` |
+| 3 | External API failure & cache integrity | Unit tests on the rates/crypto fetcher and cache read/write for failure paths. | #4, #6 | unit (with `fetch` stub) + small integration on dashboard fallback render | complete | `context/changes/testing-external-api-failure-cache/` |
 | 4 | Quality-gates wiring | Wire lint + typecheck + Vitest unit/integration into CI; document local run command. | #5 (contract enforced in CI) | CI config | not started | — |
 
 **Why no AI-native phase.** Risks are all deterministic correctness (data, auth, external API failure). The project has no AI surface, and visual snapshot tests are explicitly out of scope (see §7). Classic-only is the right call here.
@@ -143,6 +143,8 @@ How to add new tests in this project. Each sub-section is filled in once the rel
 ### 6.6 Per-rollout-phase notes
 
 **Phase 2 — Critical-path API integration (change: `testing-critical-path-api-integration`).** Shipped 5 per-handler integration tests (Risks #2, #3) plus 1 directory-walking contract test (Risk #5). Shared test seam at `src/test-utils/supabase-mock.ts`. The contract test (`src/pages/api/api-auth-contract.test.ts`) walks `src/pages/api/` recursively and asserts every `.ts` file either calls `supabase.auth.getUser()` or matches the documented public-route regex; `auth/` endpoints are exempt but must call `createClient`. The per-handler tests assert: (a) `.eq("user_id", user.id)` is in the chain for the 5 authenticated handlers; (b) the PUT update payload for `/api/assets/[id]` does NOT contain `user_id` (the structural-property pin for the USING-only RLS gap); (c) the snapshot POST has 6 named scenarios including the lesson §1 worst case (both items insert and compensating delete fail). Documented `vi.mock` exception for `@/lib/exchange-rates` in §6.2. RLS `WITH CHECK` migration shipped under `supabase/migrations/<timestamp>_rls_with_check.sql` to close the USING-only gap at the database layer. **Scope addendum**: `crypto-price.test.ts` ships 3 scenarios (not 2 as the original Phase 2 contract specified) — the third asserts the 400 response when the required `symbol` query parameter is missing. Defensible boundary check; included for completeness.
+
+**Phase 3 — External API failure & cache integrity (change: `testing-external-api-failure-cache`).** Shipped 4 unit scenarios on `getRates` (Risk #4) plus 5 on `getPrice` (Risks #4 + #6), and extended `crypto-price.test.ts` with 2 new scenarios (5xx/4xx → 404 `PRICE_UNAVAILABLE` + no cache write RPC) for a total of 5 handler scenarios. The pattern: `vi.stubGlobal("fetch", vi.fn())` in `beforeEach` and `vi.unstubAllGlobals()` in `afterEach` — the established network shim for unit tests going forward. The precedent lives in `src/lib/exchange-rates.test.ts` (4 scenarios on `getRates`) and `src/lib/crypto-prices.test.ts` (5 scenarios on `getPrice`); any future test that needs to control a network response should follow this pattern, with the fetch stub scoped to `beforeEach`/`afterEach` of the file that needs it. **Mock factory change**: `createSupabaseMock`'s `rpc` now records its call to the shared `recorded` array (was previously a silent `async () => ({ data: null, error: null })`); this is the structural property the Phase 3 scenarios assert against — `recorded.filter((c) => c.method === "rpc").length === 0` for the no-write paths.
 
 ## 7. What We Deliberately Don't Test
 

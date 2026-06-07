@@ -63,4 +63,42 @@ describe("GET /api/crypto-price", () => {
     const response = await GET({ request, cookies: createCookiesStub() } as never);
     expect(response.status).toBe(400);
   });
+
+  it("returns 404 PRICE_UNAVAILABLE when fetch returns 5xx", async () => {
+    const m = createSupabaseMock({ userId: "user-A" });
+    mocks.factory = () => m;
+    mocks.getPrice.mockReset();
+    mocks.getPrice.mockResolvedValue({
+      error: { code: "PRICE_UNAVAILABLE", message: 'Could not fetch price for "BTC"' },
+    });
+
+    const request = new Request("http://localhost/api/crypto-price?symbol=BTC", {
+      headers: { Cookie: "sb-access-token=fake" },
+    });
+    const response = await GET({ request, cookies: createCookiesStub() } as never);
+
+    expect(response.status).toBe(404);
+    const body = (await response.json()) as { error: { code: string } };
+    expect(body.error.code).toBe("PRICE_UNAVAILABLE");
+    expect(m.recorded.filter((c) => c.method === "rpc").length).toBe(0);
+  });
+
+  it("returns 404 PRICE_UNAVAILABLE when fetch returns 4xx", async () => {
+    const m = createSupabaseMock({ userId: "user-A" });
+    mocks.factory = () => m;
+    mocks.getPrice.mockReset();
+    mocks.getPrice.mockResolvedValue({
+      error: { code: "PRICE_UNAVAILABLE", message: 'Could not fetch price for "BTC"' },
+    });
+
+    const request = new Request("http://localhost/api/crypto-price?symbol=BTC", {
+      headers: { Cookie: "sb-access-token=fake" },
+    });
+    const response = await GET({ request, cookies: createCookiesStub() } as never);
+
+    expect(response.status).toBe(404);
+    const body = (await response.json()) as { error: { code: string } };
+    expect(body.error.code).toBe("PRICE_UNAVAILABLE");
+    expect(m.recorded.filter((c) => c.method === "rpc").length).toBe(0);
+  });
 });
