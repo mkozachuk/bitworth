@@ -420,24 +420,24 @@ Wire Playwright into the CI workflow so the e2e gate is enforced on every PR. Th
 
 #### Automated
 
-- [x] 2.1 DOM test passes in test:ci (`npm run test:ci`)
-- [x] 2.2 TypeScript compiles (`npm run typecheck`)
+- [x] 2.1 DOM test passes in test:ci (`npm run test:ci`) — dad59df
+- [x] 2.2 TypeScript compiles (`npm run typecheck`) — dad59df
 
 #### Manual
 
-- [x] 2.3 Verify happy-dom environment active in verbose output
+- [x] 2.3 Verify happy-dom environment active in verbose output — dad59df
 
 ### Phase 3: Playwright E2E Tests
 
 #### Automated
 
-- [ ] 3.1 E2e specs pass (`npm run test:e2e`)
-- [ ] 3.2 TypeScript compiles (`npm run typecheck`)
+- [x] 3.1 E2e specs pass (`npm run test:e2e`)
+- [x] 3.2 TypeScript compiles (`npm run typecheck`)
 
 #### Manual
 
-- [ ] 3.3 Headed run confirms correct browser behavior
-- [ ] 3.4 No stale test data in local Supabase after run
+- [x] 3.3 Headed run confirms correct browser behavior
+- [x] 3.4 No stale test data in local Supabase after run
 
 ### Phase 4: CI Gate + Document Sync
 
