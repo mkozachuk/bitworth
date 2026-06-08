@@ -431,25 +431,25 @@ Wire Playwright into the CI workflow so the e2e gate is enforced on every PR. Th
 
 #### Automated
 
-- [x] 3.1 E2e specs pass (`npm run test:e2e`)
-- [x] 3.2 TypeScript compiles (`npm run typecheck`)
+- [x] 3.1 E2e specs pass (`npm run test:e2e`) — 8ea573f
+- [x] 3.2 TypeScript compiles (`npm run typecheck`) — 8ea573f
 
 #### Manual
 
-- [x] 3.3 Headed run confirms correct browser behavior
-- [x] 3.4 No stale test data in local Supabase after run
+- [x] 3.3 Headed run confirms correct browser behavior — 8ea573f
+- [x] 3.4 No stale test data in local Supabase after run — 8ea573f
 
 ### Phase 4: CI Gate + Document Sync
 
 #### Automated
 
-- [ ] 4.1 TypeScript compiles (`npm run typecheck`)
-- [ ] 4.2 Lint passes (`npm run lint`)
-- [ ] 4.3 Unit/integration tests pass (`npm run test:ci`)
-- [ ] 4.4 E2e tests pass (`npm run test:e2e`)
+- [x] 4.1 TypeScript compiles (`npm run typecheck`)
+- [x] 4.2 Lint passes (`npm run lint`)
+- [x] 4.3 Unit/integration tests pass (`npm run test:ci`)
+- [x] 4.4 E2e tests pass (`npm run test:e2e`)
 
 #### Manual
 
-- [ ] 4.5 Test-plan.md §3/§4/§5/§6.3/§6.6/§6.7/§8 diffs reviewed
-- [ ] 4.6 Lessons.md §4 diff reviewed
-- [ ] 4.7 CI runs full gate including test:e2e on push
+- [x] 4.5 Test-plan.md §3/§4/§5/§6.3/§6.6/§6.7/§8 diffs reviewed
+- [x] 4.6 Lessons.md §4 diff reviewed
+- [x] 4.7 CI runs full gate including test:e2e on push

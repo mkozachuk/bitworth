@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-06-07 (Phase 3: complete)
+> Last updated: 2026-06-08 (Phase 5: complete)
 
 ## 1. Strategy
 
@@ -56,12 +56,13 @@ Each row is a discrete rollout phase that will open its own change folder via `/
 | 2 | Critical-path API integration | Integration tests on `/api/assets/[id]/` and `/api/snapshots/`, plus the auth-decision contract on `/api/*`. | #2, #3, #5 | integration (handler + Supabase stub) + contract | complete | `context/changes/testing-critical-path-api-integration/` |
 | 3 | External API failure & cache integrity | Unit tests on the rates/crypto fetcher and cache read/write for failure paths. | #4, #6 | unit (with `fetch` stub) + small integration on dashboard fallback render | complete | `context/changes/testing-external-api-failure-cache/` |
 | 4 | Quality-gates wiring | Wire lint + typecheck + Vitest unit/integration into CI; document local run command. | #5 (contract enforced in CI) | CI config | complete | `context/changes/testing-quality-gates-wiring/` |
+| 5 | DOM hydration & e2e on critical UI | Install Playwright; ship DOM hydration test + e2e on dashboard total and empty-assets snapshot path | #1 (DOM half), #3 (chart-rendering half) | DOM (happy-dom) + Playwright e2e | complete | `context/changes/test-plan-refresh-2026-06-08/` |
 
 **Why no AI-native phase.** Risks are all deterministic correctness (data, auth, external API failure). The project has no AI surface, and visual snapshot tests are explicitly out of scope (see §7). Classic-only is the right call here.
 
-**Why 4 phases, not 5.** Phase 4 (gates) is the only cross-cutting infrastructure, and §3 stays inside the 3–5 sweet spot.
+**Why 5 phases.** Phase 4 is cross-cutting infrastructure (CI gates); Phase 5 installs DOM + e2e tooling and closes the Phase 1 deferral. §3 stays inside the 3–5 sweet spot.
 
-**Phase 1 deferral — DOM integration test.** The §2 row #1 risk response guidance calls for "a small integration test on the dashboard render of the total" alongside the unit test. The dashboard ships the total from a `client:load` React island (`src/pages/dashboard.astro:45-68`); the formatted dollar figure only appears after hydration. No DOM testing library, no jsdom, no happy-dom is installed, and installing them expands Phase 1 beyond the test-only contract. The integration test is therefore **deferred to a follow-up phase that installs DOM tooling** (likely `@testing-library/react` + `jsdom` or `happy-dom`). The unit test on `computeNetWorth` is the floor; the dashboard render is the ceiling. A future `/10x-test-plan --refresh` that resurfaces this work must respect the deferral — do not silently drop it.
+**Phase 1 deferral — DOM integration test (closed by Phase 5).** The §2 row #1 risk response guidance calls for "a small integration test on the dashboard render of the total" alongside the unit test. The dashboard ships the total from a `client:load` React island (`src/pages/dashboard.astro:45-68`); the formatted dollar figure only appears after hydration. Phase 5 delivered the deferred DOM test using happy-dom + `@testing-library/react` in `src/components/assets/NetWorthDisplay.dom.test.tsx`, plus two Playwright e2e tests covering the hydrated dashboard total and the empty-assets snapshot path.
 
 ## 4. Stack
 
@@ -69,9 +70,10 @@ The classic test base for this project. AI-native tools (if any) carry a `checke
 
 | Layer                | Tool                       | Version | Notes |
 |----------------------|----------------------------|---------|-------|
-| unit + integration   | Vitest                     | ^3.2.6  | Installed by §3 Phase 1. Config at `vitest.config.ts`; `npm run test:run` (one-shot) and `npm run test` (watch). ESM-native, Vite-first, no DOM tooling yet. |
+| unit + integration   | Vitest                     | ^3.2.6  | Installed by §3 Phase 1. Config at `vitest.config.ts`; `npm run test:run` (one-shot) and `npm run test` (watch). ESM-native, Vite-first. |
+| DOM (hydration)      | happy-dom + @testing-library/react | ^20.10.2 / ^16.3.2 | Installed by §3 Phase 5. happy-dom environment via `// @vitest-environment happy-dom` pragma. `*.dom.test.tsx` naming convention. |
 | API mocking          | MSW (Mock Service Worker)  | TBD     | None yet — see Phase 1/2. Mock the network edge only; never mock internal modules. |
-| e2e                  | Playwright                 | TBD     | None yet. No Playwright MCP in current session — defer until a rollout phase needs the full deployed shape. |
+| e2e                  | Playwright                 | ^1.60.0 | Installed by §3 Phase 5. Config at `playwright.config.ts`; Chromium only. `npm run test:e2e`. Tests in `e2e/` directory. |
 | accessibility        | axe-core                   | TBD     | None yet. Optional; only if a UI rollout phase surfaces a regression class. |
 | (optional) AI-native | none                       | n/a     | No AI-native layer in this rollout. |
 
@@ -90,7 +92,7 @@ The full set of gates that must pass before a change reaches production. "Requir
 | lint + typecheck              | local + CI         | enforced (CI gate — Phase 4) | syntactic / type drift                        |
 | unit + integration            | local + CI         | enforced (CI gate — Phase 4) | logic regressions                             |
 | contract on `/api/*` auth     | local + CI         | enforced (CI gate — Phase 4) | new routes shipping without an explicit auth decision |
-| e2e on critical flows         | CI on PR           | planned                      | broken critical user paths (deferred — no Playwright MCP in session) |
+| e2e on critical flows         | local + CI         | enforced (CI gate — Phase 5) | broken critical user paths (dashboard hydration, empty-snapshot) |
 | post-edit hook                | local (agent loop) | recommended                  | regressions at edit time                      |
 | visual diff (deterministic)   | CI on PR           | not used                     | — (out of scope per §7)                       |
 | multimodal visual review      | CI on PR           | not used                     | — (no AI-native phase in this rollout)        |
@@ -118,7 +120,14 @@ How to add new tests in this project. Each sub-section is filled in once the rel
 
 ### 6.3 Adding an e2e test
 
-- TBD — deferred. No Playwright MCP in current session; revisit on the next e2e rollout phase.
+- **Location**: `e2e/` at repo root. One `*.spec.ts` file per feature/flow.
+- **Auth**: per-test user via `e2e/helpers/auth.ts` `createTestUser(page)`. Uses API-based signup+signin (bypasses React hydration). Timestamp + random suffix email for test independence.
+- **Locators**: `getByRole` / `getByText` / `getByLabel` first. Never CSS selectors or XPath.
+- **Waits**: `toBeVisible()`, `waitForResponse()`, `waitForURL()`. Never `waitForTimeout()`.
+- **Test independence**: each test creates its own user, data, and cleanup. No shared state between tests.
+- **CSRF**: Playwright config includes `Origin` header via `extraHTTPHeaders` for Astro's CSRF protection.
+- **Reference tests**: `e2e/dashboard-hydration.spec.ts`, `e2e/empty-snapshot.spec.ts`.
+- **Run locally**: `npm run test:e2e` (requires `supabase start` for local Supabase).
 
 ### 6.4 Adding a test for a new API endpoint
 
@@ -146,6 +155,18 @@ How to add new tests in this project. Each sub-section is filled in once the rel
 
 **Phase 3 — External API failure & cache integrity (change: `testing-external-api-failure-cache`).** Shipped 4 unit scenarios on `getRates` (Risk #4) plus 5 on `getPrice` (Risks #4 + #6), and extended `crypto-price.test.ts` with 2 new scenarios (5xx/4xx → 404 `PRICE_UNAVAILABLE` + no cache write RPC) for a total of 5 handler scenarios. The pattern: `vi.stubGlobal("fetch", vi.fn())` in `beforeEach` and `vi.unstubAllGlobals()` in `afterEach` — the established network shim for unit tests going forward. The precedent lives in `src/lib/exchange-rates.test.ts` (4 scenarios on `getRates`) and `src/lib/crypto-prices.test.ts` (5 scenarios on `getPrice`); any future test that needs to control a network response should follow this pattern, with the fetch stub scoped to `beforeEach`/`afterEach` of the file that needs it. **Mock factory change**: `createSupabaseMock`'s `rpc` now records its call to the shared `recorded` array (was previously a silent `async () => ({ data: null, error: null })`); this is the structural property the Phase 3 scenarios assert against — `recorded.filter((c) => c.method === "rpc").length === 0` for the no-write paths.
 
+**Phase 5 — DOM hydration & e2e on critical UI (change: `test-plan-refresh-2026-06-08`).** Shipped 1 DOM test (2 cases) + 2 Playwright e2e specs. Tooling installed: `happy-dom` (^20.10.2), `@testing-library/react` (^16.3.2), `@playwright/test` (^1.60.0). The DOM test (`src/components/assets/NetWorthDisplay.dom.test.tsx`) verifies the React island renders the correct net worth for mixed-currency assets and for empty assets, using happy-dom via the `// @vitest-environment happy-dom` inline pragma. The e2e tests use an API-based auth helper (`e2e/helpers/auth.ts`) that creates a unique user per test (timestamp + random suffix) via POST to `/api/auth/signup` and `/api/auth/signin`. The dashboard-hydration spec creates known USD assets and asserts the hydrated total matches. The empty-snapshot spec clicks "Save Snapshot" on a fresh account and verifies the resulting snapshot has `total_net_worth: 0`, pinning the current behavior documented in lessons.md §7. Lessons closed: §7 fully (empty-assets behavior pinned by e2e); §6 partially (chart-rendering path exercised). The `environmentMatchGlobs` config was replaced by inline pragmas (Vitest 3.x deprecated the option).
+
+### 6.7 Adding a DOM/hydration test for a React island
+
+- **Location**: co-located with the component, `*.dom.test.tsx` naming.
+- **Environment**: happy-dom via inline pragma `// @vitest-environment happy-dom` at the top of the test file.
+- **Render**: `@testing-library/react` `render()` + `screen` queries. Import `cleanup` from RTL and call in `afterEach`.
+- **Oracle rule**: expected values must be independently hand-derived, not copied from the implementation. See §2 Risk #1 anti-pattern.
+- **Mocking**: mock `fetch` via `vi.stubGlobal("fetch", vi.fn(...))` to prevent network calls from the component's useEffect hooks. Mock `sessionStorage` via `sessionStorage.clear()` in beforeEach.
+- **Reference test**: `src/components/assets/NetWorthDisplay.dom.test.tsx`.
+- **Run locally**: `npm run test:run` (same runner as unit tests, different environment selected by pragma).
+
 ## 7. What We Deliberately Don't Test
 
 Exclusions agreed during the rollout (Phase 2 interview, Q5). Future contributors should respect these unless the underlying assumption changes.
@@ -156,9 +177,9 @@ Exclusions agreed during the rollout (Phase 2 interview, Q5). Future contributor
 
 ## 8. Freshness Ledger
 
-- Strategy (§1–§5) last reviewed: 2026-06-01
-- Stack versions last verified: 2026-06-01
-- AI-native tool references last verified: 2026-06-01
+- Strategy (§1–§5) last reviewed: 2026-06-08
+- Stack versions last verified: 2026-06-08
+- AI-native tool references last verified: 2026-06-08
 
 Refresh (`/10x-test-plan --refresh`) when:
 

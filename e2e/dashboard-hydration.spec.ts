@@ -8,7 +8,8 @@ test("dashboard shows correct net worth total after hydration", async ({ page })
   const { data: categories } = (await categoryRes.json()) as {
     data: { id: string; is_liability: boolean }[];
   };
-  const assetCategory = categories.find((c) => !c.is_liability)!;
+  const assetCategory = categories.find((c) => !c.is_liability);
+  if (!assetCategory) throw new Error("No non-liability category found");
 
   const amounts = [1500, 2500, 1000];
   const assetIds: string[] = [];

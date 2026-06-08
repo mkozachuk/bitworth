@@ -38,9 +38,9 @@
 
 **Problem**: The vitest bootstrap plan claimed Vite 7 auto-resolves tsconfig paths. It does not — the community uses `vite-tsconfig-paths` for it. The single existing test file uses a relative import (`./net-worth`), not the `@/*` alias, so alias resolution is unverified end-to-end. The next test that imports across directories will surface this.
 
-**Rule**:
+**Rule**: Always include `vite-tsconfig-paths` in `vitest.config.ts` when the project uses TypeScript path aliases (`@/*`). Vitest does not auto-resolve tsconfig paths — the plugin is required for any test that imports across directories using the `@/` prefix.
 
-**Applies to**:
+**Applies to**: `vitest.config.ts` and any future Vitest configuration in this project. The plugin is already installed (`vite-tsconfig-paths@^5.1.4`) and configured; this rule prevents accidental removal.
 
 ## RLS USING-only is not enough for write-scope isolation
 
