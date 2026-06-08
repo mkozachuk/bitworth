@@ -1,11 +1,10 @@
 ---
 change_id: test-plan-refresh-2026-06-08
 title: Test plan refresh 2026-06-08 add DOM hydration and Playwright e2e phase 5
-status: implemented
+status: archived
 created: 2026-06-08
 updated: 2026-06-08
-
-archived_at: null
+archived_at: 2026-06-08T03:22:51Z
 ---
 
 ## Notes
