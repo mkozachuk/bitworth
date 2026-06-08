@@ -443,13 +443,13 @@ Wire Playwright into the CI workflow so the e2e gate is enforced on every PR. Th
 
 #### Automated
 
-- [x] 4.1 TypeScript compiles (`npm run typecheck`)
-- [x] 4.2 Lint passes (`npm run lint`)
-- [x] 4.3 Unit/integration tests pass (`npm run test:ci`)
-- [x] 4.4 E2e tests pass (`npm run test:e2e`)
+- [x] 4.1 TypeScript compiles (`npm run typecheck`) — 9a185b6
+- [x] 4.2 Lint passes (`npm run lint`) — 9a185b6
+- [x] 4.3 Unit/integration tests pass (`npm run test:ci`) — 9a185b6
+- [x] 4.4 E2e tests pass (`npm run test:e2e`) — 9a185b6
 
 #### Manual
 
-- [x] 4.5 Test-plan.md §3/§4/§5/§6.3/§6.6/§6.7/§8 diffs reviewed
-- [x] 4.6 Lessons.md §4 diff reviewed
-- [x] 4.7 CI runs full gate including test:e2e on push
+- [x] 4.5 Test-plan.md §3/§4/§5/§6.3/§6.6/§6.7/§8 diffs reviewed — 9a185b6
+- [x] 4.6 Lessons.md §4 diff reviewed — 9a185b6
+- [x] 4.7 CI runs full gate including test:e2e on push — 9a185b6
