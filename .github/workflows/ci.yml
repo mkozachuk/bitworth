@@ -20,6 +20,11 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run test:ci
+      - run: npx playwright install chromium --with-deps
+      - run: npm run test:e2e
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       - run: npm run build
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
