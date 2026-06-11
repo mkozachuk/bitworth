@@ -375,13 +375,13 @@ Adding columns to `user_preferences`: every existing user already has a row (aut
 
 #### Automated
 
-- [x] 4.1 Type checking passes: `npm run typecheck`
-- [x] 4.2 Linting passes: `npm run lint`
-- [x] 4.3 Build succeeds: `npm run build`
-- [x] 4.4 Unit tests pass: `npm run test:run`
+- [x] 4.1 Type checking passes: `npm run typecheck` — 8532748
+- [x] 4.2 Linting passes: `npm run lint` — 8532748
+- [x] 4.3 Build succeeds: `npm run build` — 8532748
+- [x] 4.4 Unit tests pass: `npm run test:run` — 8532748
 
 #### Manual
 
-- [x] 4.5 Chart renders projection + FIRE reference line, updates live
-- [x] 4.6 Never-reaches-FI shows explanatory message, not a broken chart
-- [x] 4.7 Chart legible in light/dark and at mobile widths
+- [x] 4.5 Chart renders projection + FIRE reference line, updates live — 8532748
+- [x] 4.6 Never-reaches-FI shows explanatory message, not a broken chart — 8532748
+- [x] 4.7 Chart legible in light/dark and at mobile widths — 8532748
