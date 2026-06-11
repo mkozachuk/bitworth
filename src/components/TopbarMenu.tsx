@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Menu, LayoutDashboard, FileText, Settings, LogOut } from "lucide-react";
+import { Menu, LayoutDashboard, FileText, Flame, Settings, LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import InstallButton from "@/components/InstallButton";
@@ -53,6 +53,12 @@ export default function TopbarMenu({ user }: Props) {
               <a href="/dashboard/assets" className={itemClass}>
                 <FileText className="size-4" />
                 Assets
+              </a>
+            </DropdownMenu.Item>
+            <DropdownMenu.Item asChild>
+              <a href="/dashboard/fire" className={itemClass}>
+                <Flame className="size-4" />
+                FIRE
               </a>
             </DropdownMenu.Item>
             <DropdownMenu.Item asChild>

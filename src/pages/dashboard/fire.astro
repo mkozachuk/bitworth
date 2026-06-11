@@ -1,0 +1,88 @@
+---
+import Layout from "@/layouts/DashboardLayout.astro";
+import { createClient } from "@/lib/supabase";
+import { getRates } from "@/lib/exchange-rates";
+import { computeNetWorth, type Currency } from "@/lib/net-worth";
+import { FireCalculatorForm } from "@/components/fire/FireCalculatorForm";
+import type { FireInputs } from "@/lib/fire";
+import type { Tables } from "@/lib/database.types";
+
+type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
+
+const { user } = Astro.locals;
+
+if (!user) {
+  return Astro.redirect("/auth/signin");
+}
+
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+const displayCurrency: Currency = Astro.locals.displayCurrency ?? "USD";
+
+const { data: assets } = await supabase.from("assets").select("*, category:asset_categories(*)").eq("user_id", user.id);
+
+const rates = await getRates(supabase);
+
+// First production caller of computeNetWorth (see plan / net-worth.ts). Cast the
+// DB `currency` string to Currency at the boundary per the Currency cast lesson.
+const startingPrincipal = computeNetWorth(
+  ((assets ?? []) as AssetWithCategory[]).map((a) => ({
+    amount: a.amount,
+    currency: a.currency as Currency,
+    category: { is_liability: a.category.is_liability },
+  })),
+  displayCurrency,
+  rates,
+);
+
+const { data: prefs } = await supabase
+  .from("user_preferences")
+  .select(
+    "fire_current_age, fire_annual_income, fire_annual_expenses, fire_expected_return, fire_inflation_rate, fire_safe_withdrawal_rate, fire_starting_principal_override, fire_traditional_retirement_age, fire_barista_income",
+  )
+  .eq("user_id", user.id)
+  .maybeSingle();
+
+// The Supabase typed client resolves chained selects to `any` in .astro
+// frontmatter (same reason settings.astro casts its prefs row), so read the
+// numeric columns through a typed record at the boundary.
+const firePrefs = (prefs ?? {}) as Record<string, number | null>;
+
+// Map persisted columns into Partial<FireInputs>. Nullable columns become
+// undefined so the island falls back to its defaults; the override (when set)
+// seeds the starting principal in place of the computed net worth.
+const initialInputs: Partial<FireInputs> = {
+  currentAge: firePrefs.fire_current_age ?? undefined,
+  annualIncome: firePrefs.fire_annual_income ?? undefined,
+  annualExpenses: firePrefs.fire_annual_expenses ?? undefined,
+  nominalReturn: firePrefs.fire_expected_return ?? undefined,
+  inflationRate: firePrefs.fire_inflation_rate ?? undefined,
+  safeWithdrawalRate: firePrefs.fire_safe_withdrawal_rate ?? undefined,
+  traditionalRetirementAge: firePrefs.fire_traditional_retirement_age ?? undefined,
+  baristaIncome: firePrefs.fire_barista_income ?? undefined,
+  startingPrincipal: firePrefs.fire_starting_principal_override ?? undefined,
+};
+---
+
+<Layout title="FIRE Calculator">
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <h1
+      class="mb-2 bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-3xl font-bold text-transparent dark:from-blue-200 dark:to-purple-200"
+    >
+      FIRE Calculator
+    </h1>
+    <p class="mb-6 text-sm text-zinc-600 dark:text-blue-100/60">
+      Project your path to Financial Independence / Retire Early. Figures are in {displayCurrency} in today's purchasing power.
+    </p>
+
+    <div
+      class="rounded-2xl border border-zinc-200 bg-white/80 p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/10"
+    >
+      <FireCalculatorForm
+        displayCurrency={displayCurrency}
+        startingPrincipal={startingPrincipal}
+        initialInputs={initialInputs}
+        client:load
+      />
+    </div>
+  </div>
+</Layout>

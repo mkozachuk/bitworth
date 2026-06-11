@@ -345,31 +345,31 @@ Adding columns to `user_preferences`: every existing user already has a row (aut
 
 #### Automated
 
-- [x] 2.1 Migration applies cleanly against local Supabase
-- [x] 2.2 Regenerated types compile: `npm run typecheck`
-- [x] 2.3 Handler + lib tests pass: `npm run test:run`
-- [x] 2.4 Linting passes: `npm run lint`
+- [x] 2.1 Migration applies cleanly against local Supabase — 9a0f5ef
+- [x] 2.2 Regenerated types compile: `npm run typecheck` — 9a0f5ef
+- [x] 2.3 Handler + lib tests pass: `npm run test:run` — 9a0f5ef
+- [x] 2.4 Linting passes: `npm run lint` — 9a0f5ef
 
 #### Manual
 
-- [x] 2.5 PUT persists FIRE payload and returns it on reload
-- [x] 2.6 Out-of-range value rejected with correct error shape
+- [x] 2.5 PUT persists FIRE payload and returns it on reload — 9a0f5ef
+- [x] 2.6 Out-of-range value rejected with correct error shape — 9a0f5ef
 
 ### Phase 3: SSR Page + Interactive Form/Results Island
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `npm run typecheck`
-- [ ] 3.2 Linting passes (incl. react-compiler, no-set-html-directive): `npm run lint`
-- [ ] 3.3 Build succeeds: `npm run build`
-- [ ] 3.4 Existing + new unit tests pass: `npm run test:run`
+- [x] 3.1 Type checking passes: `npm run typecheck`
+- [x] 3.2 Linting passes (incl. react-compiler, no-set-html-directive): `npm run lint`
+- [x] 3.3 Build succeeds: `npm run build`
+- [x] 3.4 Existing + new unit tests pass: `npm run test:run`
 
 #### Manual
 
-- [ ] 3.5 Page loads with seeded principal; unauth redirects to signin
-- [ ] 3.6 Editing inputs updates results live (no reload)
-- [ ] 3.7 Save persists; reload shows saved inputs
-- [ ] 3.8 Disclaimer visible; figures labelled today's-money in display currency
+- [x] 3.5 Page loads with seeded principal; unauth redirects to signin
+- [x] 3.6 Editing inputs updates results live (no reload)
+- [x] 3.7 Save persists; reload shows saved inputs
+- [x] 3.8 Disclaimer visible; figures labelled today's-money in display currency
 
 ### Phase 4: Projection Chart Island
 
