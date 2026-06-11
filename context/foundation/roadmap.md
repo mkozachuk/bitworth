@@ -36,7 +36,7 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 | S-06  | mobile-refactor              | use the dashboard, assets, and forms comfortably on phone-sized viewports | F-01, S-01, S-02, S-04 | — | done     |
 | S-07  | asset-list-mobile-reflow    | view and act on every asset in the list on a phone-sized viewport          | F-01, S-01, S-06 | — | done  |
 | S-08  | pwa-installable              | install the app to a phone's home screen and launch it standalone at /dashboard | F-01, S-06, S-07 | — | done  |
-| S-09  | fire-calculator              | project years-to-FI and a FIRE number using current net worth as the starting point | F-01, S-01, S-02, S-05 | — | planned  |
+| S-09  | fire-calculator              | project years-to-FI and a FIRE number using current net worth as the starting point | F-01, S-01, S-02, S-05 | — | done     |
 
 ## Streams
 
@@ -208,7 +208,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Persistence: are FIRE inputs saved per-user or recomputed from defaults each visit? (Owner: planner, by: during `/10x-plan`) Recommendation: persist per-user so the projection is sticky; reuse the `user_preferences` pattern from S-05 (new column(s) or a small `fire_settings` table).
   - Currency: the projection should run entirely in the user's display currency (S-05) — FIRE number and chart axis use the same converted currency as the dashboard. (Owner: planner) Recommendation: yes, single display currency end-to-end.
 - **Risk:** The projection math (compound growth + contributions crossing the FIRE target) is easy to get subtly wrong — off-by-one on compounding periods, mixing nominal/real returns, or mis-deriving the FIRE number from the withdrawal rate. Mitigant: isolate the projection into a pure, unit-tested function (e.g. `src/lib/fire.ts`) with table-driven tests before wiring any UI, and reuse the charting library chosen in S-02 rather than introducing a new one. Secondary risk: presenting a projection as a promise — add a clear "estimate, not financial advice" disclaimer.
-- **Status:** planned
+- **Status:** done
 
 ## Backlog Handoff
 
