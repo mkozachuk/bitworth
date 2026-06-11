@@ -359,29 +359,29 @@ Adding columns to `user_preferences`: every existing user already has a row (aut
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `npm run typecheck`
-- [x] 3.2 Linting passes (incl. react-compiler, no-set-html-directive): `npm run lint`
-- [x] 3.3 Build succeeds: `npm run build`
-- [x] 3.4 Existing + new unit tests pass: `npm run test:run`
+- [x] 3.1 Type checking passes: `npm run typecheck` — 057cefc
+- [x] 3.2 Linting passes (incl. react-compiler, no-set-html-directive): `npm run lint` — 057cefc
+- [x] 3.3 Build succeeds: `npm run build` — 057cefc
+- [x] 3.4 Existing + new unit tests pass: `npm run test:run` — 057cefc
 
 #### Manual
 
-- [x] 3.5 Page loads with seeded principal; unauth redirects to signin
-- [x] 3.6 Editing inputs updates results live (no reload)
-- [x] 3.7 Save persists; reload shows saved inputs
-- [x] 3.8 Disclaimer visible; figures labelled today's-money in display currency
+- [x] 3.5 Page loads with seeded principal; unauth redirects to signin — 057cefc
+- [x] 3.6 Editing inputs updates results live (no reload) — 057cefc
+- [x] 3.7 Save persists; reload shows saved inputs — 057cefc
+- [x] 3.8 Disclaimer visible; figures labelled today's-money in display currency — 057cefc
 
 ### Phase 4: Projection Chart Island
 
 #### Automated
 
-- [ ] 4.1 Type checking passes: `npm run typecheck`
-- [ ] 4.2 Linting passes: `npm run lint`
-- [ ] 4.3 Build succeeds: `npm run build`
-- [ ] 4.4 Unit tests pass: `npm run test:run`
+- [x] 4.1 Type checking passes: `npm run typecheck`
+- [x] 4.2 Linting passes: `npm run lint`
+- [x] 4.3 Build succeeds: `npm run build`
+- [x] 4.4 Unit tests pass: `npm run test:run`
 
 #### Manual
 
-- [ ] 4.5 Chart renders projection + FIRE reference line, updates live
-- [ ] 4.6 Never-reaches-FI shows explanatory message, not a broken chart
-- [ ] 4.7 Chart legible in light/dark and at mobile widths
+- [x] 4.5 Chart renders projection + FIRE reference line, updates live
+- [x] 4.6 Never-reaches-FI shows explanatory message, not a broken chart
+- [x] 4.7 Chart legible in light/dark and at mobile widths

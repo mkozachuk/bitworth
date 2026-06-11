@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Save } from "lucide-react";
 import { ServerError } from "@/components/auth/ServerError";
+import { FireProjectionChart } from "@/components/fire/FireProjectionChart";
 import { computeFireProjection, type FireInputs } from "@/lib/fire";
 
 type Currency = "USD" | "EUR" | "PLN";
@@ -306,6 +307,13 @@ export function FireCalculatorForm({ displayCurrency, startingPrincipal, initial
               All figures are an <strong>estimate, not financial advice</strong>, shown in {displayCurrency} in
               today&apos;s purchasing power (real terms).
             </p>
+
+            <FireProjectionChart
+              projection={result.projection}
+              fireNumber={result.fireNumber}
+              displayCurrency={displayCurrency}
+              retirementAge={result.retirementAge}
+            />
           </>
         )}
       </div>
