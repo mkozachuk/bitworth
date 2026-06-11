@@ -3,7 +3,7 @@ project: "BitWorth"
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-06-03
+updated: 2026-06-11
 prd_version: 1
 main_goal: market-feedback
 top_blocker: capacity
@@ -35,7 +35,8 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 | S-05  | user-settings                | configure display currency and preferences in a settings tab | F-01, S-02    | FR-011            | done     |
 | S-06  | mobile-refactor              | use the dashboard, assets, and forms comfortably on phone-sized viewports | F-01, S-01, S-02, S-04 | — | done     |
 | S-07  | asset-list-mobile-reflow    | view and act on every asset in the list on a phone-sized viewport          | F-01, S-01, S-06 | — | done  |
-| S-08  | pwa-installable              | install the app to a phone's home screen and launch it standalone at /dashboard | F-01, S-06, S-07 | — | planned  |
+| S-08  | pwa-installable              | install the app to a phone's home screen and launch it standalone at /dashboard | F-01, S-06, S-07 | — | done  |
+| S-09  | fire-calculator              | project years-to-FI and a FIRE number using current net worth as the starting point | F-01, S-01, S-02, S-05 | — | planned  |
 
 ## Streams
 
@@ -48,6 +49,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | C      | Dashboard UX  | `F-01` → `S-01` → `S-02` → `S-04`    | Builds on S-02 to complete the dashboard view                     |
 | D      | User settings | `F-01` → `S-05`                       | Parallel branch after S-02; UI for `user_preferences`              |
 | E      | Responsive UI | `F-01` → `S-06` → `S-07` → `S-08`       | S-06/S-07 make the app usable on mobile; S-08 ships it as an installable PWA |
+| F      | FIRE planning | `F-01` → `S-01` → `S-02` → `S-09`       | Projection layer on top of the net-worth number; seeds the starting principal from assets and reuses the S-02 charting lib |
 
 ## Baseline
 
@@ -106,7 +108,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Snapshot auto-save trigger (first-login-of-month vs fixed day-of-month) — Owner: user. Block: no (manual trigger is must-have; auto-save is secondary and can ship with the simpler trigger first).
 - **Risk:** Chart component is not in the baseline. Picking a charting library (Chart.js, Recharts, visx) is a one-time decision that should be made once and applied consistently. NFR §2s-load means chart data must be fetched efficiently, not re-derived on every page load.
-- **Status:** proposed
+- **Status:** done
 
 ### S-04: Dashboard assets summary
 
@@ -176,7 +178,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Offline fallback. The app requires auth + network for all meaningful data. (Owner: planner, by: during `/10x-plan`) Recommendation: ship a minimal offline fallback page (HTML shell + "You're offline" message) served by the SW. Don't try to cache user data — Supabase auth would be invalid anyway.
   - Update strategy. Service workers cache the app shell; stale SW can serve old assets. (Owner: planner, by: during `/10x-plan`) Recommendation: Serwist's default `skipWaiting` + `clientsClaim` is fine here; the data is always fresh from Supabase.
 - **Risk:** Cloudflare Workers must serve `sw.js` with the correct `Service-Worker-Allowed` scope header, or the SW won't control the site. Mitigant: Serwist emits the SW with correct scope by default; verify in `/10x-implement` via DevTools → Application → Service Workers on a deploy preview. Secondary risk: stale SW caches old assets after deploy — mitigated by Serwist's per-build version bump. Tertiary risk: iOS PWA has well-known limitations (no push, no background sync, no fullscreen by default) — out of scope for S-08; noted here for awareness.
-- **Status:** planned
+- **Status:** done
 
 ### S-03: Crypto price fetch on asset entry
 
@@ -191,6 +193,23 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** CoinGecko free tier has rate limits. If the user has many crypto assets, concurrent fetches can hit the limit. Mitigant: debounce fetches, cache aggressively per the FR-020 fallback requirement.
 - **Status:** done
 
+### S-09: FIRE calculator
+
+- **Outcome:** user opens a FIRE (Financial Independence / Retire Early) calculator that takes their current net worth as the starting point and projects how their wealth grows over time — given target annual expenses, a safe withdrawal rate, an expected return, and ongoing contributions — surfacing their FIRE number (target net worth) and estimated years-to-FI, with a projection chart.
+- **Change ID:** `fire-calculator`
+- **PRD refs:** — (post-MVP extension; was a PRD §Non-Goal, promoted by user decision 2026-06-11 — the PRD §Non-Goals section should be updated to reflect this scope change)
+- **Prerequisites:** `F-01`, `S-01`, `S-02`, `S-05`
+- **Parallel with:** —
+- **Blockers:** —
+- **Unknowns:**
+  - Starting point: prefill from live current net worth (sum of assets, converted) vs. let the user override it. (Owner: planner, by: during `/10x-plan`) Recommendation: prefill from current net worth and allow override — keeps the "assets as starting point" wedge while letting users model hypotheticals.
+  - Input set: which parameters to expose. Minimum viable: target annual expenses, safe withdrawal rate (default 4%), expected annual return, and annual/monthly contributions. (Owner: user, by: before S-09 planning) Recommendation: ship those four; defer a separate inflation field and variable-return modeling.
+  - Returns model: real vs. nominal returns and whether to model inflation separately. (Owner: planner, by: during `/10x-plan`) Recommendation: a single real-return input (return net of inflation) for v1 — simplest correct model, avoids a second field users will mis-set.
+  - Persistence: are FIRE inputs saved per-user or recomputed from defaults each visit? (Owner: planner, by: during `/10x-plan`) Recommendation: persist per-user so the projection is sticky; reuse the `user_preferences` pattern from S-05 (new column(s) or a small `fire_settings` table).
+  - Currency: the projection should run entirely in the user's display currency (S-05) — FIRE number and chart axis use the same converted currency as the dashboard. (Owner: planner) Recommendation: yes, single display currency end-to-end.
+- **Risk:** The projection math (compound growth + contributions crossing the FIRE target) is easy to get subtly wrong — off-by-one on compounding periods, mixing nominal/real returns, or mis-deriving the FIRE number from the withdrawal rate. Mitigant: isolate the projection into a pure, unit-tested function (e.g. `src/lib/fire.ts`) with table-driven tests before wiring any UI, and reuse the charting library chosen in S-02 rather than introducing a new one. Secondary risk: presenting a projection as a promise — add a clear "estimate, not financial advice" disclaimer.
+- **Status:** planned
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID                    | Suggested issue title                      | Ready for `/10x-plan` | Notes                                              |
@@ -204,19 +223,20 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-06      | mobile-refactor              | Mobile: responsive UI pass (nav, buttons, forms) | yes                   | depends on S-02; refactor of all authed pages |
 | S-07      | asset-list-mobile-reflow    | AssetList: reflow table to cards on mobile  | yes                   | depends on S-06; data-list reflow deferred from S-06 |
 | S-08      | pwa-installable              | PWA: installable mobile app via @serwist/astro | yes                   | depends on S-06+S-07; installable shell on top of mobile-UI pass |
+| S-09      | fire-calculator              | FIRE calculator: project years-to-FI from current net worth | yes                   | depends on S-01/S-02/S-05; current net worth seeds the starting principal; was a PRD non-goal, promoted 2026-06-11 |
 
 ## Open Roadmap Questions
 
-1. **Exchange rate API** — Which free public API for exchange rates? (Owner: user, by: before F-01) Popular options: frankfurter.app, exchangerate.host, Open Exchange Rates.
+1. **Exchange rate API** — Which free public API for exchange rates? (Owner: user, by: before F-01) Resolved: frankfurter.app (free, no key) — implemented in `src/lib/exchange-rates.ts`.
 2. **Crypto price API** — Which free public API for crypto prices? (Owner: user, by: before F-01) Resolved: Binance avgPrice API — CoinGecko returns 403 from Cloudflare Workers at runtime; Binance works without auth.
 3. **Snapshot auto-save trigger** — Should auto-save trigger on first login each calendar month, or on a fixed day-of-month (e.g., 1st)? (Owner: user, by: before S-02) Manual trigger (FR-017) ships regardless.
-4. **Display currency persistence** — Does the display currency preference persist per user across sessions? (Owner: user, by: before F-01) Recommended: yes, per-user in `user_preferences` table.
+4. **Display currency persistence** — Does the display currency preference persist per user across sessions? (Owner: user, by: before F-01) Resolved: yes, per-user in `user_preferences` table; configurable via the settings tab (S-05).
 5. **Demo mode scope** — Demo mode is nice-to-have per PRD. If time permits, what sample data should it include? (Owner: user, by: before S-02) Parked for now.
 
 ## Parked
 
 - **Demo mode (FR-002)** — Marked nice-to-have in PRD. Won't be built in the main plan; revisit after S-02 ships if time allows.
-- **FIRE calculator** — Non-goal per PRD §Non-Goals.
+- **FIRE calculator** — Was a PRD §Non-Goal; promoted to a planned slice (**S-09**) on 2026-06-11 per user decision. Uses current net worth as the projection starting point. The PRD §Non-Goals section should be updated to reflect this scope change.
 - **Bank/broker integrations** — Non-goal per PRD §Non-Goals.
 - **Data export (PDF, CSV)** — Non-goal per PRD §Non-Goals.
 - **Native mobile app** — Non-goal per PRD §Non-Goals.
@@ -233,3 +253,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **S-05: User settings** — Implemented 2026-06-03 → `context/changes/user-settings/`. Lessons: —.
 - **S-06: Mobile refactor** — Implemented 2026-06-03 → `context/changes/mobile-refactor/`. Lessons: —.
 - **S-07: AssetList mobile reflow** — Implemented 2026-06-03 → `context/changes/asset-list-mobile-reflow/`. Lessons: —.
+- **S-08: PWA / installable mobile app** — Implemented 2026-06-04 → `context/changes/pwa-installable/`. Note: hand-rolled `vite-plugin-pwa@1.3.0` as a custom Astro integration (avoids `@serwist/astro` preview dep); manifest + service worker + offline shell + Android/iOS install UX. Lessons: —.
