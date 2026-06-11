@@ -332,28 +332,28 @@ Adding columns to `user_preferences`: every existing user already has a row (aut
 
 #### Automated
 
-- [x] 1.1 Unit tests pass: `npm run test:run`
-- [x] 1.2 Type checking passes: `npm run typecheck`
-- [x] 1.3 Linting passes: `npm run lint`
+- [x] 1.1 Unit tests pass: `npm run test:run` — 69c50e7
+- [x] 1.2 Type checking passes: `npm run typecheck` — 69c50e7
+- [x] 1.3 Linting passes: `npm run lint` — 69c50e7
 
 #### Manual
 
-- [x] 1.4 Hand-worked example matches a spreadsheet to the year
-- [x] 1.5 Unreachable case returns `null` rather than hanging/overflowing
+- [x] 1.4 Hand-worked example matches a spreadsheet to the year — 69c50e7
+- [x] 1.5 Unreachable case returns `null` rather than hanging/overflowing — 69c50e7
 
 ### Phase 2: Persistence — Schema, Types, API
 
 #### Automated
 
-- [ ] 2.1 Migration applies cleanly against local Supabase
-- [ ] 2.2 Regenerated types compile: `npm run typecheck`
-- [ ] 2.3 Handler + lib tests pass: `npm run test:run`
-- [ ] 2.4 Linting passes: `npm run lint`
+- [x] 2.1 Migration applies cleanly against local Supabase
+- [x] 2.2 Regenerated types compile: `npm run typecheck`
+- [x] 2.3 Handler + lib tests pass: `npm run test:run`
+- [x] 2.4 Linting passes: `npm run lint`
 
 #### Manual
 
-- [ ] 2.5 PUT persists FIRE payload and returns it on reload
-- [ ] 2.6 Out-of-range value rejected with correct error shape
+- [x] 2.5 PUT persists FIRE payload and returns it on reload
+- [x] 2.6 Out-of-range value rejected with correct error shape
 
 ### Phase 3: SSR Page + Interactive Form/Results Island
 

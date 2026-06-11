@@ -236,6 +236,15 @@ export interface Database {
         Row: {
           created_at: string;
           display_currency: string;
+          fire_annual_expenses: number | null;
+          fire_annual_income: number | null;
+          fire_barista_income: number | null;
+          fire_current_age: number | null;
+          fire_expected_return: number | null;
+          fire_inflation_rate: number | null;
+          fire_safe_withdrawal_rate: number;
+          fire_starting_principal_override: number | null;
+          fire_traditional_retirement_age: number;
           theme: string;
           updated_at: string;
           user_id: string;
@@ -243,6 +252,15 @@ export interface Database {
         Insert: {
           created_at?: string;
           display_currency?: string;
+          fire_annual_expenses?: number | null;
+          fire_annual_income?: number | null;
+          fire_barista_income?: number | null;
+          fire_current_age?: number | null;
+          fire_expected_return?: number | null;
+          fire_inflation_rate?: number | null;
+          fire_safe_withdrawal_rate?: number;
+          fire_starting_principal_override?: number | null;
+          fire_traditional_retirement_age?: number;
           theme?: string;
           updated_at?: string;
           user_id: string;
@@ -250,6 +268,15 @@ export interface Database {
         Update: {
           created_at?: string;
           display_currency?: string;
+          fire_annual_expenses?: number | null;
+          fire_annual_income?: number | null;
+          fire_barista_income?: number | null;
+          fire_current_age?: number | null;
+          fire_expected_return?: number | null;
+          fire_inflation_rate?: number | null;
+          fire_safe_withdrawal_rate?: number;
+          fire_starting_principal_override?: number | null;
+          fire_traditional_retirement_age?: number;
           theme?: string;
           updated_at?: string;
           user_id?: string;

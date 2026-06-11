@@ -169,3 +169,123 @@ describe("PUT /api/user-preferences", () => {
     expect(payload).not.toHaveProperty("theme");
   });
 });
+
+describe("PUT /api/user-preferences — FIRE fields", () => {
+  const fireRow = {
+    display_currency: "USD",
+    theme: "system",
+    fire_current_age: 30,
+    fire_annual_income: 80000,
+    fire_annual_expenses: 40000,
+    fire_expected_return: 0.07,
+    fire_inflation_rate: 0.03,
+    fire_safe_withdrawal_rate: 0.04,
+    fire_starting_principal_override: null,
+    fire_traditional_retirement_age: 65,
+    fire_barista_income: null,
+  };
+
+  it("upserts a valid FIRE payload and echoes it back", async () => {
+    const m = createSupabaseMock({
+      userId: userA,
+      tableResults: { user_preferences: { data: fireRow, error: null } },
+    });
+    mocks.factory = () => m;
+
+    const request = makeJsonRequest("http://localhost/api/user-preferences", {
+      fire_current_age: 30,
+      fire_annual_income: 80000,
+      fire_annual_expenses: 40000,
+      fire_expected_return: 0.07,
+      fire_inflation_rate: 0.03,
+      fire_safe_withdrawal_rate: 0.04,
+      fire_traditional_retirement_age: 65,
+    });
+    const response = await PUT({ request, cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { data: typeof fireRow };
+    expect(body.data).toEqual(fireRow);
+
+    // The validated FIRE fields appear in the upsert payload alongside user_id.
+    const upsertCall = m.recorded.find((c) => c.method === "upsert");
+    const payload = upsertCall?.args[0] as Record<string, unknown>;
+    expect(payload.fire_annual_income).toBe(80000);
+    expect(payload.fire_safe_withdrawal_rate).toBe(0.04);
+    expect(payload.user_id).toBe(userA);
+    // Defense-in-depth: the .eq('user_id') filter is still pinned (lessons §4).
+    expect(findCall(m.recorded, "eq", ["user_id", userA])).toBeDefined();
+  });
+
+  it("rejects an out-of-range rate with VALIDATION_ERROR and names the field", async () => {
+    const m = createSupabaseMock({ userId: userA });
+    mocks.factory = () => m;
+
+    const request = makeJsonRequest("http://localhost/api/user-preferences", { fire_safe_withdrawal_rate: 1.5 });
+    const response = await PUT({ request, cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(400);
+    const body = (await response.json()) as { error: { code: string; message: string } };
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+    expect(body.error.message).toMatch(/fire_safe_withdrawal_rate/);
+  });
+
+  it("rejects a zero safe withdrawal rate (strictly > 0)", async () => {
+    const m = createSupabaseMock({ userId: userA });
+    mocks.factory = () => m;
+
+    const request = makeJsonRequest("http://localhost/api/user-preferences", { fire_safe_withdrawal_rate: 0 });
+    const response = await PUT({ request, cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(400);
+    const body = (await response.json()) as { error: { code: string; message: string } };
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+    expect(body.error.message).toMatch(/fire_safe_withdrawal_rate/);
+  });
+
+  it("rejects traditional retirement age <= current age", async () => {
+    const m = createSupabaseMock({ userId: userA });
+    mocks.factory = () => m;
+
+    const request = makeJsonRequest("http://localhost/api/user-preferences", {
+      fire_current_age: 40,
+      fire_traditional_retirement_age: 30,
+    });
+    const response = await PUT({ request, cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(400);
+    const body = (await response.json()) as { error: { code: string; message: string } };
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+    expect(body.error.message).toMatch(/fire_traditional_retirement_age/);
+  });
+
+  it("rejects a non-integer age", async () => {
+    const m = createSupabaseMock({ userId: userA });
+    mocks.factory = () => m;
+
+    const request = makeJsonRequest("http://localhost/api/user-preferences", { fire_current_age: 30.5 });
+    const response = await PUT({ request, cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(400);
+    const body = (await response.json()) as { error: { code: string; message: string } };
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+    expect(body.error.message).toMatch(/fire_current_age/);
+  });
+
+  it("accepts a partial FIRE payload and writes only the supplied fields", async () => {
+    const m = createSupabaseMock({
+      userId: userA,
+      tableResults: { user_preferences: { data: { ...fireRow, fire_annual_income: 90000 }, error: null } },
+    });
+    mocks.factory = () => m;
+
+    const request = makeJsonRequest("http://localhost/api/user-preferences", { fire_annual_income: 90000 });
+    const response = await PUT({ request, cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(200);
+
+    const upsertCall = m.recorded.find((c) => c.method === "upsert");
+    const payload = upsertCall?.args[0] as Record<string, unknown>;
+    expect(payload.fire_annual_income).toBe(90000);
+    expect(payload.user_id).toBe(userA);
+    // No other FIRE field, currency, or theme is clobbered on a partial write.
+    expect(payload).not.toHaveProperty("fire_annual_expenses");
+    expect(payload).not.toHaveProperty("fire_safe_withdrawal_rate");
+    expect(payload).not.toHaveProperty("display_currency");
+    expect(payload).not.toHaveProperty("theme");
+  });
+});
