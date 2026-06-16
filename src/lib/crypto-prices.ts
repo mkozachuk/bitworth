@@ -67,44 +67,18 @@ async function getCoinId(supabase: SupabaseClient, symbol: string): Promise<stri
   return lookupCoinIdViaApi(symbol);
 }
 
-async function fetchFromCoinGecko(coinId: string): Promise<number | null> {
-  // Binance public API — works without auth, no CORS issues from Cloudflare Workers
-  const symbolMap: Record<string, string> = {
-    bitcoin: "BTCUSDT",
-    ethereum: "ETHUSDT",
-    binancecoin: "BNBUSDT",
-    solana: "SOLUSDT",
-    ripple: "XRPUSDT",
-    cardano: "ADAUSDT",
-    avalanche: "AVAXUSDT",
-    dogecoin: "DOGEUSDT",
-    tron: "TRXUSDT",
-    polkadot: "DOTUSDT",
-    chainlink: "LINKUSDT",
-    "matic-network": "MATICUSDT",
-    "shiba-inu": "SHIBUSDT",
-    litecoin: "LTCUSDT",
-    "bitcoin-cash": "BCHUSDT",
-    uniswap: "UNIUSDT",
-    cosmos: "ATOMUSDT",
-    stellar: "XLMUSDT",
-    near: "NEARUSDT",
-    aptos: "APTUSDT",
-    arbitrum: "ARBUSDT",
-    optimism: "OPUSDT",
-    pepe: "PEPEUSDT",
-  };
-
-  const binanceSymbol = symbolMap[coinId];
-  const url = binanceSymbol
-    ? `https://api.binance.com/api/v3/avgPrice?symbol=${binanceSymbol}`
-    : `https://api.binance.com/api/v3/avgPrice?symbol=${coinId.toUpperCase()}USDT`;
+async function fetchLivePrice(coinId: string): Promise<number | null> {
+  // CoinGecko simple/price — keyed by the resolved coin id (e.g. "bitcoin"), so it
+  // sidesteps ticker→pair mapping entirely. Unlike Binance, CoinGecko is reachable
+  // from Cloudflare Workers egress IPs (Binance returns HTTP 451 from datacenter /
+  // US regions, which surfaced in the app as "Price unavailable").
+  const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(coinId)}&vs_currencies=usd`;
 
   const res = await fetch(url);
   if (!res.ok) return null;
-  const json = (await res.json()) as { price?: string };
-  const price = parseFloat(json.price ?? "");
-  return isNaN(price) ? null : price;
+  const json = (await res.json()) as Record<string, { usd?: number }>;
+  const price = json[coinId]?.usd;
+  return typeof price === "number" && !isNaN(price) ? price : null;
 }
 
 async function getCachedPrice(
@@ -158,7 +132,7 @@ export async function getPrice(
     };
   }
 
-  const fetchedPrice = await fetchFromCoinGecko(coinId);
+  const fetchedPrice = await fetchLivePrice(coinId);
   if (fetchedPrice !== null) {
     await upsertCache(supabase, coinId, upper, fetchedPrice);
     return { price: fetchedPrice, isCached: false, fetchedAt: new Date().toISOString() };
