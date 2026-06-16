@@ -76,7 +76,7 @@ async function fetchLivePrice(coinId: string): Promise<number | null> {
 
   const res = await fetch(url);
   if (!res.ok) return null;
-  const json = (await res.json()) as Record<string, { usd?: number }>;
+  const json = (await res.json()) as Record<string, { usd?: number } | undefined>;
   const price = json[coinId]?.usd;
   return typeof price === "number" && !isNaN(price) ? price : null;
 }
