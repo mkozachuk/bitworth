@@ -108,7 +108,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Parallel with:** `S-03`
 - **Blockers:** —
 - **Unknowns:**
-  - Snapshot auto-save trigger (first-login-of-month vs fixed day-of-month) — Owner: user. Block: no (manual trigger is must-have; auto-save is secondary and can ship with the simpler trigger first).
+  - Snapshot auto-save trigger (first-login-of-month vs fixed day-of-month) — **Resolved 2026-06-16: auto-save (FR-016) dropped; manual trigger (FR-017) is the snapshot mechanism. Issue #8 closed.**
 - **Risk:** Chart component is not in the baseline. Picking a charting library (Chart.js, Recharts, visx) is a one-time decision that should be made once and applied consistently. NFR §2s-load means chart data must be fetched efficiently, not re-derived on every page load.
 - **Status:** done
 
@@ -247,13 +247,14 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 1. **Exchange rate API** — Which free public API for exchange rates? (Owner: user, by: before F-01) Resolved: frankfurter.app (free, no key) — implemented in `src/lib/exchange-rates.ts`.
 2. **Crypto price API** — Which free public API for crypto prices? (Owner: user, by: before F-01) Resolved: Binance avgPrice API — CoinGecko returns 403 from Cloudflare Workers at runtime; Binance works without auth.
-3. **Snapshot auto-save trigger** — Should auto-save trigger on first login each calendar month, or on a fixed day-of-month (e.g., 1st)? (Owner: user, by: before S-02) Manual trigger (FR-017) ships regardless.
+3. **Snapshot auto-save trigger** — Should auto-save trigger on first login each calendar month, or on a fixed day-of-month (e.g., 1st)? (Owner: user, by: before S-02) **Closed 2026-06-16:** moot — auto-save (FR-016) dropped; staying with the manual snapshot trigger (FR-017, shipped in S-02). Issue #8 closed (not planned).
 4. **Display currency persistence** — Does the display currency preference persist per user across sessions? (Owner: user, by: before F-01) Resolved: yes, per-user in `user_preferences` table; configurable via the settings tab (S-05).
-5. **Demo mode scope** — Demo mode is nice-to-have per PRD. If time permits, what sample data should it include? (Owner: user, by: before S-02) Parked for now.
+5. **Demo mode scope** — Demo mode is nice-to-have per PRD. If time permits, what sample data should it include? (Owner: user, by: before S-02) **Closed 2026-06-16:** demo mode dropped entirely; will not be built. Resolved as "skip entirely." Issue #10 closed (not planned).
 
 ## Parked
 
-- **Demo mode (FR-002)** — Marked nice-to-have in PRD. Won't be built in the main plan; revisit after S-02 ships if time allows.
+- **Demo mode (FR-002)** — **Dropped 2026-06-16.** Will not be built (MVP or post-MVP). Resolved as "skip entirely"; decision recorded in issue #10 (closed, not planned).
+- **Snapshot auto-save (FR-016)** — **Dropped 2026-06-16.** The manual snapshot trigger (FR-017, shipped in S-02) is the snapshot mechanism; auto-save will not be built. The first-login-of-month vs fixed-day-of-month question is moot. Decision recorded in issue #8 (closed, not planned); revisit only if auto-save is ever picked up.
 - **FIRE calculator** — Was a PRD §Non-Goal; promoted to a planned slice (**S-09**) on 2026-06-11 per user decision. Uses current net worth as the projection starting point. The PRD §Non-Goals section should be updated to reflect this scope change.
 - **Bank/broker integrations** — Non-goal per PRD §Non-Goals.
 - **Data export (PDF, CSV)** — Non-goal per PRD §Non-Goals.
