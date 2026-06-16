@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { CircleAlert } from "lucide-react";
 import type { Tables } from "@/lib/database.types";
+import { categoryEmoji } from "@/lib/category-icons";
 
 interface Props {
   value: string;
@@ -61,8 +62,7 @@ export function CategorySelect({ value, onChange, error }: Props) {
               <optgroup label="Assets">
                 {assets.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.icon ? `${c.icon} ` : ""}
-                    {c.name}
+                    {[categoryEmoji(c.icon), c.name].filter(Boolean).join(" ")}
                   </option>
                 ))}
               </optgroup>
@@ -71,8 +71,7 @@ export function CategorySelect({ value, onChange, error }: Props) {
               <optgroup label="Liabilities">
                 {liabilities.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.icon ? `${c.icon} ` : ""}
-                    {c.name}
+                    {[categoryEmoji(c.icon), c.name].filter(Boolean).join(" ")}
                   </option>
                 ))}
               </optgroup>
