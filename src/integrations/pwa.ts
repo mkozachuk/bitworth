@@ -46,7 +46,7 @@ export default function pwa(): AstroIntegration {
               {
                 urlPattern: ({ url }) =>
                   url.pathname.startsWith("/icons/") ||
-                  url.pathname === "/favicon.png" ||
+                  url.pathname.startsWith("/favicon") ||
                   url.pathname === "/apple-touch-icon.png",
                 handler: "CacheFirst",
                 options: {
