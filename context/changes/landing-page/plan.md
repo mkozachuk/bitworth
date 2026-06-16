@@ -183,13 +183,13 @@ None of note — the page remains a static `.astro` render with no new JS, no Re
 
 #### Automated
 
-- [x] 2.1 Build passes: `npm run build`
-- [x] 2.2 Linting passes: `npm run lint`
-- [x] 2.3 Four value-prop cards render
+- [x] 2.1 Build passes: `npm run build` — 7fe9b3b
+- [x] 2.2 Linting passes: `npm run lint` — 7fe9b3b
+- [x] 2.3 Four value-prop cards render — 7fe9b3b
 
 #### Manual
 
-- [x] 2.4 Four value props render with distinct icons and copy in both themes
-- [x] 2.5 Grid reflows 1/2/4 cols across mobile/tablet/desktop
-- [x] 2.6 Closing CTA band renders and CTA links route correctly
-- [x] 2.7 Page reads as a coherent BitWorth marketing page, no starter remnants
+- [x] 2.4 Four value props render with distinct icons and copy in both themes — 7fe9b3b
+- [x] 2.5 Grid reflows 1/2/4 cols across mobile/tablet/desktop — 7fe9b3b
+- [x] 2.6 Closing CTA band renders and CTA links route correctly — 7fe9b3b
+- [x] 2.7 Page reads as a coherent BitWorth marketing page, no starter remnants — 7fe9b3b
