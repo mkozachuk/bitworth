@@ -95,7 +95,11 @@ describe("getPrice", () => {
     const result = await getPrice(asClient(m.client), "BTC");
 
     expect(result).toEqual({
-      error: { code: "PRICE_UNAVAILABLE", message: 'Could not fetch price for "BTC"' },
+      error: {
+        code: "PRICE_UNAVAILABLE",
+        message: 'Could not fetch price for "BTC"',
+        context: { coinId: "bitcoin", upstreamStatus: 503 },
+      },
     });
     expect(m.recorded.filter((c) => c.method === "rpc").length).toBe(0);
   });

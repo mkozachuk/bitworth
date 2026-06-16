@@ -1,6 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { COINGECKO_API_KEY } from "astro:env/server";
 
 const CACHE_TTL_SECONDS = 3600;
+
+// CoinGecko's keyless public API is rate-limited per source IP. Cloudflare Workers
+// egress shares datacenter IPs across all tenants, so keyless calls get 429'd
+// constantly (surfacing as PRICE_UNAVAILABLE / 404). A free Demo key is rate-limited
+// per-key instead, sidestepping the shared-IP throttle. Sent via header so it never
+// lands in URLs, cache keys, or logs.
+const cgHeaders: HeadersInit = COINGECKO_API_KEY ? { "x-cg-demo-api-key": COINGECKO_API_KEY } : {};
 
 // Hardcoded coin ID map for top coins
 const COIN_ID_MAP: Record<string, string> = {
@@ -54,7 +62,9 @@ interface CoinListEntry {
 }
 
 async function lookupCoinIdViaApi(symbol: string): Promise<string | null> {
-  const res = await fetch("https://api.coingecko.com/api/v3/coins/list?include_platform=false");
+  const res = await fetch("https://api.coingecko.com/api/v3/coins/list?include_platform=false", {
+    headers: cgHeaders,
+  });
   if (!res.ok) return null;
   const coins = (await res.json()) as CoinListEntry[];
   const match = coins.find((c) => c.symbol.toLowerCase() === symbol.toLowerCase());
@@ -67,18 +77,20 @@ async function getCoinId(supabase: SupabaseClient, symbol: string): Promise<stri
   return lookupCoinIdViaApi(symbol);
 }
 
-async function fetchLivePrice(coinId: string): Promise<number | null> {
+type LivePriceResult = { price: number } | { upstreamStatus?: number };
+
+async function fetchLivePrice(coinId: string): Promise<LivePriceResult> {
   // CoinGecko simple/price — keyed by the resolved coin id (e.g. "bitcoin"), so it
   // sidesteps ticker→pair mapping entirely. Unlike Binance, CoinGecko is reachable
   // from Cloudflare Workers egress IPs (Binance returns HTTP 451 from datacenter /
   // US regions, which surfaced in the app as "Price unavailable").
   const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(coinId)}&vs_currencies=usd`;
 
-  const res = await fetch(url);
-  if (!res.ok) return null;
+  const res = await fetch(url, { headers: cgHeaders });
+  if (!res.ok) return { upstreamStatus: res.status };
   const json = (await res.json()) as Record<string, { usd?: number } | undefined>;
   const price = json[coinId]?.usd;
-  return typeof price === "number" && !isNaN(price) ? price : null;
+  return typeof price === "number" && !isNaN(price) ? { price } : {};
 }
 
 async function getCachedPrice(
@@ -111,7 +123,7 @@ async function upsertCache(supabase: SupabaseClient, coinId: string, symbol: str
 export async function getPrice(
   supabase: SupabaseClient,
   symbol: string,
-): Promise<PriceResult | { error: { code: string; message: string } }> {
+): Promise<PriceResult | { error: { code: string; message: string; context?: unknown } }> {
   const upper = symbol.toUpperCase().trim();
   if (!upper) {
     return { error: { code: "INVALID_SYMBOL", message: "Symbol is required" } };
@@ -132,11 +144,17 @@ export async function getPrice(
     };
   }
 
-  const fetchedPrice = await fetchLivePrice(coinId);
-  if (fetchedPrice !== null) {
-    await upsertCache(supabase, coinId, upper, fetchedPrice);
-    return { price: fetchedPrice, isCached: false, fetchedAt: new Date().toISOString() };
+  const fetched = await fetchLivePrice(coinId);
+  if ("price" in fetched) {
+    await upsertCache(supabase, coinId, upper, fetched.price);
+    return { price: fetched.price, isCached: false, fetchedAt: new Date().toISOString() };
   }
 
-  return { error: { code: "PRICE_UNAVAILABLE", message: `Could not fetch price for "${upper}"` } };
+  return {
+    error: {
+      code: "PRICE_UNAVAILABLE",
+      message: `Could not fetch price for "${upper}"`,
+      context: { coinId, upstreamStatus: fetched.upstreamStatus },
+    },
+  };
 }

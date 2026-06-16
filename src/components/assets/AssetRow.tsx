@@ -1,6 +1,7 @@
 import { Pencil, Trash2 } from "lucide-react";
 import { CurrencyBadge } from "./CurrencyBadge";
 import type { Tables } from "@/lib/database.types";
+import { categoryEmoji } from "@/lib/category-icons";
 import { convertAmount, type Currency } from "@/lib/net-worth";
 
 type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
@@ -51,7 +52,7 @@ export function AssetRow({ asset, onDelete, displayCurrency, rates }: Props) {
       </td>
       <td className="py-3 pr-4">
         <div className="flex items-center gap-1.5 text-sm text-zinc-700 dark:text-white/70">
-          {asset.category.icon && <span>{asset.category.icon}</span>}
+          {categoryEmoji(asset.category.icon) && <span>{categoryEmoji(asset.category.icon)}</span>}
           <span>{asset.category.name}</span>
           {asset.category.is_liability && <span className="text-xs text-red-600 dark:text-red-300">(liability)</span>}
         </div>
