@@ -52,7 +52,7 @@ describe("getPrice", () => {
       },
     });
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-      new Response(JSON.stringify({ price: "50000" }), { status: 200 }),
+      new Response(JSON.stringify({ bitcoin: { usd: 50000 } }), { status: 200 }),
     );
 
     const result = await getPrice(asClient(m.client), "BTC");
@@ -69,7 +69,7 @@ describe("getPrice", () => {
       },
     });
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-      new Response(JSON.stringify({ price: "50000" }), { status: 200 }),
+      new Response(JSON.stringify({ bitcoin: { usd: 50000 } }), { status: 200 }),
     );
 
     const result = await getPrice(asClient(m.client), "BTC");
@@ -111,5 +111,38 @@ describe("getPrice", () => {
 
     await expect(getPrice(asClient(m.client), "BTC")).rejects.toThrow();
     expect(m.recorded.filter((c) => c.method === "rpc").length).toBe(0);
+  });
+
+  // Regression: prod showed "Price unavailable" for BTC/ETH because the price was
+  // fetched from Binance, which geo-blocks Cloudflare Workers egress (HTTP 451).
+  // Prices must come from CoinGecko's simple/price, keyed by the resolved coin id.
+  it.each([
+    { symbol: "BTC", coinId: "bitcoin", price: 66000 },
+    { symbol: "ETH", coinId: "ethereum", price: 3200 },
+  ])("returns a live CoinGecko price for $symbol", async ({ symbol, coinId, price }) => {
+    const m = createSupabaseMock({
+      userId: null,
+      tableResults: {
+        crypto_price_cache: { data: null, error: null },
+      },
+    });
+    const mockFetch = fetch as ReturnType<typeof vi.fn>;
+    mockFetch.mockResolvedValue(new Response(JSON.stringify({ [coinId]: { usd: price } }), { status: 200 }));
+
+    const result = await getPrice(asClient(m.client), symbol);
+
+    expect(result).toMatchObject({ price, isCached: false });
+    // Price must come from CoinGecko (keyed by coin id), never the geo-blocked Binance.
+    const requestedUrl = String(mockFetch.mock.calls[0][0]);
+    expect(requestedUrl).toContain("api.coingecko.com");
+    expect(requestedUrl).toContain(`ids=${coinId}`);
+    expect(requestedUrl).not.toContain("binance");
+    // Cache is keyed by the resolved coin id + ticker symbol.
+    expect(
+      findCall(m.recorded, "rpc", [
+        "upsert_crypto_price_cache",
+        { p_coin_id: coinId, p_coin_symbol: symbol, p_price_usd: price },
+      ]),
+    ).toBeDefined();
   });
 });
