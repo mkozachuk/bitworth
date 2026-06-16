@@ -169,27 +169,27 @@ None of note — the page remains a static `.astro` render with no new JS, no Re
 
 #### Automated
 
-- [x] 1.1 Build passes: `npm run build`
-- [x] 1.2 Linting passes: `npm run lint`
-- [x] 1.3 No starter references remain in `Welcome.astro`
+- [x] 1.1 Build passes: `npm run build` — 30a8777
+- [x] 1.2 Linting passes: `npm run lint` — 30a8777
+- [x] 1.3 No starter references remain in `Welcome.astro` — 30a8777
 
 #### Manual
 
-- [x] 1.4 Hero shows new headline, subline, and Sign Up (primary) + Sign In CTAs routing correctly
-- [x] 1.5 Dashboard-preview panel renders in light and dark mode and is responsive
-- [x] 1.6 No layout regression to orbs/starfield/Topbar
+- [x] 1.4 Hero shows new headline, subline, and Sign Up (primary) + Sign In CTAs routing correctly — 30a8777
+- [x] 1.5 Dashboard-preview panel renders in light and dark mode and is responsive — 30a8777
+- [x] 1.6 No layout regression to orbs/starfield/Topbar — 30a8777
 
 ### Phase 2: Value Props & Closing CTA
 
 #### Automated
 
-- [ ] 2.1 Build passes: `npm run build`
-- [ ] 2.2 Linting passes: `npm run lint`
-- [ ] 2.3 Four value-prop cards render
+- [x] 2.1 Build passes: `npm run build`
+- [x] 2.2 Linting passes: `npm run lint`
+- [x] 2.3 Four value-prop cards render
 
 #### Manual
 
-- [ ] 2.4 Four value props render with distinct icons and copy in both themes
-- [ ] 2.5 Grid reflows 1/2/4 cols across mobile/tablet/desktop
-- [ ] 2.6 Closing CTA band renders and CTA links route correctly
-- [ ] 2.7 Page reads as a coherent BitWorth marketing page, no starter remnants
+- [x] 2.4 Four value props render with distinct icons and copy in both themes
+- [x] 2.5 Grid reflows 1/2/4 cols across mobile/tablet/desktop
+- [x] 2.6 Closing CTA band renders and CTA links route correctly
+- [x] 2.7 Page reads as a coherent BitWorth marketing page, no starter remnants
