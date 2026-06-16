@@ -3,7 +3,7 @@ project: "BitWorth"
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-06-11
+updated: 2026-06-16
 prd_version: 1
 main_goal: market-feedback
 top_blocker: capacity
@@ -37,6 +37,7 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 | S-07  | asset-list-mobile-reflow    | view and act on every asset in the list on a phone-sized viewport          | F-01, S-01, S-06 | — | done  |
 | S-08  | pwa-installable              | install the app to a phone's home screen and launch it standalone at /dashboard | F-01, S-06, S-07 | — | done  |
 | S-09  | fire-calculator              | project years-to-FI and a FIRE number using current net worth as the starting point | F-01, S-01, S-02, S-05 | — | done     |
+| S-10  | landing-page                 | land on a dedicated BitWorth landing page that explains the product and drives sign-up | — | — | done  |
 
 ## Streams
 
@@ -50,6 +51,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | D      | User settings | `F-01` → `S-05`                       | Parallel branch after S-02; UI for `user_preferences`              |
 | E      | Responsive UI | `F-01` → `S-06` → `S-07` → `S-08`       | S-06/S-07 make the app usable on mobile; S-08 ships it as an installable PWA |
 | F      | FIRE planning | `F-01` → `S-01` → `S-02` → `S-09`       | Projection layer on top of the net-worth number; seeds the starting principal from assets and reuses the S-02 charting lib |
+| G      | Marketing      | `landing-page`                          | Standalone public page; no data dependency — reuses the design system and auth CTAs. Parallel with everything. |
 
 ## Baseline
 
@@ -210,6 +212,21 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** The projection math (compound growth + contributions crossing the FIRE target) is easy to get subtly wrong — off-by-one on compounding periods, mixing nominal/real returns, or mis-deriving the FIRE number from the withdrawal rate. Mitigant: isolate the projection into a pure, unit-tested function (e.g. `src/lib/fire.ts`) with table-driven tests before wiring any UI, and reuse the charting library chosen in S-02 rather than introducing a new one. Secondary risk: presenting a projection as a promise — add a clear "estimate, not financial advice" disclaimer.
 - **Status:** done
 
+### S-10: Dedicated landing page
+
+- **Outcome:** an unauthenticated visitor lands on a dedicated BitWorth marketing page (replacing the "10x Astro Starter" placeholder) that communicates the privacy-first, manual-entry net-worth-tracking value proposition — hero headline + tagline, 3–4 value props (privacy/no bank connections, multi-currency auto-conversion, one-click snapshots, trend charts), a product preview, and clear Sign Up / Sign In CTAs.
+- **Change ID:** `landing-page`
+- **PRD refs:** — (presentation polish; not a PRD functional requirement)
+- **Prerequisites:** — (public page; no schema/data dependency — reuses the Tailwind design system and existing `/auth/*` pages)
+- **Parallel with:** all slices (independent)
+- **Blockers:** —
+- **Unknowns:**
+  - Copy/positioning source: lift the vision + wedge from `prd.md` / roadmap §Vision recap. (Owner: planner, by: during `/10x-plan`) Recommendation: reuse "privacy-first net worth tracker, manual-entry, better than a spreadsheet."
+  - Product preview asset: `public/template.png` (1492×470 dashboard mockup) exists. (Owner: user, by: before S-10 planning) Recommendation: use `template.png` as the hero/preview image; designer can swap a real screenshot later.
+  - Implementation surface: rewrite `Welcome.astro` in place vs. new component. (Owner: planner, by: during `/10x-plan`) Recommendation: rewrite copy/sections inside `Welcome.astro` to keep the cosmic theme and avoid a new wrapper.
+- **Risk:** Low — single static public page, no data or auth-flow changes. Main risk is design drift from the established cosmic aesthetic; mitigant: reuse the existing starfield + blur-orb styling and the `button.tsx` variants already in `Welcome.astro`, swap only copy and add the value-prop/preview sections.
+- **Status:** done
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID                    | Suggested issue title                      | Ready for `/10x-plan` | Notes                                              |
@@ -224,6 +241,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-07      | asset-list-mobile-reflow    | AssetList: reflow table to cards on mobile  | yes                   | depends on S-06; data-list reflow deferred from S-06 |
 | S-08      | pwa-installable              | PWA: installable mobile app via @serwist/astro | yes                   | depends on S-06+S-07; installable shell on top of mobile-UI pass |
 | S-09      | fire-calculator              | FIRE calculator: project years-to-FI from current net worth | yes                   | depends on S-01/S-02/S-05; current net worth seeds the starting principal; was a PRD non-goal, promoted 2026-06-11 |
+| S-10      | landing-page                 | Dedicated BitWorth landing page (replace starter placeholder) | yes                   | independent; reuses design system + auth CTAs; product preview from public/template.png |
 
 ## Open Roadmap Questions
 
