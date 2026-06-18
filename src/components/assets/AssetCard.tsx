@@ -2,6 +2,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { CurrencyBadge } from "./CurrencyBadge";
 import type { Tables } from "@/lib/database.types";
 import { convertAmount, type Currency } from "@/lib/net-worth";
+import { categoryEmoji } from "@/lib/category-icons";
 
 type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
 
@@ -48,7 +49,7 @@ export function AssetCard({ asset, onDelete, displayCurrency, rates }: Props) {
         </p>
       )}
       <div className="mt-2 flex items-center gap-1.5 text-sm text-zinc-700 dark:text-white/70">
-        {asset.category.icon && <span>{asset.category.icon}</span>}
+        {categoryEmoji(asset.category.icon) && <span>{categoryEmoji(asset.category.icon)}</span>}
         <span>{asset.category.name}</span>
         {asset.category.is_liability && <span className="text-xs text-red-600 dark:text-red-300">(liability)</span>}
       </div>
