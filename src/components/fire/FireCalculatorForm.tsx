@@ -27,17 +27,22 @@ interface FormState {
   baristaIncome: number;
 }
 
+// Money fields default to NaN so a fresh user sees a blank box (with a "0"
+// placeholder) instead of a literal 0 they have to delete before typing.
+// num() coerces NaN -> 0 wherever the value is actually consumed.
 const DEFAULTS: FormState = {
   startingPrincipal: 0,
-  annualIncome: 0,
-  annualExpenses: 0,
+  annualIncome: NaN,
+  annualExpenses: NaN,
   expectedReturnPct: 7,
   inflationRatePct: 3,
   safeWithdrawalRatePct: 4,
   currentAge: 30,
   traditionalRetirementAge: 65,
-  baristaIncome: 0,
+  baristaIncome: NaN,
 };
+
+const num = (v: number): number => (Number.isNaN(v) ? 0 : v);
 
 function seedState(startingPrincipal: number, initial: Partial<FireInputs>): FormState {
   return {
@@ -58,15 +63,15 @@ function seedState(startingPrincipal: number, initial: Partial<FireInputs>): For
 
 function toInputs(state: FormState): FireInputs {
   return {
-    startingPrincipal: state.startingPrincipal,
-    annualIncome: state.annualIncome,
-    annualExpenses: state.annualExpenses,
-    nominalReturn: state.expectedReturnPct / 100,
-    inflationRate: state.inflationRatePct / 100,
-    safeWithdrawalRate: state.safeWithdrawalRatePct / 100,
-    currentAge: state.currentAge,
-    traditionalRetirementAge: state.traditionalRetirementAge,
-    baristaIncome: state.baristaIncome > 0 ? state.baristaIncome : undefined,
+    startingPrincipal: num(state.startingPrincipal),
+    annualIncome: num(state.annualIncome),
+    annualExpenses: num(state.annualExpenses),
+    nominalReturn: num(state.expectedReturnPct) / 100,
+    inflationRate: num(state.inflationRatePct) / 100,
+    safeWithdrawalRate: num(state.safeWithdrawalRatePct) / 100,
+    currentAge: num(state.currentAge),
+    traditionalRetirementAge: num(state.traditionalRetirementAge),
+    baristaIncome: num(state.baristaIncome) > 0 ? num(state.baristaIncome) : undefined,
   };
 }
 
@@ -85,14 +90,15 @@ export function FireCalculatorForm({ displayCurrency, startingPrincipal, initial
 
   function update(key: keyof FormState) {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
-      const v = e.target.valueAsNumber;
-      setState((prev) => ({ ...prev, [key]: Number.isNaN(v) ? 0 : v }));
+      // Keep NaN (empty box) in state so the field can be cleared and retyped
+      // without snapping back to 0; num() coerces it where the value is used.
+      setState((prev) => ({ ...prev, [key]: e.target.valueAsNumber }));
     };
   }
 
   // The only invalid input fire.ts cannot absorb is a non-positive SWR (the
   // FIRE number divides by it). Guard the call rather than let it throw.
-  const swrValid = state.safeWithdrawalRatePct > 0;
+  const swrValid = num(state.safeWithdrawalRatePct) > 0;
   const inputs = toInputs(state);
   const result = swrValid ? computeFireProjection(inputs) : null;
 
@@ -101,15 +107,15 @@ export function FireCalculatorForm({ displayCurrency, startingPrincipal, initial
     setPending(true);
 
     const payload = {
-      fire_current_age: state.currentAge,
-      fire_annual_income: state.annualIncome,
-      fire_annual_expenses: state.annualExpenses,
-      fire_expected_return: state.expectedReturnPct / 100,
-      fire_inflation_rate: state.inflationRatePct / 100,
-      fire_safe_withdrawal_rate: state.safeWithdrawalRatePct / 100,
-      fire_starting_principal_override: state.startingPrincipal,
-      fire_traditional_retirement_age: state.traditionalRetirementAge,
-      fire_barista_income: state.baristaIncome,
+      fire_current_age: num(state.currentAge),
+      fire_annual_income: num(state.annualIncome),
+      fire_annual_expenses: num(state.annualExpenses),
+      fire_expected_return: num(state.expectedReturnPct) / 100,
+      fire_inflation_rate: num(state.inflationRatePct) / 100,
+      fire_safe_withdrawal_rate: num(state.safeWithdrawalRatePct) / 100,
+      fire_starting_principal_override: num(state.startingPrincipal),
+      fire_traditional_retirement_age: num(state.traditionalRetirementAge),
+      fire_barista_income: num(state.baristaIncome),
     };
 
     try {
@@ -160,6 +166,7 @@ export function FireCalculatorForm({ displayCurrency, startingPrincipal, initial
           value={state.startingPrincipal}
           onChange={update("startingPrincipal")}
           min={0}
+          placeholder="0"
         />
         <NumberField
           id="fire_annual_income"
@@ -167,6 +174,7 @@ export function FireCalculatorForm({ displayCurrency, startingPrincipal, initial
           value={state.annualIncome}
           onChange={update("annualIncome")}
           min={0}
+          placeholder="0"
         />
         <NumberField
           id="fire_annual_expenses"
@@ -174,6 +182,7 @@ export function FireCalculatorForm({ displayCurrency, startingPrincipal, initial
           value={state.annualExpenses}
           onChange={update("annualExpenses")}
           min={0}
+          placeholder="0"
         />
         <div className="grid grid-cols-2 gap-4">
           <NumberField
@@ -222,6 +231,7 @@ export function FireCalculatorForm({ displayCurrency, startingPrincipal, initial
           value={state.baristaIncome}
           onChange={update("baristaIncome")}
           min={0}
+          placeholder="0"
         />
 
         <button
@@ -330,9 +340,10 @@ interface NumberFieldProps {
   min?: number;
   max?: number;
   step?: number;
+  placeholder?: string;
 }
 
-function NumberField({ id, label, help, value, onChange, min, max, step }: NumberFieldProps) {
+function NumberField({ id, label, help, value, onChange, min, max, step, placeholder }: NumberFieldProps) {
   return (
     <div>
       <label htmlFor={id} className="mb-1 block text-sm text-zinc-700 dark:text-blue-100/80">
@@ -349,6 +360,7 @@ function NumberField({ id, label, help, value, onChange, min, max, step }: Numbe
         min={min}
         max={max}
         step={step}
+        placeholder={placeholder}
         className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 transition-colors focus:ring-2 focus:outline-none dark:border-white/20 dark:bg-white/10 dark:text-white"
       />
     </div>
