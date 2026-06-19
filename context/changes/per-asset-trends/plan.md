@@ -324,16 +324,16 @@ Single additive column with `NOT NULL DEFAULT FALSE` — existing rows are valid
 
 #### Automated
 
-- [x] 3.1 Type checking passes (`npm run build`)
-- [x] 3.2 Linting passes (`npm run lint`)
-- [x] 3.3 Full unit suite passes (`npx vitest run`)
+- [x] 3.1 Type checking passes (`npm run build`) — 6eebf7e
+- [x] 3.2 Linting passes (`npm run lint`) — 6eebf7e
+- [x] 3.3 Full unit suite passes (`npx vitest run`) — 6eebf7e
 
 #### Manual
 
-- [x] 3.4 Asset Trends card hidden by default; master toggle reveals it
-- [x] 3.5 Only opted-in assets appear; each color-distinct with correct legend label
-- [x] 3.6 Indexed mode default; switching to absolute re-scales correctly
-- [x] 3.7 Liability line reads in natural direction in indexed mode
-- [x] 3.8 Deleted-then-re-added asset shows a broken line, not bridged
-- [x] 3.9 Empty / single-snapshot / no-opted-in-asset states show placeholder, not crash
-- [x] 3.10 No regression to Net Worth chart or Top Movers
+- [x] 3.4 Asset Trends card hidden by default; master toggle reveals it — 6eebf7e
+- [x] 3.5 Only opted-in assets appear; each color-distinct with correct legend label — 6eebf7e
+- [x] 3.6 Indexed mode default; switching to absolute re-scales correctly — 6eebf7e
+- [x] 3.7 Liability line reads in natural direction in indexed mode — 6eebf7e
+- [x] 3.8 Deleted-then-re-added asset shows a broken line, not bridged — 6eebf7e
+- [x] 3.9 Empty / single-snapshot / no-opted-in-asset states show placeholder, not crash — 6eebf7e
+- [x] 3.10 No regression to Net Worth chart or Top Movers — 6eebf7e
