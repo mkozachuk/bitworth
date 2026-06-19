@@ -4,7 +4,7 @@ import { convertAmount, type Currency } from "./net-worth";
 // treated as zero: it neither counts as a baseline for the percentage nor as a
 // real change for the gainer/loser split. Converted amounts are floats, so an
 // exact `=== 0` comparison would mis-classify rounding dust.
-const EPSILON = 1e-2;
+export const EPSILON = 1e-2;
 
 /** Current-side input: a subset of an `assets` row plus its joined category. */
 export interface MoverAsset {
@@ -45,12 +45,12 @@ export interface MoversResult {
 }
 
 /** Matching key for pairing a current asset with a baseline item. */
-function key(name: string, categoryId: string): string {
+export function key(name: string, categoryId: string): string {
   return `${name} ${categoryId}`;
 }
 
 /** Signed net-worth contribution: liabilities count negative, so a shrinking debt reads as a gain. */
-function contribution(
+export function contribution(
   amount: number,
   currency: string,
   isLiability: boolean,
