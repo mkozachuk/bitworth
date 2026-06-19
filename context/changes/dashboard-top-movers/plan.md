@@ -260,17 +260,17 @@ None — read-only feature, no schema or data changes.
 
 #### Automated
 
-- [x] 2.1 Type checking / build passes: `npm run build`
-- [x] 2.2 Lint passes: `npm run lint`
-- [x] 2.3 Full unit suite passes: `npx vitest run`
+- [x] 2.1 Type checking / build passes: `npm run build` — 737a07b
+- [x] 2.2 Lint passes: `npm run lint` — 737a07b
+- [x] 2.3 Full unit suite passes: `npx vitest run` — 737a07b
 
 #### Manual
 
-- [x] 2.4 No snapshot → "save a snapshot" placeholder, no crash
-- [x] 2.5 Happy path → correct gainer/loser with amount + %
-- [x] 2.6 Liability sign → shrinking debt shows as gainer
-- [x] 2.7 New asset → appears only under "New since snapshot"
-- [x] 2.8 Currency change → sane per-asset changes, no mismatch
-- [x] 2.9 No-change state → quiet "no changes" message
-- [x] 2.10 Mobile ~360px → columns stack, no horizontal scroll
-- [x] 2.11 No regressions to NetWorthDisplay / AssetsSummary / NetWorthChart
+- [x] 2.4 No snapshot → "save a snapshot" placeholder, no crash — 737a07b
+- [x] 2.5 Happy path → correct gainer/loser with amount + % — 737a07b
+- [x] 2.6 Liability sign → shrinking debt shows as gainer — 737a07b
+- [x] 2.7 New asset → appears only under "New since snapshot" — 737a07b
+- [x] 2.8 Currency change → sane per-asset changes, no mismatch — 737a07b
+- [x] 2.9 No-change state → quiet "no changes" message — 737a07b
+- [x] 2.10 Mobile ~360px → columns stack, no horizontal scroll — 737a07b
+- [x] 2.11 No regressions to NetWorthDisplay / AssetsSummary / NetWorthChart — 737a07b
