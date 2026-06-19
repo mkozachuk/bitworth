@@ -25,7 +25,7 @@ Tracking net worth in a spreadsheet works until it doesn't: formulas drift, curr
 - **Privacy-first** — manual entry only. No bank links, no aggregators, no third-party data sharing. Every row is yours and isolated by row-level security.
 - **Multi-currency, automatically** — hold assets in PLN, USD, and EUR; BitWorth converts everything to your display currency using live rates (cached, with graceful fallback).
 - **One number, with context** — a single net worth figure plus month-over-month and year-to-date deltas.
-- **History you can see** — one-click (and automatic monthly) snapshots feed a trend chart.
+- **History you can see** — one-click snapshots feed an overall trend chart, top movers, and per-asset trend lines.
 - **Plan ahead** — a built-in FIRE calculator projects when you can retire.
 
 ![Landing page](docs/screenshots/landing.png)
@@ -34,8 +34,10 @@ Tracking net worth in a spreadsheet works until it doesn't: formulas drift, curr
 
 - **Asset & liability tracking** — full CRUD across 13 categories (checking, savings, business, cash, stocks, funds, bonds, crypto, precious metals, real estate, vehicles, loans, P2P). Liabilities subtract from net worth.
 - **Net worth calculation** — assets minus liabilities, every currency converted to your display currency, with "vs last month" and "vs Jan 1st" deltas.
-- **Snapshots** — save your net worth on demand; the app also auto-saves once per calendar month so your history fills in by itself.
+- **Snapshots** — save your net worth on demand. Each snapshot also captures a per-asset breakdown, which powers top movers and per-asset trends.
 - **Trend chart** — a Recharts line chart over all snapshots, with a "Start" baseline reference line.
+- **Top movers** — see which assets rose and fell the most since your last snapshot (top gainers + losers, with amount and percentage); a friendly placeholder prompts the first snapshot when there's nothing to compare against.
+- **Asset trends** — opt any asset into a dedicated trend chart and watch each one move across your snapshot history. Toggle between indexed (%) and absolute scales; lines are color-distinct, gaps stay honest (no bridging), and liabilities read in their natural direction (debt paydown trends up).
 - **Live crypto prices** — adding or editing a crypto holding fetches the current market price from CoinGecko (cached, with manual-entry fallback). Top coins are mapped out of the box (BTC, ETH, SOL, and more).
 - **FIRE calculator** — enter your income, expenses, return, inflation, and safe withdrawal rate to compute your FIRE number, years to FI, estimated retirement age, plus Coast and Barista FIRE — with a year-by-year projection chart in today's money.
 - **Settings** — choose your display currency (PLN/USD/EUR) and theme (light/dark/system), persisted per user.
@@ -44,6 +46,8 @@ Tracking net worth in a spreadsheet works until it doesn't: formulas drift, curr
 | Assets                                                                     | FIRE calculator                                                            |
 | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
 | [![Assets list](docs/screenshots/assets.png)](docs/screenshots/assets.png) | [![FIRE calculator](docs/screenshots/fire.png)](docs/screenshots/fire.png) |
+
+![Asset Trends — per-asset trend lines over snapshot history, indexed mode](docs/screenshots/asset-trends.png)
 
 > Screenshots show the default dark theme. BitWorth also ships a light theme (and a "system" option) — here's the dashboard and FIRE calculator in light:
 >
