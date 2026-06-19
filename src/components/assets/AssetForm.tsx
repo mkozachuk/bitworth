@@ -31,6 +31,7 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
   const [cryptoPrice, setCryptoPrice] = useState<{ price: number; isCached: boolean } | null>(null);
   const [priceStatus, setPriceStatus] = useState<"idle" | "loading" | "success" | "cached" | "error">("idle");
   const [quantity, setQuantity] = useState(asset ? (asset.quantity != null ? String(asset.quantity) : "") : "");
+  const [showOnChart, setShowOnChart] = useState(asset?.show_on_chart ?? false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [pending, setPending] = useState(false);
 
@@ -324,6 +325,24 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
           rows={3}
           className="w-full resize-none rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 placeholder-zinc-500 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-white/20 dark:bg-white/10 dark:text-white dark:placeholder-white/40"
         />
+      </div>
+
+      <div>
+        <label htmlFor="show_on_chart" className="flex items-center gap-2 text-sm text-zinc-700 dark:text-blue-100/80">
+          <input
+            id="show_on_chart"
+            type="checkbox"
+            checked={showOnChart}
+            onChange={(e) => {
+              setShowOnChart(e.target.checked);
+            }}
+            className="size-4 accent-purple-600"
+          />
+          Show on chart
+        </label>
+        {/* Native unchecked checkboxes are absent from FormData — mirror the
+            controlled state into a hidden input so PUT can detect "unchecked". */}
+        <input type="hidden" name="show_on_chart" value={showOnChart ? "true" : "false"} />
       </div>
 
       <div className="flex flex-col gap-3 pt-2 sm:flex-row">

@@ -51,6 +51,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
   const notes = form.get("notes") as string | null;
   const crypto_symbol = form.get("crypto_symbol") as string | null;
   const quantity = form.get("quantity") as string | null;
+  const show_on_chart = form.get("show_on_chart");
 
   const updates: Record<string, unknown> = {};
   if (name !== null) updates.name = name;
@@ -74,6 +75,9 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
   if (notes !== null) updates.notes = notes !== "" ? notes : null;
   if (crypto_symbol !== null) updates.crypto_symbol = crypto_symbol !== "" ? crypto_symbol : null;
   if (quantity !== null) updates.quantity = quantity !== "" ? parseFloat(quantity) : null;
+  // The hidden mirror in AssetForm makes this always present on submit, so
+  // toggle-off ("false") is captured rather than omitted.
+  if (show_on_chart !== null) updates.show_on_chart = show_on_chart === "true";
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const { data, error } = await supabase

@@ -80,6 +80,29 @@ describe("PUT /api/assets/[id]", () => {
     expect(updates).not.toHaveProperty("user_id");
   });
 
+  it("captures show_on_chart=false in the update payload (toggle-off)", async () => {
+    const m = createSupabaseMock({
+      userId: userA,
+      tableResults: { assets: { data: { id: assetId }, error: null } },
+    });
+    mocks.factory = () => m;
+
+    const form = new FormData();
+    form.set("name", "Updated name");
+    form.set("show_on_chart", "false");
+
+    const request = new Request(`http://localhost/api/assets/${assetId}`, {
+      method: "PUT",
+      headers: { Cookie: "sb-access-token=fake" },
+      body: form,
+    });
+    await PUT({ request, cookies: createCookiesStub(), params: { id: assetId } } as never);
+
+    const updateCall = m.recorded.find((c) => c.method === "update");
+    const updates = updateCall?.args[0] as Record<string, unknown>;
+    expect(updates.show_on_chart).toBe(false);
+  });
+
   it("returns 404 when the row does not match", async () => {
     const m = createSupabaseMock({
       userId: userA,

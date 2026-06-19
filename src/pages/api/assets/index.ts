@@ -89,6 +89,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const notes = form.get("notes") as string | null;
   const crypto_symbol = form.get("crypto_symbol") as string | null;
   const quantity = form.get("quantity") as string | null;
+  const show_on_chart = form.get("show_on_chart");
 
   if (!name || !amount || !currency || !category_id) {
     return new Response(
@@ -124,6 +125,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       notes: notes !== "" ? notes : null,
       crypto_symbol: crypto_symbol !== "" ? crypto_symbol : null,
       quantity: quantity !== "" && quantity !== null ? parseFloat(quantity) : null,
+      show_on_chart: show_on_chart === "true",
       user_id: user.id,
     })
     .select()
