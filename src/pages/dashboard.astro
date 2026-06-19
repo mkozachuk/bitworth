@@ -5,9 +5,11 @@ import { getRates } from "@/lib/exchange-rates";
 import { NetWorthDisplay } from "@/components/assets/NetWorthDisplay";
 import { AssetsSummary } from "@/components/assets/AssetsSummary";
 import { NetWorthChart } from "@/components/NetWorthChart";
+import { TopMovers } from "@/components/assets/TopMovers";
 import type { Tables } from "@/lib/database.types";
 
 type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
+type SnapshotItemWithCategory = Tables<"snapshot_items"> & { category: Tables<"asset_categories"> };
 type Currency = "USD" | "EUR" | "PLN";
 
 const { user } = Astro.locals;
@@ -28,6 +30,15 @@ const { data: snapshots } = await supabase
   .select()
   .eq("user_id", user.id)
   .order("created_at", { ascending: true });
+
+// Latest snapshot is the last element (loaded ascending). Load its items as the
+// baseline for the Top Movers diff; skip the query when there are no snapshots.
+const snapshotRows = (snapshots ?? []) as Tables<"snapshots">[];
+const latestSnapshot = snapshotRows.length > 0 ? snapshotRows[snapshotRows.length - 1] : null;
+const { data: baselineItems } = latestSnapshot
+  ? await supabase.from("snapshot_items").select("*, category:asset_categories(*)").eq("snapshot_id", latestSnapshot.id)
+  : { data: null };
+const hasSnapshot = (baselineItems?.length ?? 0) > 0;
 ---
 
 <Layout title="Dashboard">
@@ -69,18 +80,13 @@ const { data: snapshots } = await supabase
       )
     }
 
-    <div
-      class="mt-6 rounded-2xl border border-zinc-200 bg-white/80 p-8 text-center text-zinc-700 backdrop-blur-xl dark:border-white/10 dark:bg-white/10 dark:text-white"
-    >
-      <p class="text-zinc-600 dark:text-blue-100/60">
-        Your assets will appear here.{" "}
-        <a
-          href="/dashboard/assets"
-          class="text-purple-600 underline transition-colors hover:text-purple-800 dark:text-purple-300 dark:hover:text-purple-100"
-        >
-          Manage assets
-        </a>
-      </p>
-    </div>
+    <TopMovers
+      assets={(assets ?? []) as AssetWithCategory[]}
+      baselineItems={(baselineItems ?? []) as SnapshotItemWithCategory[]}
+      hasSnapshot={hasSnapshot}
+      displayCurrency={displayCurrency}
+      rates={rates}
+      client:load
+    />
   </div>
 </Layout>

@@ -248,29 +248,29 @@ None — read-only feature, no schema or data changes.
 
 #### Automated
 
-- [x] 1.1 Type checking passes: `npm run build`
-- [x] 1.2 Lint passes: `npm run lint`
-- [x] 1.3 Unit tests pass: `npx vitest run src/lib/movers.test.ts`
+- [x] 1.1 Type checking passes: `npm run build` — 5e4654d
+- [x] 1.2 Lint passes: `npm run lint` — 5e4654d
+- [x] 1.3 Unit tests pass: `npx vitest run src/lib/movers.test.ts` — 5e4654d
 
 #### Manual
 
-- [x] 1.4 Spot-check one table case (currency-change) by hand
+- [x] 1.4 Spot-check one table case (currency-change) by hand — 5e4654d
 
 ### Phase 2: Dashboard wiring + TopMovers island
 
 #### Automated
 
-- [ ] 2.1 Type checking / build passes: `npm run build`
-- [ ] 2.2 Lint passes: `npm run lint`
-- [ ] 2.3 Full unit suite passes: `npx vitest run`
+- [x] 2.1 Type checking / build passes: `npm run build`
+- [x] 2.2 Lint passes: `npm run lint`
+- [x] 2.3 Full unit suite passes: `npx vitest run`
 
 #### Manual
 
-- [ ] 2.4 No snapshot → "save a snapshot" placeholder, no crash
-- [ ] 2.5 Happy path → correct gainer/loser with amount + %
-- [ ] 2.6 Liability sign → shrinking debt shows as gainer
-- [ ] 2.7 New asset → appears only under "New since snapshot"
-- [ ] 2.8 Currency change → sane per-asset changes, no mismatch
-- [ ] 2.9 No-change state → quiet "no changes" message
-- [ ] 2.10 Mobile ~360px → columns stack, no horizontal scroll
-- [ ] 2.11 No regressions to NetWorthDisplay / AssetsSummary / NetWorthChart
+- [x] 2.4 No snapshot → "save a snapshot" placeholder, no crash
+- [x] 2.5 Happy path → correct gainer/loser with amount + %
+- [x] 2.6 Liability sign → shrinking debt shows as gainer
+- [x] 2.7 New asset → appears only under "New since snapshot"
+- [x] 2.8 Currency change → sane per-asset changes, no mismatch
+- [x] 2.9 No-change state → quiet "no changes" message
+- [x] 2.10 Mobile ~360px → columns stack, no horizontal scroll
+- [x] 2.11 No regressions to NetWorthDisplay / AssetsSummary / NetWorthChart
