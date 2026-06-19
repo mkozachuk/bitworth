@@ -301,24 +301,24 @@ Single additive column with `NOT NULL DEFAULT FALSE` — existing rows are valid
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly against local Supabase
-- [x] 1.2 Type checking passes (`npm run build`)
-- [x] 1.3 Linting passes (`npm run lint`)
-- [x] 1.4 Unit tests pass (`npx vitest run src/pages/api/assets`)
+- [x] 1.1 Migration applies cleanly against local Supabase — 4336fa7
+- [x] 1.2 Type checking passes (`npm run build`) — 4336fa7
+- [x] 1.3 Linting passes (`npm run lint`) — 4336fa7
+- [x] 1.4 Unit tests pass (`npx vitest run src/pages/api/assets`) — 4336fa7
 
 #### Manual
 
-- [x] 1.5 Creating an asset with "Show on chart" checked persists `show_on_chart = true`
-- [x] 1.6 Editing an asset to uncheck the box persists `show_on_chart = false`
-- [x] 1.7 Existing assets default to unchecked / `false`
+- [x] 1.5 Creating an asset with "Show on chart" checked persists `show_on_chart = true` — 4336fa7
+- [x] 1.6 Editing an asset to uncheck the box persists `show_on_chart = false` — 4336fa7
+- [x] 1.7 Existing assets default to unchecked / `false` — 4336fa7
 
 ### Phase 2: Pure series builder + color palette helper
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass (`npx vitest run src/lib/asset-trends.test.ts`)
-- [ ] 2.2 Type checking passes (`npm run build`)
-- [ ] 2.3 Linting passes (`npm run lint`)
+- [x] 2.1 Unit tests pass (`npx vitest run src/lib/asset-trends.test.ts`)
+- [x] 2.2 Type checking passes (`npm run build`)
+- [x] 2.3 Linting passes (`npm run lint`)
 
 ### Phase 3: Asset Trends chart island + dashboard wiring
 
