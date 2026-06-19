@@ -18,6 +18,7 @@ function makeAsset(overrides: Partial<AssetWithCategory> & { amount: number; cur
     crypto_symbol: null,
     notes: null,
     quantity: null,
+    show_on_chart: false,
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
     category: {
