@@ -8,7 +8,8 @@ import { assetColor, buildAssetTrends } from "@/lib/asset-trends";
 // contribution formula), not by reading the implementation.
 //
 // Rates mirror movers.test.ts: USD<->USD short-circuits but EUR carries a real
-// conversion (1 EUR = 0.5 USD here): convertAmount(amt, EUR, USD) = amt / 2.
+// conversion. Rates are USD-denominated divisors, so a larger number means a
+// weaker currency: EUR = 2.0 ⇒ convertAmount(amt, EUR, USD) = amt / 2 (200 EUR → 100 USD).
 const RATES: Record<"PLN" | "USD" | "EUR", number> = { USD: 1, EUR: 2.0, PLN: 4.0 };
 
 function item(over: Partial<TrendItem>): TrendItem {

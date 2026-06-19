@@ -39,7 +39,7 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 | S-09 | fire-calculator            | project years-to-FI and a FIRE number using current net worth as the starting point               | F-01, S-01, S-02, S-05 | —                    | done   |
 | S-10 | landing-page               | land on a dedicated BitWorth landing page that explains the product and drives sign-up            | —                      | —                    | done   |
 | S-11 | dashboard-top-movers       | see which assets rose/fell most since their last snapshot (top gainers + losers) on the dashboard | F-01, S-01, S-02, S-04 | —                    | done   |
-| S-12 | per-asset-trends           | see how individual assets/categories changed over time as a chart, from snapshot history          | F-01, S-02             | —                    | todo   |
+| S-12 | per-asset-trends           | see how individual assets/categories changed over time as a chart, from snapshot history          | F-01, S-02             | —                    | done   |
 
 ## Streams
 
@@ -260,7 +260,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Identity over history: same `(name, category_id)` matching fragility as S-11 — long histories will show discontinuities when assets are renamed/removed. (Owner: planner) Recommendation: reuse S-11's matching helper and a pure series-builder function.
   - Charting library: reuse Recharts (the one-time S-02 decision) — do **not** introduce a new lib.
 - **Risk:** Name-based identity over a long snapshot history is fragile and can render misleading discontinuities. Mitigant: reuse S-11's `(name, category_id)` matching plus a pure, unit-tested series-builder; copy the Recharts `LineChart` pattern from `src/components/NetWorthChart.tsx` and `src/components/fire/FireProjectionChart.tsx` rather than rebuilding chart scaffolding.
-- **Status:** todo
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -313,3 +313,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **S-09: FIRE calculator** — Implemented 2026-06-11 → `context/changes/fire-calculator/`. Note: projection isolated in a pure, unit-tested `src/lib/fire.ts`; reuses the S-02 Recharts lib. Lessons: —.
 - **S-10: Dedicated landing page** — Implemented 2026-06-16 → `context/changes/landing-page/`. Lessons: —.
 - **S-11: Dashboard top movers** — Implemented 2026-06-19 → `context/changes/dashboard-top-movers/`. Note: first reader of `snapshot_items`; `(name, category_id)` matching + signed net-worth contributions isolated in a pure, unit-tested `src/lib/movers.ts`; both sides re-converted at today's rates. Lessons: —.
+- **S-12: Per-asset trends** — Implemented 2026-06-19 → `context/changes/per-asset-trends/`. Note: per-asset `show_on_chart` opt-in flag threaded schema→form→API; pure, unit-tested `src/lib/asset-trends.ts` series builder reuses S-11's `(name, category_id)` matching + `contribution()` over all snapshot history; `AssetTrendsChart` island (Recharts, master + indexed/absolute toggles, generated HSL palette, `connectNulls={false}` broken lines). Impl-review APPROVED (0 critical/warning). Lessons: —.
