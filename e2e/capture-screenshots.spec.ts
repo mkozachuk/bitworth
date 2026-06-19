@@ -27,6 +27,14 @@ const SHOTS_DIR = join(process.cwd(), "docs", "screenshots");
 
 // Realistic multi-currency portfolio. category_id values are the stable seed
 // ids from supabase/seed.sql. Mixing USD/EUR/PLN showcases auto-conversion.
+//
+// `show_on_chart` opts an asset into the Asset Trends chart (S-12). `trend` is a
+// per-snapshot multiplier (one per SNAPSHOT_NET_WORTHS entry) applied to `amount`
+// to backdate each asset's snapshot_items value, so trend lines actually move and
+// Top Movers (S-11) has a real baseline. Last multiplier < 1 (or > 1 for the
+// liability) makes the live value differ from the last snapshot → Top Movers shows
+// movement. The opted-in set is a deliberate mix: a steady grower, a volatile coin,
+// a large stable asset, and a paid-down liability (rises in indexed mode).
 const ASSETS: {
   name: string;
   amount: number;
@@ -34,14 +42,66 @@ const ASSETS: {
   category_id: string;
   crypto_symbol?: string;
   quantity?: number;
+  show_on_chart?: boolean;
+  trend: number[];
 }[] = [
-  { name: "Main Checking", amount: 8500, currency: "USD", category_id: "checking_account" },
-  { name: "Emergency Fund", amount: 95000, currency: "PLN", category_id: "savings_account" },
-  { name: "Index Funds (VWCE)", amount: 62000, currency: "USD", category_id: "stocks" },
-  { name: "Bitcoin", amount: 58000, currency: "USD", category_id: "crypto", crypto_symbol: "BTC", quantity: 0.85 },
-  { name: "Ethereum", amount: 18000, currency: "USD", category_id: "crypto", crypto_symbol: "ETH", quantity: 6.2 },
-  { name: "Apartment", amount: 240000, currency: "EUR", category_id: "real_estate" },
-  { name: "Mortgage", amount: 120000, currency: "EUR", category_id: "loans_credit" },
+  {
+    name: "Main Checking",
+    amount: 8500,
+    currency: "USD",
+    category_id: "checking_account",
+    trend: [0.9, 0.95, 0.88, 0.97, 0.99],
+  },
+  {
+    name: "Emergency Fund",
+    amount: 95000,
+    currency: "PLN",
+    category_id: "savings_account",
+    trend: [0.85, 0.9, 0.93, 0.96, 0.98],
+  },
+  {
+    name: "Index Funds (VWCE)",
+    amount: 62000,
+    currency: "USD",
+    category_id: "stocks",
+    show_on_chart: true,
+    trend: [0.78, 0.85, 0.89, 0.93, 0.96],
+  },
+  {
+    name: "Bitcoin",
+    amount: 58000,
+    currency: "USD",
+    category_id: "crypto",
+    crypto_symbol: "BTC",
+    quantity: 0.85,
+    show_on_chart: true,
+    trend: [0.65, 0.92, 0.8, 1.04, 0.95],
+  },
+  {
+    name: "Ethereum",
+    amount: 18000,
+    currency: "USD",
+    category_id: "crypto",
+    crypto_symbol: "ETH",
+    quantity: 6.2,
+    trend: [0.6, 0.88, 0.78, 1.02, 0.94],
+  },
+  {
+    name: "Apartment",
+    amount: 240000,
+    currency: "EUR",
+    category_id: "real_estate",
+    show_on_chart: true,
+    trend: [0.93, 0.94, 0.95, 0.96, 0.98],
+  },
+  {
+    name: "Mortgage",
+    amount: 120000,
+    currency: "EUR",
+    category_id: "loans_credit",
+    show_on_chart: true,
+    trend: [1.2, 1.15, 1.1, 1.05, 1.03],
+  },
 ];
 
 // FIRE inputs (fractions for rates, per the user-preferences contract).
@@ -70,6 +130,7 @@ async function seedAssets(request: import("@playwright/test").APIRequestContext)
     form.set("category_id", a.category_id);
     if (a.crypto_symbol) form.set("crypto_symbol", a.crypto_symbol);
     if (a.quantity !== undefined) form.set("quantity", String(a.quantity));
+    if (a.show_on_chart) form.set("show_on_chart", "true");
 
     const res = await request.post("/api/assets", {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -113,8 +174,38 @@ async function seedSnapshots(email: string, password: string): Promise<void> {
     created_at: new Date(Date.UTC(year, i, 1, i === 0 ? 0 : 12, 0, 0)).toISOString(),
   }));
 
-  const { error } = await supabase.from("snapshots").insert(rows);
+  const { data: inserted, error } = await supabase
+    .from("snapshots")
+    .insert(rows)
+    .select("id, created_at")
+    .overrideTypes<{ id: string; created_at: string }[], { merge: false }>();
   if (error) throw new Error(`Seed snapshots failed: ${error.message}`);
+
+  // Backdate per-asset snapshot_items so the Asset Trends chart (S-12) draws real
+  // lines and Top Movers (S-11) has a baseline. Snapshots are ordered by created_at
+  // ascending; the i-th snapshot uses each asset's i-th trend multiplier.
+  const ordered = [...inserted].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  if (ordered.length === 0) throw new Error("Seed snapshots returned no rows");
+  const items = ordered.flatMap((snap, i) =>
+    ASSETS.map((a) => {
+      const amount = Math.round(a.amount * a.trend[i]);
+      return {
+        snapshot_id: snap.id,
+        name: a.name,
+        category_id: a.category_id,
+        original_amount: amount,
+        original_currency: a.currency,
+        // converted_amount is required + NOT NULL but unused by the trends chart and
+        // Top Movers (both recompute from original_* at today's rates); a nominal
+        // value keeps the row valid without pretending to be an exact conversion.
+        converted_amount: amount,
+        display_currency: "USD",
+      };
+    }),
+  );
+
+  const { error: itemsError } = await supabase.from("snapshot_items").insert(items);
+  if (itemsError) throw new Error(`Seed snapshot_items failed: ${itemsError.message}`);
 }
 
 // Recharts draws its line with a ~1.5s reveal animation. This is a render-settle
@@ -129,6 +220,20 @@ async function settleChart(page: import("@playwright/test").Page, heading: RegEx
   // which (Line defaults to isAnimationActive:"auto") draws the line statically —
   // so we just wait for the curve to be present.
   await page.locator(".recharts-line-curve").first().waitFor({ state: "visible" });
+}
+
+// The Asset Trends card (S-12) is collapsed by default; click its master toggle
+// to reveal the chart, then wait for the lines to render. Returns the card
+// locator so callers can capture a focused shot. Ephemeral state — re-reveal
+// after every navigation.
+async function revealAssetTrends(page: import("@playwright/test").Page) {
+  const toggle = page.getByRole("button", { name: "Show asset trends" });
+  await toggle.waitFor({ state: "visible" });
+  await toggle.click();
+  const card = page.locator("div.rounded-2xl").filter({ has: page.getByRole("heading", { name: "Asset Trends" }) });
+  await card.locator(".recharts-line-curve").first().waitFor({ state: "visible" });
+  await card.scrollIntoViewIfNeeded();
+  return card;
 }
 
 test("capture README screenshots", async ({ page, browser }) => {
@@ -165,6 +270,8 @@ test("capture README screenshots", async ({ page, browser }) => {
 
   await page.goto("/dashboard");
   await settleChart(page, /net worth trend/i);
+  const trendsCard = await revealAssetTrends(page);
+  await trendsCard.screenshot({ path: join(SHOTS_DIR, "asset-trends.png") });
   await page.screenshot({ path: join(SHOTS_DIR, "dashboard.png"), fullPage: true });
 
   await page.goto("/dashboard/assets");
@@ -181,6 +288,7 @@ test("capture README screenshots", async ({ page, browser }) => {
 
   await page.goto("/dashboard");
   await settleChart(page, /net worth trend/i);
+  await revealAssetTrends(page);
   await page.screenshot({ path: join(SHOTS_DIR, "dashboard-light.png"), fullPage: true });
 
   await page.goto("/dashboard/fire");
@@ -208,6 +316,7 @@ test("capture README screenshots", async ({ page, browser }) => {
 
   await mobilePage.goto("/dashboard");
   await settleChart(mobilePage, /net worth trend/i);
+  await revealAssetTrends(mobilePage);
   await mobilePage.screenshot({ path: join(SHOTS_DIR, "mobile-dashboard.png"), fullPage: true });
 
   await mobilePage.goto("/dashboard/assets");
