@@ -3,7 +3,7 @@ project: "BitWorth"
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-06-16
+updated: 2026-06-19
 prd_version: 1
 main_goal: market-feedback
 top_blocker: capacity
@@ -38,7 +38,7 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 | S-08 | pwa-installable            | install the app to a phone's home screen and launch it standalone at /dashboard                   | F-01, S-06, S-07       | —                    | done   |
 | S-09 | fire-calculator            | project years-to-FI and a FIRE number using current net worth as the starting point               | F-01, S-01, S-02, S-05 | —                    | done   |
 | S-10 | landing-page               | land on a dedicated BitWorth landing page that explains the product and drives sign-up            | —                      | —                    | done   |
-| S-11 | dashboard-top-movers       | see which assets rose/fell most since their last snapshot (top gainers + losers) on the dashboard | F-01, S-01, S-02, S-04 | —                    | todo   |
+| S-11 | dashboard-top-movers       | see which assets rose/fell most since their last snapshot (top gainers + losers) on the dashboard | F-01, S-01, S-02, S-04 | —                    | done   |
 | S-12 | per-asset-trends           | see how individual assets/categories changed over time as a chart, from snapshot history          | F-01, S-02             | —                    | todo   |
 
 ## Streams
@@ -240,11 +240,11 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:**
   - Asset identity across the comparison boundary: `snapshot_items` has no stable `asset_id`, only `name` + `category_id`; a renamed asset reads as remove+add. (Owner: planner, by: during `/10x-plan`) Recommendation: match current assets to the latest snapshot's items on `(name, category_id)`; current assets with no match are "new" (no baseline — exclude from movers or label as new); snapshot items with no current match are removed and simply absent.
-  - Comparison basis: **confirmed current live asset values (converted at today's rates) vs the `converted_amount` stored in the most recent snapshot's `snapshot_items`.** This mirrors the existing delta indicators, which already compare live net worth to stored snapshots — note the mixed-rate caveat (live side uses today's rates).
+  - Comparison basis: **confirmed current live asset values (converted at today's rates) vs the `converted_amount` stored in the most recent snapshot's `snapshot_items`.** This mirrors the existing delta indicators, which already compare live net worth to stored snapshots — note the mixed-rate caveat (live side uses today's rates). **Implemented: baseline re-converted from `original_amount`/`original_currency` at today's rates (both sides on one rate set) so a display-currency switch doesn't introduce spurious movement.**
   - Count: how many movers per side. (Owner: planner) Recommendation: top 3 gainers + top 3 losers, ranked by absolute change; a "no change" / single-asset state degrades gracefully.
   - Read path: new GET endpoint vs server-load in `dashboard.astro`. (Owner: planner) Recommendation: load the latest snapshot's `snapshot_items` server-side in `dashboard.astro` (consistent with the existing snapshots load at lines 26-30) and pass them to a new `TopMovers` React island that replaces the placeholder `<div>` at `dashboard.astro:72-84`.
 - **Risk:** First-ever consumer of `snapshot_items` (written but never read today), and `(name, category_id)` matching is fragile across renames. Mitigant: isolate the diff into a pure, unit-tested function (e.g. `src/lib/movers.ts`); reuse the `DeltaIndicator` sign/colour pattern in `src/components/assets/NetWorthDisplay.tsx:19-34` and `convertAmount` from `src/lib/net-worth.ts`. Secondary: empty / single-asset / no-snapshot states must render the placeholder, not crash.
-- **Status:** todo
+- **Status:** done
 
 ### S-12: Per-asset trends
 
@@ -310,3 +310,6 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **S-06: Mobile refactor** — Implemented 2026-06-03 → `context/changes/mobile-refactor/`. Lessons: —.
 - **S-07: AssetList mobile reflow** — Implemented 2026-06-03 → `context/changes/asset-list-mobile-reflow/`. Lessons: —.
 - **S-08: PWA / installable mobile app** — Implemented 2026-06-04 → `context/changes/pwa-installable/`. Note: hand-rolled `vite-plugin-pwa@1.3.0` as a custom Astro integration (avoids `@serwist/astro` preview dep); manifest + service worker + offline shell + Android/iOS install UX. Lessons: —.
+- **S-09: FIRE calculator** — Implemented 2026-06-11 → `context/changes/fire-calculator/`. Note: projection isolated in a pure, unit-tested `src/lib/fire.ts`; reuses the S-02 Recharts lib. Lessons: —.
+- **S-10: Dedicated landing page** — Implemented 2026-06-16 → `context/changes/landing-page/`. Lessons: —.
+- **S-11: Dashboard top movers** — Implemented 2026-06-19 → `context/changes/dashboard-top-movers/`. Note: first reader of `snapshot_items`; `(name, category_id)` matching + signed net-worth contributions isolated in a pure, unit-tested `src/lib/movers.ts`; both sides re-converted at today's rates. Lessons: —.
