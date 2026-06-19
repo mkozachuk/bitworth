@@ -6,6 +6,7 @@ import { NetWorthDisplay } from "@/components/assets/NetWorthDisplay";
 import { AssetsSummary } from "@/components/assets/AssetsSummary";
 import { NetWorthChart } from "@/components/NetWorthChart";
 import { TopMovers } from "@/components/assets/TopMovers";
+import { AssetTrendsChart, type SnapshotItemWithDate } from "@/components/AssetTrendsChart";
 import type { Tables } from "@/lib/database.types";
 
 type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
@@ -39,6 +40,23 @@ const { data: baselineItems } = latestSnapshot
   ? await supabase.from("snapshot_items").select("*, category:asset_categories(*)").eq("snapshot_id", latestSnapshot.id)
   : { data: null };
 const hasSnapshot = (baselineItems?.length ?? 0) > 0;
+
+// All-snapshot items (with category join) for the Asset Trends chart. One nested
+// round trip scoped by the parent `user_id`; each item is flattened with its
+// parent snapshot's `created_at` so the pure builder can order points in time.
+const { data: snapshotsWithItems } = await supabase
+  .from("snapshots")
+  .select("id, created_at, snapshot_items(*, category:asset_categories(*))")
+  .eq("user_id", user.id)
+  .order("created_at", { ascending: true });
+
+interface SnapshotWithItems {
+  created_at: string;
+  snapshot_items: SnapshotItemWithCategory[];
+}
+const trendSnapshotItems: SnapshotItemWithDate[] = ((snapshotsWithItems ?? []) as SnapshotWithItems[]).flatMap(
+  (snapshot) => snapshot.snapshot_items.map((item) => ({ ...item, snapshotDate: snapshot.created_at })),
+);
 ---
 
 <Layout title="Dashboard">
@@ -74,6 +92,14 @@ const hasSnapshot = (baselineItems?.length ?? 0) > 0;
             onSaveSnapshot={() => {
               window.location.reload();
             }}
+            client:load
+          />
+          <AssetTrendsChart
+            assets={assets as AssetWithCategory[]}
+            snapshots={snapshots as Tables<"snapshots">[]}
+            snapshotItems={trendSnapshotItems}
+            displayCurrency={displayCurrency}
+            rates={rates}
             client:load
           />
         </>

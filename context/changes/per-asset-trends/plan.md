@@ -316,24 +316,24 @@ Single additive column with `NOT NULL DEFAULT FALSE` — existing rows are valid
 
 #### Automated
 
-- [x] 2.1 Unit tests pass (`npx vitest run src/lib/asset-trends.test.ts`)
-- [x] 2.2 Type checking passes (`npm run build`)
-- [x] 2.3 Linting passes (`npm run lint`)
+- [x] 2.1 Unit tests pass (`npx vitest run src/lib/asset-trends.test.ts`) — 9ed94dc
+- [x] 2.2 Type checking passes (`npm run build`) — 9ed94dc
+- [x] 2.3 Linting passes (`npm run lint`) — 9ed94dc
 
 ### Phase 3: Asset Trends chart island + dashboard wiring
 
 #### Automated
 
-- [ ] 3.1 Type checking passes (`npm run build`)
-- [ ] 3.2 Linting passes (`npm run lint`)
-- [ ] 3.3 Full unit suite passes (`npx vitest run`)
+- [x] 3.1 Type checking passes (`npm run build`)
+- [x] 3.2 Linting passes (`npm run lint`)
+- [x] 3.3 Full unit suite passes (`npx vitest run`)
 
 #### Manual
 
-- [ ] 3.4 Asset Trends card hidden by default; master toggle reveals it
-- [ ] 3.5 Only opted-in assets appear; each color-distinct with correct legend label
-- [ ] 3.6 Indexed mode default; switching to absolute re-scales correctly
-- [ ] 3.7 Liability line reads in natural direction in indexed mode
-- [ ] 3.8 Deleted-then-re-added asset shows a broken line, not bridged
-- [ ] 3.9 Empty / single-snapshot / no-opted-in-asset states show placeholder, not crash
-- [ ] 3.10 No regression to Net Worth chart or Top Movers
+- [x] 3.4 Asset Trends card hidden by default; master toggle reveals it
+- [x] 3.5 Only opted-in assets appear; each color-distinct with correct legend label
+- [x] 3.6 Indexed mode default; switching to absolute re-scales correctly
+- [x] 3.7 Liability line reads in natural direction in indexed mode
+- [x] 3.8 Deleted-then-re-added asset shows a broken line, not bridged
+- [x] 3.9 Empty / single-snapshot / no-opted-in-asset states show placeholder, not crash
+- [x] 3.10 No regression to Net Worth chart or Top Movers
