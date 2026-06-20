@@ -343,27 +343,27 @@ Backups are per-user and small (a personal finance account is hundreds, not mill
 
 #### Automated
 
-- [x] 1.1 Type checking passes (`npx astro sync && npx tsc --noEmit`)
-- [x] 1.2 Linting passes (`npm run lint`)
-- [x] 1.3 Unit tests pass (`npx vitest run src/lib/backup.test.ts`)
+- [x] 1.1 Type checking passes (`npx astro sync && npx tsc --noEmit`) — 762588a
+- [x] 1.2 Linting passes (`npm run lint`) — 762588a
+- [x] 1.3 Unit tests pass (`npx vitest run src/lib/backup.test.ts`) — 762588a
 
 #### Manual
 
-- [x] 1.4 Whitelists include all easy-to-drop fields (9 `fire_*`, `quantity`, `show_on_chart`, both timestamps)
+- [x] 1.4 Whitelists include all easy-to-drop fields (9 `fire_*`, `quantity`, `show_on_chart`, both timestamps) — 762588a
 
 ### Phase 2: Export endpoint
 
 #### Automated
 
-- [ ] 2.1 Type checking passes (`npx tsc --noEmit`)
-- [ ] 2.2 Linting passes (`npm run lint`)
-- [ ] 2.3 Route tests pass (`npx vitest run src/pages/api/backup/export.test.ts`)
-- [ ] 2.4 API-auth contract test still passes (`npx vitest run src/pages/api/api-auth-contract.test.ts`)
+- [x] 2.1 Type checking passes (`npx tsc --noEmit`)
+- [x] 2.2 Linting passes (`npm run lint`)
+- [x] 2.3 Route tests pass (`npx vitest run src/pages/api/backup/export.test.ts`)
+- [x] 2.4 API-auth contract test still passes (`npx vitest run src/pages/api/api-auth-contract.test.ts`)
 
 #### Manual
 
-- [ ] 2.5 Authed GET downloads valid `bitworth-backup.json` with all four tables + envelope
-- [ ] 2.6 Logged-out request returns 401
+- [x] 2.5 Authed GET downloads valid `bitworth-backup.json` with all four tables + envelope
+- [x] 2.6 Logged-out request returns 401
 
 ### Phase 3: restore_backup RPC migration
 
