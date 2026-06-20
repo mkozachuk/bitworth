@@ -355,29 +355,29 @@ Backups are per-user and small (a personal finance account is hundreds, not mill
 
 #### Automated
 
-- [x] 2.1 Type checking passes (`npx tsc --noEmit`)
-- [x] 2.2 Linting passes (`npm run lint`)
-- [x] 2.3 Route tests pass (`npx vitest run src/pages/api/backup/export.test.ts`)
-- [x] 2.4 API-auth contract test still passes (`npx vitest run src/pages/api/api-auth-contract.test.ts`)
+- [x] 2.1 Type checking passes (`npx tsc --noEmit`) — 2350593
+- [x] 2.2 Linting passes (`npm run lint`) — 2350593
+- [x] 2.3 Route tests pass (`npx vitest run src/pages/api/backup/export.test.ts`) — 2350593
+- [x] 2.4 API-auth contract test still passes (`npx vitest run src/pages/api/api-auth-contract.test.ts`) — 2350593
 
 #### Manual
 
-- [x] 2.5 Authed GET downloads valid `bitworth-backup.json` with all four tables + envelope
-- [x] 2.6 Logged-out request returns 401
+- [x] 2.5 Authed GET downloads valid `bitworth-backup.json` with all four tables + envelope — 2350593
+- [x] 2.6 Logged-out request returns 401 — 2350593
 
 ### Phase 3: restore_backup RPC migration
 
 #### Automated
 
-- [ ] 3.1 Migration applies cleanly (`supabase db reset` / `migration up`)
-- [ ] 3.2 Types regenerate (`npx astro sync`, RPC present in `database.types.ts`)
-- [ ] 3.3 Linting passes (`npm run lint`)
+- [x] 3.1 Migration applies cleanly (`supabase db reset` / `migration up`)
+- [x] 3.2 Types regenerate (`npx astro sync`, RPC present in `database.types.ts`)
+- [x] 3.3 Linting passes (`npm run lint`)
 
 #### Manual
 
-- [ ] 3.4 `restore_backup('replace', …)` replaces only the caller's rows; other users untouched
-- [ ] 3.5 Unknown `category_id` rolls back entirely (no partial rows)
-- [ ] 3.6 `SET search_path = public, pg_temp` present in the migration
+- [x] 3.4 `restore_backup('replace', …)` replaces only the caller's rows; other users untouched
+- [x] 3.5 Unknown `category_id` rolls back entirely (no partial rows)
+- [x] 3.6 `SET search_path = public, pg_temp` present in the migration
 
 ### Phase 4: Import endpoint
 
