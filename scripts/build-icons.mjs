@@ -9,6 +9,9 @@
 //   public/icons/icon-512.png
 //   public/icons/icon-maskable-512.png
 //   public/apple-touch-icon.png
+//   public/favicon-32.png
+//   public/favicon-16.png
+//   public/favicon.png  (legacy copy, kept in sync with favicon-32)
 //   public/icons/safari-pinned-tab.svg  (hand-authored; not generated)
 
 import { readFile, writeFile, mkdir } from "node:fs/promises";
@@ -71,6 +74,16 @@ async function build() {
   // 180x180 apple-touch-icon — iOS does not scale from manifest icons.
   const appleTouch = await sharp(raw).resize(180, 180, { fit: "contain", background: BG }).png().toBuffer();
   await writeIcon(appleTouch, "public/apple-touch-icon.png");
+
+  // 32x32 favicon — referenced in Layout.astro head.
+  const favicon32 = await sharp(raw).resize(32, 32, { fit: "contain", background: BG }).png().toBuffer();
+  await writeIcon(favicon32, "public/favicon-32.png");
+  // Legacy unreferenced copy, kept in sync with favicon-32.
+  await writeIcon(favicon32, "public/favicon.png");
+
+  // 16x16 favicon — referenced in Layout.astro head.
+  const favicon16 = await sharp(raw).resize(16, 16, { fit: "contain", background: BG }).png().toBuffer();
+  await writeIcon(favicon16, "public/favicon-16.png");
 
   console.log("Safe-zone outer ring (maskable):", SAFE_ZONE_PX, "px");
   console.log("Done.");
