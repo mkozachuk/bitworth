@@ -399,14 +399,14 @@ Backups are per-user and small (a personal finance account is hundreds, not mill
 
 #### Automated
 
-- [x] 5.1 Type checking passes (`npx tsc --noEmit`)
-- [x] 5.2 Linting passes incl. `react-compiler` (`npm run lint`)
-- [x] 5.3 Build succeeds (`npm run build`)
+- [x] 5.1 Type checking passes (`npx tsc --noEmit`) — 59992be
+- [x] 5.2 Linting passes incl. `react-compiler` (`npm run lint`) — 59992be
+- [x] 5.3 Build succeeds (`npm run build`) — 59992be
 
 #### Manual
 
-- [x] 5.4 Backup & Restore card visible on settings page
-- [x] 5.5 Export downloads; Replace shows confirm dialog and only restores on confirm; Cancel aborts with no write
-- [x] 5.6 Merge shows amber caveat and appends
-- [x] 5.7 Failed import surfaces readable `ServerError`; page does not crash
-- [x] 5.8 File input + dialog work on iOS Safari
+- [x] 5.4 Backup & Restore card visible on settings page — 59992be
+- [x] 5.5 Export downloads; Replace shows confirm dialog and only restores on confirm; Cancel aborts with no write — 59992be
+- [x] 5.6 Merge shows amber caveat and appends — 59992be
+- [x] 5.7 Failed import surfaces readable `ServerError`; page does not crash — 59992be
+- [x] 5.8 File input + dialog work on iOS Safari — 59992be
