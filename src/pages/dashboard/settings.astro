@@ -1,6 +1,7 @@
 ---
 import Layout from "@/layouts/DashboardLayout.astro";
 import { SettingsForm } from "@/components/settings/SettingsForm";
+import { BackupRestore } from "@/components/settings/BackupRestore";
 import { createClient } from "@/lib/supabase";
 
 type Currency = "USD" | "EUR" | "PLN";
@@ -44,6 +45,14 @@ const initialTheme: Theme = VALID_THEMES.includes(rawTheme as Theme) ? (rawTheme
       class="rounded-2xl border border-zinc-200 bg-white/80 p-8 text-zinc-900 backdrop-blur-xl dark:border-white/10 dark:bg-white/10 dark:text-white"
     >
       <SettingsForm initialDisplayCurrency={initialDisplayCurrency} initialTheme={initialTheme} client:load />
+    </div>
+
+    <h2 class="mt-8 mb-4 text-xl font-semibold text-zinc-900 dark:text-white">Backup &amp; Restore</h2>
+
+    <div
+      class="rounded-2xl border border-zinc-200 bg-white/80 p-8 text-zinc-900 backdrop-blur-xl dark:border-white/10 dark:bg-white/10 dark:text-white"
+    >
+      <BackupRestore client:load />
     </div>
   </div>
 </Layout>

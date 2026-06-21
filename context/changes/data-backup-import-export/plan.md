@@ -383,30 +383,30 @@ Backups are per-user and small (a personal finance account is hundreds, not mill
 
 #### Automated
 
-- [x] 4.1 Type checking passes (`npx tsc --noEmit`)
-- [x] 4.2 Linting passes (`npm run lint`)
-- [x] 4.3 Route tests pass (`npx vitest run src/pages/api/backup/import.test.ts`)
-- [x] 4.4 API-auth contract test still passes (`npx vitest run src/pages/api/api-auth-contract.test.ts`)
+- [x] 4.1 Type checking passes (`npx tsc --noEmit`) — fa9682f
+- [x] 4.2 Linting passes (`npm run lint`) — fa9682f
+- [x] 4.3 Route tests pass (`npx vitest run src/pages/api/backup/import.test.ts`) — fa9682f
+- [x] 4.4 API-auth contract test still passes (`npx vitest run src/pages/api/api-auth-contract.test.ts`) — fa9682f
 
 #### Manual
 
-- [x] 4.5 Export→delete→import replace restores account exactly (rows, dates, chart)
-- [x] 4.6 Import merge appends data (duplicates expected, not an error)
-- [x] 4.7 Unknown `category_id` → 400, zero rows written
-- [x] 4.8 Newer `schemaVersion` → 400, zero rows written
+- [x] 4.5 Export→delete→import replace restores account exactly (rows, dates, chart) — fa9682f
+- [x] 4.6 Import merge appends data (duplicates expected, not an error) — fa9682f
+- [x] 4.7 Unknown `category_id` → 400, zero rows written — fa9682f
+- [x] 4.8 Newer `schemaVersion` → 400, zero rows written — fa9682f
 
 ### Phase 5: Settings UI island
 
 #### Automated
 
-- [ ] 5.1 Type checking passes (`npx tsc --noEmit`)
-- [ ] 5.2 Linting passes incl. `react-compiler` (`npm run lint`)
-- [ ] 5.3 Build succeeds (`npm run build`)
+- [x] 5.1 Type checking passes (`npx tsc --noEmit`)
+- [x] 5.2 Linting passes incl. `react-compiler` (`npm run lint`)
+- [x] 5.3 Build succeeds (`npm run build`)
 
 #### Manual
 
-- [ ] 5.4 Backup & Restore card visible on settings page
-- [ ] 5.5 Export downloads; Replace shows confirm dialog and only restores on confirm; Cancel aborts with no write
-- [ ] 5.6 Merge shows amber caveat and appends
-- [ ] 5.7 Failed import surfaces readable `ServerError`; page does not crash
-- [ ] 5.8 File input + dialog work on iOS Safari
+- [x] 5.4 Backup & Restore card visible on settings page
+- [x] 5.5 Export downloads; Replace shows confirm dialog and only restores on confirm; Cancel aborts with no write
+- [x] 5.6 Merge shows amber caveat and appends
+- [x] 5.7 Failed import surfaces readable `ServerError`; page does not crash
+- [x] 5.8 File input + dialog work on iOS Safari
