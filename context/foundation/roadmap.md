@@ -3,7 +3,7 @@ project: "BitWorth"
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-06-19
+updated: 2026-06-21
 prd_version: 1
 main_goal: market-feedback
 top_blocker: capacity
@@ -25,21 +25,22 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 
 ## At a glance
 
-| ID   | Change ID                  | Outcome (user can …)                                                                              | Prerequisites          | PRD refs             | Status |
-| ---- | -------------------------- | ------------------------------------------------------------------------------------------------- | ---------------------- | -------------------- | ------ |
-| F-01 | supabase-schema-migrations | (foundation) Supabase schema landed; migrations ready                                             | —                      | NFR-perf, FR-006-020 | done   |
-| S-01 | asset-management           | add/edit/delete assets with currency conversion                                                   | F-01                   | US-03, FR-006-010    | done   |
-| S-02 | dashboard-snapshots-chart  | see net worth, deltas, and trend chart from snapshots                                             | F-01, S-01             | US-01, FR-011-018    | done   |
-| S-03 | crypto-price-fetch         | see live BTC/ETH prices when adding crypto assets                                                 | F-01                   | FR-019-020           | done   |
-| S-04 | dashboard-assets-summary   | see assets summary by currency on dashboard                                                       | F-01, S-01, S-02       | —                    | done   |
-| S-05 | user-settings              | configure display currency and preferences in a settings tab                                      | F-01, S-02             | FR-011               | done   |
-| S-06 | mobile-refactor            | use the dashboard, assets, and forms comfortably on phone-sized viewports                         | F-01, S-01, S-02, S-04 | —                    | done   |
-| S-07 | asset-list-mobile-reflow   | view and act on every asset in the list on a phone-sized viewport                                 | F-01, S-01, S-06       | —                    | done   |
-| S-08 | pwa-installable            | install the app to a phone's home screen and launch it standalone at /dashboard                   | F-01, S-06, S-07       | —                    | done   |
-| S-09 | fire-calculator            | project years-to-FI and a FIRE number using current net worth as the starting point               | F-01, S-01, S-02, S-05 | —                    | done   |
-| S-10 | landing-page               | land on a dedicated BitWorth landing page that explains the product and drives sign-up            | —                      | —                    | done   |
-| S-11 | dashboard-top-movers       | see which assets rose/fell most since their last snapshot (top gainers + losers) on the dashboard | F-01, S-01, S-02, S-04 | —                    | done   |
-| S-12 | per-asset-trends           | see how individual assets/categories changed over time as a chart, from snapshot history          | F-01, S-02             | —                    | done   |
+| ID   | Change ID                  | Outcome (user can …)                                                                              | Prerequisites          | PRD refs             | Status  |
+| ---- | -------------------------- | ------------------------------------------------------------------------------------------------- | ---------------------- | -------------------- | ------- |
+| F-01 | supabase-schema-migrations | (foundation) Supabase schema landed; migrations ready                                             | —                      | NFR-perf, FR-006-020 | done    |
+| S-01 | asset-management           | add/edit/delete assets with currency conversion                                                   | F-01                   | US-03, FR-006-010    | done    |
+| S-02 | dashboard-snapshots-chart  | see net worth, deltas, and trend chart from snapshots                                             | F-01, S-01             | US-01, FR-011-018    | done    |
+| S-03 | crypto-price-fetch         | see live BTC/ETH prices when adding crypto assets                                                 | F-01                   | FR-019-020           | done    |
+| S-04 | dashboard-assets-summary   | see assets summary by currency on dashboard                                                       | F-01, S-01, S-02       | —                    | done    |
+| S-05 | user-settings              | configure display currency and preferences in a settings tab                                      | F-01, S-02             | FR-011               | done    |
+| S-06 | mobile-refactor            | use the dashboard, assets, and forms comfortably on phone-sized viewports                         | F-01, S-01, S-02, S-04 | —                    | done    |
+| S-07 | asset-list-mobile-reflow   | view and act on every asset in the list on a phone-sized viewport                                 | F-01, S-01, S-06       | —                    | done    |
+| S-08 | pwa-installable            | install the app to a phone's home screen and launch it standalone at /dashboard                   | F-01, S-06, S-07       | —                    | done    |
+| S-09 | fire-calculator            | project years-to-FI and a FIRE number using current net worth as the starting point               | F-01, S-01, S-02, S-05 | —                    | done    |
+| S-10 | landing-page               | land on a dedicated BitWorth landing page that explains the product and drives sign-up            | —                      | —                    | done    |
+| S-11 | dashboard-top-movers       | see which assets rose/fell most since their last snapshot (top gainers + losers) on the dashboard | F-01, S-01, S-02, S-04 | —                    | done    |
+| S-12 | per-asset-trends           | see how individual assets/categories changed over time as a chart, from snapshot history          | F-01, S-02             | —                    | done    |
+| S-13 | data-backup-import-export  | export a full backup of all their data to one file and import it back                             | F-01, S-02, S-05       | —                    | done    |
 
 ## Streams
 
@@ -55,6 +56,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | F      | FIRE planning     | `F-01` → `S-01` → `S-02` → `S-09`          | Projection layer on top of the net-worth number; seeds the starting principal from assets and reuses the S-02 charting lib             |
 | G      | Marketing         | `landing-page`                             | Standalone public page; no data dependency — reuses the design system and auth CTAs. Parallel with everything.                         |
 | H      | Snapshot insights | `F-01` → `S-01` → `S-02` → `S-11` → `S-12` | Reads the per-asset `snapshot_items` already captured by S-02; S-11 introduces the read+matching path, S-12 reuses it for trend charts |
+| I      | Data portability  | `F-01` → `S-02` → `S-05` → `S-13`          | Full-account backup export/import; reuses the S-05 settings page as host and reads every user-owned table                              |
 
 ## Baseline
 
@@ -262,23 +264,43 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Name-based identity over a long snapshot history is fragile and can render misleading discontinuities. Mitigant: reuse S-11's `(name, category_id)` matching plus a pure, unit-tested series-builder; copy the Recharts `LineChart` pattern from `src/components/NetWorthChart.tsx` and `src/components/fire/FireProjectionChart.tsx` rather than rebuilding chart scaffolding.
 - **Status:** done
 
+### S-13: Data backup import/export
+
+- **Outcome:** user opens the settings page and can (a) export a single self-describing backup file (JSON) containing all their data — preferences, assets, snapshots, and snapshot items — and (b) import such a file to restore it, choosing whether to **replace** all existing data or **merge** it alongside what's there.
+- **Change ID:** `data-backup-import-export`
+- **PRD refs:** — (post-MVP data-portability extension; distinct from the parked "Data export (PDF, CSV)" non-goal — see §Parked)
+- **Prerequisites:** `F-01` (schema / all user-owned tables), `S-02` (snapshots + `snapshot_items` exist), `S-05` (settings page is the host surface)
+- **Parallel with:** — (independent of other post-MVP slices)
+- **Blockers:** —
+- **Unknowns:**
+  - File format & schema versioning: JSON with an explicit `schemaVersion` / `exportedAt` envelope so future imports can detect/upgrade old files. (Owner: planner, by: during `/10x-plan`) Recommendation: version the envelope from day one.
+  - Import mode UX: **confirmed — offer both replace-all and merge, user picks.** Replace-all is destructive → guard with an explicit confirmation dialog. Merge must define identity: UUIDs regenerate on import, so there is no stable cross-file asset identity → merge = append new rows, accepting possible duplicates. (Owner: planner) Recommendation: append-only merge; surface the duplicate caveat in the UI.
+  - Atomicity: no Supabase JS transactions. Replace-all = delete-then-insert across 4 tables; a mid-import failure can leave partial state. (Owner: planner) Recommendation: prefer a single Postgres RPC (`restore_backup`) for true atomicity; fall back to the compensating-delete pattern from `src/pages/api/snapshots/index.ts` if an RPC is out of scope.
+  - Category validation: imported `category_id` values must still exist in the global `asset_categories` table — do not recreate categories. (Owner: planner) Recommendation: validate referenced ids on import; reject the file (or skip the row with a `context` error) if a category is unknown.
+  - Snapshot child remapping: on import, regenerate `snapshots.id` and remap each `snapshot_items.snapshot_id`. (Owner: planner) Recommendation: required for both modes.
+  - Export delivery & import input: GET endpoint returning a downloadable file vs client-side blob; import via `<input type="file">` → JSON body or multipart. (Owner: planner) Recommendation: `GET /api/backup/export` returning `application/json` with a `Content-Disposition` attachment; `POST /api/backup/import` reading parsed JSON (follow the `user-preferences` JSON-body pattern, not `formData`).
+  - Field-list completeness: confirm `assets.quantity` (present in `src/lib/database.types.ts`, no matching migration file found) is included in the backup. (Owner: planner)
+- **Risk:** Restore touches every user-owned table with no native transaction, so a partial failure can corrupt the account's data — the exact scenario backups exist to prevent. Mitigant: isolate (de)serialization into a pure, unit-tested helper (e.g. `src/lib/backup.ts`) that validates the envelope and shape before any write; prefer an atomic Postgres RPC for the restore, otherwise reuse the compensating-delete rollback from `src/pages/api/snapshots/index.ts`. Secondary risk: importing another user's `user_id` — neutralized by remapping to `auth.uid()` and RLS `WITH CHECK`. Tertiary: large backups — acceptable for MVP (manual-entry data is small).
+- **Status:** done
+
 ## Backlog Handoff
 
-| Roadmap ID | Change ID                  | Suggested issue title                                         | Ready for `/10x-plan` | Notes                                                                                                              |
-| ---------- | -------------------------- | ------------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| F-01       | supabase-schema-migrations | Design and migrate Supabase schema                            | yes                   | —                                                                                                                  |
-| S-01       | asset-management           | Build asset CRUD with currency conversion                     | yes                   | —                                                                                                                  |
-| S-02       | dashboard-snapshots-chart  | Dashboard: net worth, deltas, chart                           | yes                   | depends on S-01                                                                                                    |
-| S-03       | crypto-price-fetch         | Live crypto price fetch on asset entry                        | yes                   | parallel with S-01 and S-02                                                                                        |
-| S-04       | dashboard-assets-summary   | Dashboard: assets summary by currency                         | yes                   | depends on S-02                                                                                                    |
-| S-05       | user-settings              | Settings: display currency & preferences                      | yes                   | depends on S-02                                                                                                    |
-| S-06       | mobile-refactor            | Mobile: responsive UI pass (nav, buttons, forms)              | yes                   | depends on S-02; refactor of all authed pages                                                                      |
-| S-07       | asset-list-mobile-reflow   | AssetList: reflow table to cards on mobile                    | yes                   | depends on S-06; data-list reflow deferred from S-06                                                               |
-| S-08       | pwa-installable            | PWA: installable mobile app via @serwist/astro                | yes                   | depends on S-06+S-07; installable shell on top of mobile-UI pass                                                   |
-| S-09       | fire-calculator            | FIRE calculator: project years-to-FI from current net worth   | yes                   | depends on S-01/S-02/S-05; current net worth seeds the starting principal; was a PRD non-goal, promoted 2026-06-11 |
-| S-10       | landing-page               | Dedicated BitWorth landing page (replace starter placeholder) | yes                   | independent; reuses design system + auth CTAs; product preview from public/template.png                            |
-| S-11       | dashboard-top-movers       | Dashboard: top movers vs last snapshot (gainers/losers)       | yes                   | depends on S-02; replaces the placeholder card; first reader of `snapshot_items`; match on (name, category_id)     |
-| S-12       | per-asset-trends           | Per-asset / per-category trend charts from snapshot history   | yes                   | depends on S-02; reuses S-11's snapshot_items read + matching; reuse Recharts (S-02), no new charting lib          |
+| Roadmap ID | Change ID                  | Suggested issue title                                         | Ready for `/10x-plan` | Notes                                                                                                                                                            |
+| ---------- | -------------------------- | ------------------------------------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F-01       | supabase-schema-migrations | Design and migrate Supabase schema                            | yes                   | —                                                                                                                                                                |
+| S-01       | asset-management           | Build asset CRUD with currency conversion                     | yes                   | —                                                                                                                                                                |
+| S-02       | dashboard-snapshots-chart  | Dashboard: net worth, deltas, chart                           | yes                   | depends on S-01                                                                                                                                                  |
+| S-03       | crypto-price-fetch         | Live crypto price fetch on asset entry                        | yes                   | parallel with S-01 and S-02                                                                                                                                      |
+| S-04       | dashboard-assets-summary   | Dashboard: assets summary by currency                         | yes                   | depends on S-02                                                                                                                                                  |
+| S-05       | user-settings              | Settings: display currency & preferences                      | yes                   | depends on S-02                                                                                                                                                  |
+| S-06       | mobile-refactor            | Mobile: responsive UI pass (nav, buttons, forms)              | yes                   | depends on S-02; refactor of all authed pages                                                                                                                    |
+| S-07       | asset-list-mobile-reflow   | AssetList: reflow table to cards on mobile                    | yes                   | depends on S-06; data-list reflow deferred from S-06                                                                                                             |
+| S-08       | pwa-installable            | PWA: installable mobile app via @serwist/astro                | yes                   | depends on S-06+S-07; installable shell on top of mobile-UI pass                                                                                                 |
+| S-09       | fire-calculator            | FIRE calculator: project years-to-FI from current net worth   | yes                   | depends on S-01/S-02/S-05; current net worth seeds the starting principal; was a PRD non-goal, promoted 2026-06-11                                               |
+| S-10       | landing-page               | Dedicated BitWorth landing page (replace starter placeholder) | yes                   | independent; reuses design system + auth CTAs; product preview from public/template.png                                                                          |
+| S-11       | dashboard-top-movers       | Dashboard: top movers vs last snapshot (gainers/losers)       | yes                   | depends on S-02; replaces the placeholder card; first reader of `snapshot_items`; match on (name, category_id)                                                   |
+| S-12       | per-asset-trends           | Per-asset / per-category trend charts from snapshot history   | yes                   | depends on S-02; reuses S-11's snapshot_items read + matching; reuse Recharts (S-02), no new charting lib                                                        |
+| S-13       | data-backup-import-export  | Settings: full data backup export/import (one file)           | yes                   | depends on F-01/S-02/S-05; hosts on the S-05 settings page; reads/writes all user-owned tables; no DB transactions — prefer a restore RPC or compensating-delete |
 
 ## Open Roadmap Questions
 
@@ -294,7 +316,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Snapshot auto-save (FR-016)** — **Dropped 2026-06-16.** The manual snapshot trigger (FR-017, shipped in S-02) is the snapshot mechanism; auto-save will not be built. The first-login-of-month vs fixed-day-of-month question is moot. Decision recorded in issue #8 (closed, not planned); revisit only if auto-save is ever picked up.
 - **FIRE calculator** — Was a PRD §Non-Goal; promoted to a planned slice (**S-09**) on 2026-06-11 per user decision. Uses current net worth as the projection starting point. The PRD §Non-Goals section should be updated to reflect this scope change.
 - **Bank/broker integrations** — Non-goal per PRD §Non-Goals.
-- **Data export (PDF, CSV)** — Non-goal per PRD §Non-Goals.
+- **Data export (PDF, CSV)** — Non-goal per PRD §Non-Goals. (Note: full-account **backup** export/import in JSON is a distinct concern — data portability, not formatted reporting — and is now a planned slice, **S-13**. The PDF/CSV reporting export remains a non-goal.)
 - **Native mobile app** — Non-goal per PRD §Non-Goals.
 - **Observability scaffolding** — Baseline reports no logging/error-tracking. Not blocking MVP; observability is deferred until a production incident surfaces a need.
 - **Charting library** — Not in the baseline. A decision (Chart.js, Recharts, visx) will be made during S-02 planning.

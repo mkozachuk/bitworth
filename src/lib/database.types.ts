@@ -289,6 +289,10 @@ export interface Database {
     };
     Views: Record<never, never>;
     Functions: {
+      restore_backup: {
+        Args: { p_data: Json; p_mode: string };
+        Returns: undefined;
+      };
       upsert_crypto_price_cache: {
         Args: { p_coin_id: string; p_coin_symbol: string; p_price_usd: number };
         Returns: undefined;
