@@ -369,31 +369,31 @@ Backups are per-user and small (a personal finance account is hundreds, not mill
 
 #### Automated
 
-- [x] 3.1 Migration applies cleanly (`supabase db reset` / `migration up`)
-- [x] 3.2 Types regenerate (`npx astro sync`, RPC present in `database.types.ts`)
-- [x] 3.3 Linting passes (`npm run lint`)
+- [x] 3.1 Migration applies cleanly (`supabase db reset` / `migration up`) — d304be3
+- [x] 3.2 Types regenerate (`npx astro sync`, RPC present in `database.types.ts`) — d304be3
+- [x] 3.3 Linting passes (`npm run lint`) — d304be3
 
 #### Manual
 
-- [x] 3.4 `restore_backup('replace', …)` replaces only the caller's rows; other users untouched
-- [x] 3.5 Unknown `category_id` rolls back entirely (no partial rows)
-- [x] 3.6 `SET search_path = public, pg_temp` present in the migration
+- [x] 3.4 `restore_backup('replace', …)` replaces only the caller's rows; other users untouched — d304be3
+- [x] 3.5 Unknown `category_id` rolls back entirely (no partial rows) — d304be3
+- [x] 3.6 `SET search_path = public, pg_temp` present in the migration — d304be3
 
 ### Phase 4: Import endpoint
 
 #### Automated
 
-- [ ] 4.1 Type checking passes (`npx tsc --noEmit`)
-- [ ] 4.2 Linting passes (`npm run lint`)
-- [ ] 4.3 Route tests pass (`npx vitest run src/pages/api/backup/import.test.ts`)
-- [ ] 4.4 API-auth contract test still passes (`npx vitest run src/pages/api/api-auth-contract.test.ts`)
+- [x] 4.1 Type checking passes (`npx tsc --noEmit`)
+- [x] 4.2 Linting passes (`npm run lint`)
+- [x] 4.3 Route tests pass (`npx vitest run src/pages/api/backup/import.test.ts`)
+- [x] 4.4 API-auth contract test still passes (`npx vitest run src/pages/api/api-auth-contract.test.ts`)
 
 #### Manual
 
-- [ ] 4.5 Export→delete→import replace restores account exactly (rows, dates, chart)
-- [ ] 4.6 Import merge appends data (duplicates expected, not an error)
-- [ ] 4.7 Unknown `category_id` → 400, zero rows written
-- [ ] 4.8 Newer `schemaVersion` → 400, zero rows written
+- [x] 4.5 Export→delete→import replace restores account exactly (rows, dates, chart)
+- [x] 4.6 Import merge appends data (duplicates expected, not an error)
+- [x] 4.7 Unknown `category_id` → 400, zero rows written
+- [x] 4.8 Newer `schemaVersion` → 400, zero rows written
 
 ### Phase 5: Settings UI island
 
