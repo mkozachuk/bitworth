@@ -65,9 +65,9 @@ export function BackupRestore() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...(parsed as Record<string, unknown>), mode }),
       });
-      const json = (await res.json()) as { error?: { message: string } };
-      if (json.error) {
-        setError(json.error.message);
+      const json = (await res.json().catch(() => null)) as { error?: { message: string } } | null;
+      if (!res.ok || json?.error) {
+        setError(json?.error?.message ?? "Import failed. Please try again.");
         setImporting(false);
         return;
       }
