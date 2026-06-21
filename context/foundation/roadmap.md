@@ -3,7 +3,7 @@ project: "BitWorth"
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-06-20
+updated: 2026-06-21
 prd_version: 1
 main_goal: market-feedback
 top_blocker: capacity
@@ -40,7 +40,7 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 | S-10 | landing-page               | land on a dedicated BitWorth landing page that explains the product and drives sign-up            | —                      | —                    | done    |
 | S-11 | dashboard-top-movers       | see which assets rose/fell most since their last snapshot (top gainers + losers) on the dashboard | F-01, S-01, S-02, S-04 | —                    | done    |
 | S-12 | per-asset-trends           | see how individual assets/categories changed over time as a chart, from snapshot history          | F-01, S-02             | —                    | done    |
-| S-13 | data-backup-import-export  | export a full backup of all their data to one file and import it back                             | F-01, S-02, S-05       | —                    | planned |
+| S-13 | data-backup-import-export  | export a full backup of all their data to one file and import it back                             | F-01, S-02, S-05       | —                    | done    |
 
 ## Streams
 
@@ -281,7 +281,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Export delivery & import input: GET endpoint returning a downloadable file vs client-side blob; import via `<input type="file">` → JSON body or multipart. (Owner: planner) Recommendation: `GET /api/backup/export` returning `application/json` with a `Content-Disposition` attachment; `POST /api/backup/import` reading parsed JSON (follow the `user-preferences` JSON-body pattern, not `formData`).
   - Field-list completeness: confirm `assets.quantity` (present in `src/lib/database.types.ts`, no matching migration file found) is included in the backup. (Owner: planner)
 - **Risk:** Restore touches every user-owned table with no native transaction, so a partial failure can corrupt the account's data — the exact scenario backups exist to prevent. Mitigant: isolate (de)serialization into a pure, unit-tested helper (e.g. `src/lib/backup.ts`) that validates the envelope and shape before any write; prefer an atomic Postgres RPC for the restore, otherwise reuse the compensating-delete rollback from `src/pages/api/snapshots/index.ts`. Secondary risk: importing another user's `user_id` — neutralized by remapping to `auth.uid()` and RLS `WITH CHECK`. Tertiary: large backups — acceptable for MVP (manual-entry data is small).
-- **Status:** planned
+- **Status:** done
 
 ## Backlog Handoff
 
