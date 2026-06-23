@@ -289,28 +289,28 @@ The new column is `NOT NULL DEFAULT TRUE`, so all existing `user_preferences` ro
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly: `supabase db reset`
-- [x] 1.2 Type checking passes: `npx astro sync && npx tsc --noEmit`
-- [x] 1.3 Linting passes: `npm run lint`
-- [x] 1.4 Build passes: `npm run build`
+- [x] 1.1 Migration applies cleanly: `supabase db reset` — 01bb784
+- [x] 1.2 Type checking passes: `npx astro sync && npx tsc --noEmit` — 01bb784
+- [x] 1.3 Linting passes: `npm run lint` — 01bb784
+- [x] 1.4 Build passes: `npm run build` — 01bb784
 
 #### Manual
 
-- [x] 1.5 GET returns `show_fire_dashboard` (true for fresh row)
-- [x] 1.6 PUT `{ show_fire_dashboard: false }` persists and round-trips
-- [x] 1.7 PUT with non-boolean returns VALIDATION_ERROR with standard shape
+- [x] 1.5 GET returns `show_fire_dashboard` (true for fresh row) — 01bb784
+- [x] 1.6 PUT `{ show_fire_dashboard: false }` persists and round-trips — 01bb784
+- [x] 1.7 PUT with non-boolean returns VALIDATION_ERROR with standard shape — 01bb784
 
 ### Phase 2: Pure runway helper + tests
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass: `npm run test`
-- [ ] 2.2 Type checking passes: `npx tsc --noEmit`
-- [ ] 2.3 Linting passes: `npm run lint`
+- [x] 2.1 Unit tests pass: `npm run test`
+- [x] 2.2 Type checking passes: `npx tsc --noEmit`
+- [x] 2.3 Linting passes: `npm run lint`
 
 #### Manual
 
-- [ ] 2.4 Spot-check one oracle by hand (120000 / (40000/12) = 36 months)
+- [x] 2.4 Spot-check one oracle by hand (120000 / (40000/12) = 36 months)
 
 ### Phase 3: Settings toggle
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { FireInputs } from "@/lib/fire";
-import { computeFireProjection, toRealReturn } from "@/lib/fire";
+import { computeFireProjection, monthsOfRunway, toRealReturn } from "@/lib/fire";
 
 // Pins the FIRE projection math against oracles computed from first principles
 // — never by reading the implementation. The projection runs entirely in REAL
@@ -185,5 +185,40 @@ describe("computeFireProjection", () => {
     // off by two orders of magnitude and fail even a coarse comparison.
     const r = computeFireProjection(inputs({ annualExpenses: 33_333.33 }));
     expect(r.fireNumber).toBeCloseTo(833_333.25, 6);
+  });
+});
+
+describe("monthsOfRunway", () => {
+  it("divides net worth by the monthly burn rate", () => {
+    // monthly burn = 40000 / 12 = 3333.33... ; 120000 / 3333.33... = 36 months
+    expect(monthsOfRunway(120_000, 40_000)).toBeCloseTo(120_000 / (40_000 / 12), 6);
+  });
+
+  it("returns null when annual expenses are zero (no meaningful burn rate)", () => {
+    expect(monthsOfRunway(120_000, 0)).toBeNull();
+  });
+
+  it("returns null when annual expenses are negative", () => {
+    expect(monthsOfRunway(120_000, -40_000)).toBeNull();
+  });
+
+  it("returns null when annual expenses are non-finite", () => {
+    expect(monthsOfRunway(120_000, Number.POSITIVE_INFINITY)).toBeNull();
+    expect(monthsOfRunway(120_000, Number.NaN)).toBeNull();
+  });
+
+  it("returns 0 months for zero net worth against positive expenses", () => {
+    // 0 / (40000/12) = 0
+    expect(monthsOfRunway(0, 40_000)).toBe(0);
+  });
+
+  it("returns a negative number for an underwater net worth (documented, not clamped)", () => {
+    // liabilities exceed assets: -10000 / (40000/12) = -3 months
+    expect(monthsOfRunway(-10_000, 40_000)).toBeCloseTo(-3, 6);
+  });
+
+  it("survives a 333.33-class FP probe without scaling drift", () => {
+    // 33333.33 / (10000/12) = 39.99999... ; a ×100/÷100 bug lands two orders off
+    expect(monthsOfRunway(33_333.33, 10_000)).toBeCloseTo(33_333.33 / (10_000 / 12), 6);
   });
 });

@@ -136,3 +136,19 @@ export function computeFireProjection(inputs: FireInputs): FireResult {
     projection,
   };
 }
+
+/**
+ * Months a user could live on current net worth with zero income, at a flat
+ * real burn rate: `netWorth / (annualExpenses / 12)`.
+ *
+ * Returns `null` when `annualExpenses` is non-positive or non-finite — runway
+ * is undefined without a positive burn rate (a zero-expense user never runs
+ * out, which is not a meaningful month count). A negative net worth (liabilities
+ * exceed assets) yields a negative number by design; it is not clamped, so the
+ * view edge can decide how to present an underwater position. Returns a raw
+ * float; rounding happens at the view edge.
+ */
+export function monthsOfRunway(netWorth: number, annualExpenses: number): number | null {
+  if (!Number.isFinite(annualExpenses) || annualExpenses <= 0) return null;
+  return netWorth / (annualExpenses / 12);
+}
