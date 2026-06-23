@@ -283,6 +283,11 @@ test("capture README screenshots", async ({ page, browser }) => {
   await settleChart(page, /projected portfolio/i);
   await page.screenshot({ path: join(SHOTS_DIR, "fire.png"), fullPage: true });
 
+  await page.goto("/dashboard/settings");
+  await page.getByRole("heading", { name: /settings/i }).waitFor({ state: "visible" });
+  await page.waitForLoadState("networkidle");
+  await page.screenshot({ path: join(SHOTS_DIR, "settings.png"), fullPage: true });
+
   // 4. A few light-theme shots (dashboard + FIRE) to showcase the light theme.
   await page.emulateMedia({ colorScheme: "light" });
 
