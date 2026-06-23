@@ -32,6 +32,7 @@ const prefsRow = {
   fire_safe_withdrawal_rate: null,
   fire_starting_principal_override: null,
   fire_traditional_retirement_age: null,
+  show_fire_dashboard: true,
   created_at: "2026-01-01T00:00:00.000Z",
   updated_at: "2026-01-01T00:00:00.000Z",
 };
