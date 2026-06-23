@@ -248,6 +248,7 @@ export interface Database {
           fire_safe_withdrawal_rate: number;
           fire_starting_principal_override: number | null;
           fire_traditional_retirement_age: number;
+          show_fire_dashboard: boolean;
           theme: string;
           updated_at: string;
           user_id: string;
@@ -264,6 +265,7 @@ export interface Database {
           fire_safe_withdrawal_rate?: number;
           fire_starting_principal_override?: number | null;
           fire_traditional_retirement_age?: number;
+          show_fire_dashboard?: boolean;
           theme?: string;
           updated_at?: string;
           user_id: string;
@@ -280,6 +282,7 @@ export interface Database {
           fire_safe_withdrawal_rate?: number;
           fire_starting_principal_override?: number | null;
           fire_traditional_retirement_age?: number;
+          show_fire_dashboard?: boolean;
           theme?: string;
           updated_at?: string;
           user_id?: string;

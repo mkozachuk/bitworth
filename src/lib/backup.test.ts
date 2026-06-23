@@ -34,6 +34,7 @@ function makeInput(): BackupInput {
         fire_safe_withdrawal_rate: 4,
         fire_starting_principal_override: null,
         fire_traditional_retirement_age: 65,
+        show_fire_dashboard: true,
         created_at: ISO,
         updated_at: ISO,
       },
