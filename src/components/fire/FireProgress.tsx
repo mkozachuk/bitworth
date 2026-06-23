@@ -44,7 +44,11 @@ export function FireProgress({ configured, percent, fireNumber, yearsToFi, runwa
     );
   }
 
-  const pct = percent ?? 0;
+  // Defensive: the SSR guard already excludes the zero-expense case that would
+  // make percent non-finite, but clamp here too so a stray Infinity/NaN never
+  // leaks into the width, the label, or aria-valuenow.
+  const rawPct = percent ?? 0;
+  const pct = Number.isFinite(rawPct) ? Math.max(0, rawPct) : 0;
   const fillWidth = Math.min(pct, 100);
   const fiReached = pct >= 100;
 
