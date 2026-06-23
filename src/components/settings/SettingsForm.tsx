@@ -8,6 +8,7 @@ type Theme = "light" | "dark" | "system";
 interface Props {
   initialDisplayCurrency: Currency;
   initialTheme: Theme;
+  initialShowFireDashboard: boolean;
 }
 
 const CURRENCIES: { value: Currency; label: string }[] = [
@@ -22,13 +23,17 @@ const THEMES: { value: Theme; label: string; description: string }[] = [
   { value: "system", label: "System", description: "Follow your operating system preference." },
 ];
 
-export function SettingsForm({ initialDisplayCurrency, initialTheme }: Props) {
+export function SettingsForm({ initialDisplayCurrency, initialTheme, initialShowFireDashboard }: Props) {
   const [displayCurrency, setDisplayCurrency] = useState<Currency>(initialDisplayCurrency);
   const [theme, setTheme] = useState<Theme>(initialTheme);
+  const [showFireDashboard, setShowFireDashboard] = useState<boolean>(initialShowFireDashboard);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  const hasChanges = displayCurrency !== initialDisplayCurrency || theme !== initialTheme;
+  const hasChanges =
+    displayCurrency !== initialDisplayCurrency ||
+    theme !== initialTheme ||
+    showFireDashboard !== initialShowFireDashboard;
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -36,9 +41,10 @@ export function SettingsForm({ initialDisplayCurrency, initialTheme }: Props) {
     setError(null);
     setPending(true);
 
-    const updates: { display_currency?: Currency; theme?: Theme } = {};
+    const updates: { display_currency?: Currency; theme?: Theme; show_fire_dashboard?: boolean } = {};
     if (displayCurrency !== initialDisplayCurrency) updates.display_currency = displayCurrency;
     if (theme !== initialTheme) updates.theme = theme;
+    if (showFireDashboard !== initialShowFireDashboard) updates.show_fire_dashboard = showFireDashboard;
 
     try {
       const res = await fetch("/api/user-preferences", {
@@ -124,6 +130,27 @@ export function SettingsForm({ initialDisplayCurrency, initialTheme }: Props) {
           ))}
         </div>
       </fieldset>
+
+      <div>
+        <label
+          htmlFor="show_fire_dashboard"
+          className="flex items-center gap-2 text-sm text-zinc-700 dark:text-blue-100/80"
+        >
+          <input
+            id="show_fire_dashboard"
+            type="checkbox"
+            checked={showFireDashboard}
+            onChange={(e) => {
+              setShowFireDashboard(e.target.checked);
+            }}
+            className="size-4 accent-purple-600"
+          />
+          Show FIRE progress on dashboard
+        </label>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-white/40">
+          Adds a card to your dashboard showing progress toward financial independence.
+        </p>
+      </div>
 
       <div className="flex gap-3 pt-2">
         <button
