@@ -3,7 +3,7 @@ project: "BitWorth"
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-06-21
+updated: 2026-06-23
 prd_version: 1
 main_goal: market-feedback
 top_blocker: capacity
@@ -41,6 +41,7 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 | S-11 | dashboard-top-movers       | see which assets rose/fell most since their last snapshot (top gainers + losers) on the dashboard | F-01, S-01, S-02, S-04 | —                    | done    |
 | S-12 | per-asset-trends           | see how individual assets/categories changed over time as a chart, from snapshot history          | F-01, S-02             | —                    | done    |
 | S-13 | data-backup-import-export  | export a full backup of all their data to one file and import it back                             | F-01, S-02, S-05       | —                    | done    |
+| S-14 | fire-dashboard             | toggle a FIRE-progress card on the dashboard showing % to FIRE, runway months, and years-to-FI    | F-01, S-02, S-05, S-09 | —                    | todo    |
 
 ## Streams
 
@@ -53,7 +54,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | C      | Dashboard UX      | `F-01` → `S-01` → `S-02` → `S-04`          | Builds on S-02 to complete the dashboard view                                                                                          |
 | D      | User settings     | `F-01` → `S-05`                            | Parallel branch after S-02; UI for `user_preferences`                                                                                  |
 | E      | Responsive UI     | `F-01` → `S-06` → `S-07` → `S-08`          | S-06/S-07 make the app usable on mobile; S-08 ships it as an installable PWA                                                           |
-| F      | FIRE planning     | `F-01` → `S-01` → `S-02` → `S-09`          | Projection layer on top of the net-worth number; seeds the starting principal from assets and reuses the S-02 charting lib             |
+| F      | FIRE planning     | `F-01` → `S-01` → `S-02` → `S-09` → `S-14` | Projection layer on top of the net-worth number; seeds the starting principal from assets and reuses the S-02 charting lib. S-14 surfaces FIRE on the dashboard as a settings-gated card; depends on the S-05 settings page for the on/off toggle |
 | G      | Marketing         | `landing-page`                             | Standalone public page; no data dependency — reuses the design system and auth CTAs. Parallel with everything.                         |
 | H      | Snapshot insights | `F-01` → `S-01` → `S-02` → `S-11` → `S-12` | Reads the per-asset `snapshot_items` already captured by S-02; S-11 introduces the read+matching path, S-12 reuses it for trend charts |
 | I      | Data portability  | `F-01` → `S-02` → `S-05` → `S-13`          | Full-account backup export/import; reuses the S-05 settings page as host and reads every user-owned table                              |
@@ -283,6 +284,24 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Restore touches every user-owned table with no native transaction, so a partial failure can corrupt the account's data — the exact scenario backups exist to prevent. Mitigant: isolate (de)serialization into a pure, unit-tested helper (e.g. `src/lib/backup.ts`) that validates the envelope and shape before any write; prefer an atomic Postgres RPC for the restore, otherwise reuse the compensating-delete rollback from `src/pages/api/snapshots/index.ts`. Secondary risk: importing another user's `user_id` — neutralized by remapping to `auth.uid()` and RLS `WITH CHECK`. Tertiary: large backups — acceptable for MVP (manual-entry data is small).
 - **Status:** done
 
+### S-14: FIRE dashboard card
+
+- **Outcome:** user can turn a "FIRE dashboard" card on or off from the settings page (on by default); when on, the main dashboard shows a card with their progress toward financial independence — an animated progress bar for percent of the FIRE number reached, months of runway they could live on with zero income, estimated years-to-FI, and the FIRE number itself, all in their display currency. When they have not entered any FIRE data yet, the card shows a placeholder prompting them to set up the FIRE calculator, with a link to `/dashboard/fire`.
+- **Change ID:** `fire-dashboard`
+- **PRD refs:** — (post-MVP dashboard extension; not a PRD functional requirement)
+- **Prerequisites:** `F-01` (schema), `S-02` (dashboard host + net-worth/rates load), `S-05` (settings page + `user_preferences` write path for the new toggle), `S-09` (FIRE engine `src/lib/fire.ts` + the `fire_*` columns this card reads)
+- **Parallel with:** —
+- **Blockers:** —
+- **Unknowns:**
+  - "No FIRE data" definition: which absent field flips the card to its placeholder state. (Owner: planner, by: during `/10x-plan`) Recommendation: treat `fire_annual_expenses == null` as "not set up" — it is the one input both the FIRE number and the runway calc require (`fire_safe_withdrawal_rate` is NOT NULL with a default, so it cannot signal absence).
+  - Runway helper: "months at zero income" does not exist yet. (Owner: planner) Recommendation: add a pure, unit-tested helper (e.g. `monthsOfRunway(netWorth, annualExpenses)` in `src/lib/fire.ts` or a sibling `src/lib/runway.ts`) = `netWorth / (annualExpenses / 12)`; guard `annualExpenses <= 0`. Mirror the isolated, table-tested style of `fire.ts`.
+  - Settings persistence: add `show_fire_dashboard BOOLEAN NOT NULL DEFAULT TRUE` to `user_preferences` via a new migration (timestamp after `20260621000000`), mirroring the `show_on_chart` boolean precedent. Thread it through `database.types.ts` (Row/Insert/Update), `PREFS_SELECT` + a boolean validation branch in `api/user-preferences/index.ts`, and a native `accent-purple-600` checkbox in `SettingsForm.tsx`. (Owner: planner)
+  - Dashboard data load: `dashboard.astro` does not currently read the `fire_*` columns or call `computeNetWorth`. (Owner: planner) Recommendation: copy the SSR load pattern from `dashboard/fire.astro` (assets + `getRates` + `computeNetWorth`, plus the `fire_*` + `show_fire_dashboard` select), gate rendering on `show_fire_dashboard`, and pass the computed net worth + FIRE prefs + `displayCurrency` into a new `FireProgress` island.
+  - Card placement & gating scope: where in the dashboard stack the card sits, and whether the toggle also gates the FIRE nav link (`Topbar`/`TopbarMenu` → `/dashboard/fire`). (Owner: planner) Recommendation: place it in the `assets &&` block near `NetWorthDisplay`; gate only the dashboard card, leave the nav link always available.
+  - Progress-bar animation: CSS transition on width vs a JS-driven count-up. (Owner: planner) Recommendation: CSS `transition`/`@keyframes` on the bar fill — no new dependency, respects `prefers-reduced-motion`.
+- **Risk:** Low — read-and-present over an existing, tested engine. Main risks: (a) divide-by-zero / null FIRE inputs must degrade to the placeholder, not crash — mitigant: a pure guarded runway helper with table-driven tests and an explicit "no FIRE data" branch; (b) `computeFireProjection` throws `RangeError` when `safeWithdrawalRate <= 0` — the card must guard before calling, as `FireCalculatorForm` already does; (c) currency cast boundary (DB `string` → `Currency`) per the documented project lesson — reuse the `dashboard/fire.astro` cast pattern.
+- **Status:** todo
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID                  | Suggested issue title                                         | Ready for `/10x-plan` | Notes                                                                                                                                                            |
@@ -301,6 +320,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-11       | dashboard-top-movers       | Dashboard: top movers vs last snapshot (gainers/losers)       | yes                   | depends on S-02; replaces the placeholder card; first reader of `snapshot_items`; match on (name, category_id)                                                   |
 | S-12       | per-asset-trends           | Per-asset / per-category trend charts from snapshot history   | yes                   | depends on S-02; reuses S-11's snapshot_items read + matching; reuse Recharts (S-02), no new charting lib                                                        |
 | S-13       | data-backup-import-export  | Settings: full data backup export/import (one file)           | yes                   | depends on F-01/S-02/S-05; hosts on the S-05 settings page; reads/writes all user-owned tables; no DB transactions — prefer a restore RPC or compensating-delete |
+| S-14       | fire-dashboard             | Dashboard: settings-gated FIRE-progress card                  | yes                   | depends on F-01/S-02/S-05/S-09; reuses `src/lib/fire.ts` + `computeNetWorth`; new `show_fire_dashboard` pref (default TRUE) + a new runway helper; placeholder links to `/dashboard/fire`                                                          |
 
 ## Open Roadmap Questions
 
