@@ -29,7 +29,7 @@ function formatRunway(months: number): string {
 export function FireProgress({ configured, percent, fireNumber, yearsToFi, runwayMonths, displayCurrency }: Props) {
   if (!configured) {
     return (
-      <div className="mb-6 rounded-2xl border border-zinc-200 bg-white/80 p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/10">
+      <div className="mt-6 rounded-2xl border border-zinc-200 bg-white/80 p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/10">
         <p className="text-sm tracking-wider text-zinc-500 uppercase dark:text-white/50">FIRE progress</p>
         <p className="mt-2 text-sm text-zinc-600 dark:text-white/60">
           Set your income, expenses, and return assumptions to see your progress toward financial independence.
@@ -53,7 +53,7 @@ export function FireProgress({ configured, percent, fireNumber, yearsToFi, runwa
   const fiReached = pct >= 100;
 
   return (
-    <div className="mb-6 rounded-2xl border border-zinc-200 bg-white/80 p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/10">
+    <div className="mt-6 rounded-2xl border border-zinc-200 bg-white/80 p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/10">
       <div className="flex items-baseline justify-between gap-4">
         <p className="text-sm tracking-wider text-zinc-500 uppercase dark:text-white/50">FIRE progress</p>
         <p
