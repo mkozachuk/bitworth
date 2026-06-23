@@ -20,17 +20,19 @@ const supabase = createClient(Astro.request.headers, Astro.cookies);
 
 const { data: prefs } = await supabase
   .from("user_preferences")
-  .select("display_currency, theme")
+  .select("display_currency, theme, show_fire_dashboard")
   .eq("user_id", user.id)
   .maybeSingle();
 
 const rawCurrency = (prefs as { display_currency?: string } | null)?.display_currency;
 const rawTheme = (prefs as { theme?: string } | null)?.theme;
+const rawShowFireDashboard = (prefs as { show_fire_dashboard?: boolean } | null)?.show_fire_dashboard;
 
 const initialDisplayCurrency: Currency = VALID_CURRENCIES.includes(rawCurrency as Currency)
   ? (rawCurrency as Currency)
   : "USD";
 const initialTheme: Theme = VALID_THEMES.includes(rawTheme as Theme) ? (rawTheme as Theme) : "system";
+const initialShowFireDashboard: boolean = rawShowFireDashboard ?? true;
 ---
 
 <Layout title="Settings">
@@ -44,7 +46,12 @@ const initialTheme: Theme = VALID_THEMES.includes(rawTheme as Theme) ? (rawTheme
     <div
       class="rounded-2xl border border-zinc-200 bg-white/80 p-8 text-zinc-900 backdrop-blur-xl dark:border-white/10 dark:bg-white/10 dark:text-white"
     >
-      <SettingsForm initialDisplayCurrency={initialDisplayCurrency} initialTheme={initialTheme} client:load />
+      <SettingsForm
+        initialDisplayCurrency={initialDisplayCurrency}
+        initialTheme={initialTheme}
+        initialShowFireDashboard={initialShowFireDashboard}
+        client:load
+      />
     </div>
 
     <h2 class="mt-8 mb-4 text-xl font-semibold text-zinc-900 dark:text-white">Backup &amp; Restore</h2>

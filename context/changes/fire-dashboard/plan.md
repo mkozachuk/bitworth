@@ -304,28 +304,28 @@ The new column is `NOT NULL DEFAULT TRUE`, so all existing `user_preferences` ro
 
 #### Automated
 
-- [x] 2.1 Unit tests pass: `npm run test`
-- [x] 2.2 Type checking passes: `npx tsc --noEmit`
-- [x] 2.3 Linting passes: `npm run lint`
+- [x] 2.1 Unit tests pass: `npm run test` — c0ed8a8
+- [x] 2.2 Type checking passes: `npx tsc --noEmit` — c0ed8a8
+- [x] 2.3 Linting passes: `npm run lint` — c0ed8a8
 
 #### Manual
 
-- [x] 2.4 Spot-check one oracle by hand (120000 / (40000/12) = 36 months)
+- [x] 2.4 Spot-check one oracle by hand (120000 / (40000/12) = 36 months) — c0ed8a8
 
 ### Phase 3: Settings toggle
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `npx tsc --noEmit`
-- [ ] 3.2 Linting passes (incl. react-compiler): `npm run lint`
-- [ ] 3.3 Build passes: `npm run build`
+- [x] 3.1 Type checking passes: `npx tsc --noEmit`
+- [x] 3.2 Linting passes (incl. react-compiler): `npm run lint`
+- [x] 3.3 Build passes: `npm run build`
 
 #### Manual
 
-- [ ] 3.4 Checkbox shown, checked by default for fresh account
-- [ ] 3.5 Uncheck + save persists false; reload shows unchecked
-- [ ] 3.6 Re-check + save persists true
-- [ ] 3.7 No console errors; save enables only on change
+- [x] 3.4 Checkbox shown, checked by default for fresh account
+- [x] 3.5 Uncheck + save persists false; reload shows unchecked
+- [x] 3.6 Re-check + save persists true
+- [x] 3.7 No console errors; save enables only on change
 
 ### Phase 4: Dashboard FIRE-progress card
 
