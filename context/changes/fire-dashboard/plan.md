@@ -316,32 +316,32 @@ The new column is `NOT NULL DEFAULT TRUE`, so all existing `user_preferences` ro
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `npx tsc --noEmit`
-- [x] 3.2 Linting passes (incl. react-compiler): `npm run lint`
-- [x] 3.3 Build passes: `npm run build`
+- [x] 3.1 Type checking passes: `npx tsc --noEmit` — ae77f90
+- [x] 3.2 Linting passes (incl. react-compiler): `npm run lint` — ae77f90
+- [x] 3.3 Build passes: `npm run build` — ae77f90
 
 #### Manual
 
-- [x] 3.4 Checkbox shown, checked by default for fresh account
-- [x] 3.5 Uncheck + save persists false; reload shows unchecked
-- [x] 3.6 Re-check + save persists true
-- [x] 3.7 No console errors; save enables only on change
+- [x] 3.4 Checkbox shown, checked by default for fresh account — ae77f90
+- [x] 3.5 Uncheck + save persists false; reload shows unchecked — ae77f90
+- [x] 3.6 Re-check + save persists true — ae77f90
+- [x] 3.7 No console errors; save enables only on change — ae77f90
 
 ### Phase 4: Dashboard FIRE-progress card
 
 #### Automated
 
-- [ ] 4.1 Type checking passes: `npx tsc --noEmit`
-- [ ] 4.2 Linting passes (incl. react-compiler + no-set-html-directive): `npm run lint`
-- [ ] 4.3 Build passes: `npm run build`
+- [x] 4.1 Type checking passes: `npx tsc --noEmit`
+- [x] 4.2 Linting passes (incl. react-compiler + no-set-html-directive): `npm run lint`
+- [x] 4.3 Build passes: `npm run build`
 
 #### Manual
 
-- [ ] 4.4 Configured: card shows bar (uncapped % label), years-to-FI, runway "N months (N.N years)", FIRE number in display currency
-- [ ] 4.5 Missing core inputs: placeholder linking to `/dashboard/fire`
-- [ ] 4.6 Toggle off: no card renders
-- [ ] 4.7 Net worth ≥ FIRE number: bar complete (FI-reached accent) + >100% label
-- [ ] 4.8 FI unreachable: years-to-FI row hidden; rest renders
-- [ ] 4.9 Display currency change updates amounts on reload
-- [ ] 4.10 `prefers-reduced-motion` disables bar animation
-- [ ] 4.11 Card readable and stacks on phone-sized viewport
+- [x] 4.4 Configured: card shows bar (uncapped % label), years-to-FI, runway "N months (N.N years)", FIRE number in display currency
+- [x] 4.5 Missing core inputs: placeholder linking to `/dashboard/fire`
+- [x] 4.6 Toggle off: no card renders
+- [x] 4.7 Net worth ≥ FIRE number: bar complete (FI-reached accent) + >100% label
+- [x] 4.8 FI unreachable: years-to-FI row hidden; rest renders
+- [x] 4.9 Display currency change updates amounts on reload
+- [x] 4.10 `prefers-reduced-motion` disables bar animation
+- [x] 4.11 Card readable and stacks on phone-sized viewport
