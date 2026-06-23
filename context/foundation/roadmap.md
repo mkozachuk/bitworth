@@ -41,7 +41,7 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 | S-11 | dashboard-top-movers       | see which assets rose/fell most since their last snapshot (top gainers + losers) on the dashboard | F-01, S-01, S-02, S-04 | —                    | done    |
 | S-12 | per-asset-trends           | see how individual assets/categories changed over time as a chart, from snapshot history          | F-01, S-02             | —                    | done    |
 | S-13 | data-backup-import-export  | export a full backup of all their data to one file and import it back                             | F-01, S-02, S-05       | —                    | done    |
-| S-14 | fire-dashboard             | toggle a FIRE-progress card on the dashboard showing % to FIRE, runway months, and years-to-FI    | F-01, S-02, S-05, S-09 | —                    | todo    |
+| S-14 | fire-dashboard             | toggle a FIRE-progress card on the dashboard showing % to FIRE, runway months, and years-to-FI    | F-01, S-02, S-05, S-09 | —                    | done    |
 
 ## Streams
 
