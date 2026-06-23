@@ -110,11 +110,14 @@ if (showFireDashboard) {
   const currentAge = firePrefs.fire_current_age;
   const swr = firePrefs.fire_safe_withdrawal_rate;
 
-  // Configured = all core inputs present and SWR > 0 (the projection divides by
-  // it and throws RangeError otherwise). retirement-age + SWR are NOT NULL with
-  // defaults, but the SWR > 0 guard is required before computeFireProjection.
+  // Configured = all core inputs present, SWR > 0, and expenses > 0. The SWR > 0
+  // guard is required before computeFireProjection (it divides by SWR and throws
+  // RangeError otherwise). The expenses > 0 guard mirrors monthsOfRunway: a
+  // zero-expense profile makes fireNumber 0, so percent = netWorth / 0 would be
+  // Infinity/NaN — treat it as not-yet-configured (show the placeholder).
   const configured =
     annualExpenses != null &&
+    annualExpenses > 0 &&
     annualIncome != null &&
     expectedReturn != null &&
     inflationRate != null &&

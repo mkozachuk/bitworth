@@ -1,7 +1,7 @@
 ---
 change_id: fire-dashboard
 title: Settings-gated FIRE-progress card on the dashboard
-status: implemented
+status: impl_reviewed
 created: 2026-06-23
 updated: 2026-06-23
 archived_at: null
