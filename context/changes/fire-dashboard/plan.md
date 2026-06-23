@@ -331,17 +331,17 @@ The new column is `NOT NULL DEFAULT TRUE`, so all existing `user_preferences` ro
 
 #### Automated
 
-- [x] 4.1 Type checking passes: `npx tsc --noEmit`
-- [x] 4.2 Linting passes (incl. react-compiler + no-set-html-directive): `npm run lint`
-- [x] 4.3 Build passes: `npm run build`
+- [x] 4.1 Type checking passes: `npx tsc --noEmit` — cd64119
+- [x] 4.2 Linting passes (incl. react-compiler + no-set-html-directive): `npm run lint` — cd64119
+- [x] 4.3 Build passes: `npm run build` — cd64119
 
 #### Manual
 
-- [x] 4.4 Configured: card shows bar (uncapped % label), years-to-FI, runway "N months (N.N years)", FIRE number in display currency
-- [x] 4.5 Missing core inputs: placeholder linking to `/dashboard/fire`
-- [x] 4.6 Toggle off: no card renders
-- [x] 4.7 Net worth ≥ FIRE number: bar complete (FI-reached accent) + >100% label
-- [x] 4.8 FI unreachable: years-to-FI row hidden; rest renders
-- [x] 4.9 Display currency change updates amounts on reload
-- [x] 4.10 `prefers-reduced-motion` disables bar animation
-- [x] 4.11 Card readable and stacks on phone-sized viewport
+- [x] 4.4 Configured: card shows bar (uncapped % label), years-to-FI, runway "N months (N.N years)", FIRE number in display currency — cd64119
+- [x] 4.5 Missing core inputs: placeholder linking to `/dashboard/fire` — cd64119
+- [x] 4.6 Toggle off: no card renders — cd64119
+- [x] 4.7 Net worth ≥ FIRE number: bar complete (FI-reached accent) + >100% label — cd64119
+- [x] 4.8 FI unreachable: years-to-FI row hidden; rest renders — cd64119
+- [x] 4.9 Display currency change updates amounts on reload — cd64119
+- [x] 4.10 `prefers-reduced-motion` disables bar animation — cd64119
+- [x] 4.11 Card readable and stacks on phone-sized viewport — cd64119
