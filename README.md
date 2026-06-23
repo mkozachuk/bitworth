@@ -14,7 +14,7 @@ BitWorth is a privacy-first personal net worth tracker. You manually enter your 
   <img alt="PWA" src="https://img.shields.io/badge/PWA-installable-5A0FC8?logo=pwa&logoColor=white" />
 </p>
 
-![BitWorth dashboard — net worth, deltas, and trend chart](docs/screenshots/dashboard.png)
+![BitWorth dashboard — net worth, deltas, FIRE progress, and trend chart](docs/screenshots/dashboard.png)
 
 ---
 
@@ -26,7 +26,7 @@ Tracking net worth in a spreadsheet works until it doesn't: formulas drift, curr
 - **Multi-currency, automatically** — hold assets in PLN, USD, and EUR; BitWorth converts everything to your display currency using live rates (cached, with graceful fallback).
 - **One number, with context** — a single net worth figure plus month-over-month and year-to-date deltas.
 - **History you can see** — one-click snapshots feed an overall trend chart, top movers, and per-asset trend lines.
-- **Plan ahead** — a built-in FIRE calculator projects when you can retire.
+- **Plan ahead** — a built-in FIRE calculator projects when you can retire, and an optional dashboard card keeps your progress toward financial independence front and center.
 
 ![Landing page](docs/screenshots/landing.png)
 
@@ -40,7 +40,8 @@ Tracking net worth in a spreadsheet works until it doesn't: formulas drift, curr
 - **Asset trends** — opt any asset into a dedicated trend chart and watch each one move across your snapshot history. Toggle between indexed (%) and absolute scales; lines are color-distinct, gaps stay honest (no bridging), and liabilities read in their natural direction (debt paydown trends up).
 - **Live crypto prices** — adding or editing a crypto holding fetches the current market price from CoinGecko (cached, with manual-entry fallback). Top coins are mapped out of the box (BTC, ETH, SOL, and more).
 - **FIRE calculator** — enter your income, expenses, return, inflation, and safe withdrawal rate to compute your FIRE number, years to FI, estimated retirement age, plus Coast and Barista FIRE — with a year-by-year projection chart in today's money.
-- **Settings** — choose your display currency (PLN/USD/EUR) and theme (light/dark/system), persisted per user.
+- **FIRE progress card** — a settings-gated card on the dashboard (on by default) that turns your saved FIRE inputs into an at-a-glance view: a progress bar for percent of your FIRE number reached, months of runway at zero income, years to FI, and the FIRE number — all in your display currency. Before you've entered any FIRE data it shows a placeholder linking to the calculator.
+- **Settings** — choose your display currency (PLN/USD/EUR), theme (light/dark/system), and whether the FIRE progress card appears on your dashboard; everything is persisted per user.
 - **Auth** — email/password authentication via Supabase SSR, with protected dashboard routes.
 
 | Assets                                                                     | FIRE calculator                                                            |
@@ -48,6 +49,8 @@ Tracking net worth in a spreadsheet works until it doesn't: formulas drift, curr
 | [![Assets list](docs/screenshots/assets.png)](docs/screenshots/assets.png) | [![FIRE calculator](docs/screenshots/fire.png)](docs/screenshots/fire.png) |
 
 ![Asset Trends — per-asset trend lines over snapshot history, indexed mode](docs/screenshots/asset-trends.png)
+
+![Settings — display currency, theme, FIRE progress card toggle, and backup/restore](docs/screenshots/settings.png)
 
 > Screenshots show the default dark theme. BitWorth also ships a light theme (and a "system" option) — here's the dashboard and FIRE calculator in light:
 >
