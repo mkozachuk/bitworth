@@ -2,11 +2,14 @@
 import Layout from "@/layouts/DashboardLayout.astro";
 import { createClient } from "@/lib/supabase";
 import { getRates } from "@/lib/exchange-rates";
+import { computeNetWorth } from "@/lib/net-worth";
+import { computeFireProjection, monthsOfRunway, type FireInputs } from "@/lib/fire";
 import { NetWorthDisplay } from "@/components/assets/NetWorthDisplay";
 import { AssetsSummary } from "@/components/assets/AssetsSummary";
 import { NetWorthChart } from "@/components/NetWorthChart";
 import { TopMovers } from "@/components/assets/TopMovers";
 import { AssetTrendsChart, type SnapshotItemWithDate } from "@/components/AssetTrendsChart";
+import { FireProgress } from "@/components/fire/FireProgress";
 import type { Tables } from "@/lib/database.types";
 
 type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
@@ -57,6 +60,93 @@ interface SnapshotWithItems {
 const trendSnapshotItems: SnapshotItemWithDate[] = ((snapshotsWithItems ?? []) as SnapshotWithItems[]).flatMap(
   (snapshot) => snapshot.snapshot_items.map((item) => ({ ...item, snapshotDate: snapshot.created_at })),
 );
+
+// FIRE-progress card. The toggle (`show_fire_dashboard`, default TRUE) gates the
+// whole card; when on, compute net worth + the projection server-side so the
+// island stays purely presentational. Chained selects resolve to `any` in
+// frontmatter, so read the numeric fire_* columns through a typed record at the
+// boundary (same reason fire.astro casts its prefs row).
+const { data: prefs } = await supabase
+  .from("user_preferences")
+  .select(
+    "show_fire_dashboard, fire_current_age, fire_annual_income, fire_annual_expenses, fire_expected_return, fire_inflation_rate, fire_safe_withdrawal_rate, fire_starting_principal_override, fire_traditional_retirement_age, fire_barista_income",
+  )
+  .eq("user_id", user.id)
+  .maybeSingle();
+
+const showFireDashboard: boolean = (prefs?.show_fire_dashboard ?? true) as boolean;
+const firePrefs = (prefs ?? {}) as Record<string, number | null>;
+
+interface FireCardProps {
+  configured: boolean;
+  percent?: number;
+  fireNumber?: number;
+  yearsToFi?: number | null;
+  runwayMonths?: number | null;
+  displayCurrency: Currency;
+}
+
+let fireCard: FireCardProps | null = null;
+if (showFireDashboard) {
+  // Live net worth: numerator of the progress bar AND the default starting
+  // principal for the projection (the override, when set, replaces the latter).
+  const netWorth = computeNetWorth(
+    ((assets ?? []) as AssetWithCategory[]).map((a) => ({
+      amount: a.amount,
+      currency: a.currency as Currency,
+      category: { is_liability: a.category.is_liability },
+    })),
+    displayCurrency,
+    rates,
+  );
+
+  // Pull the core columns into consts so the `configured` alias narrows them to
+  // non-null inside the branch below (TS aliased-condition narrowing) — avoiding
+  // both an `as number` cast and a `!` assertion, which the lint rules reject.
+  const annualExpenses = firePrefs.fire_annual_expenses;
+  const annualIncome = firePrefs.fire_annual_income;
+  const expectedReturn = firePrefs.fire_expected_return;
+  const inflationRate = firePrefs.fire_inflation_rate;
+  const currentAge = firePrefs.fire_current_age;
+  const swr = firePrefs.fire_safe_withdrawal_rate;
+
+  // Configured = all core inputs present and SWR > 0 (the projection divides by
+  // it and throws RangeError otherwise). retirement-age + SWR are NOT NULL with
+  // defaults, but the SWR > 0 guard is required before computeFireProjection.
+  const configured =
+    annualExpenses != null &&
+    annualIncome != null &&
+    expectedReturn != null &&
+    inflationRate != null &&
+    currentAge != null &&
+    swr != null &&
+    swr > 0;
+
+  if (configured) {
+    const inputs: FireInputs = {
+      startingPrincipal: firePrefs.fire_starting_principal_override ?? netWorth,
+      annualIncome,
+      annualExpenses,
+      nominalReturn: expectedReturn,
+      inflationRate,
+      safeWithdrawalRate: swr,
+      currentAge,
+      traditionalRetirementAge: firePrefs.fire_traditional_retirement_age ?? 65,
+      baristaIncome: firePrefs.fire_barista_income ?? undefined,
+    };
+    const result = computeFireProjection(inputs);
+    fireCard = {
+      configured: true,
+      percent: (netWorth / result.fireNumber) * 100,
+      fireNumber: result.fireNumber,
+      yearsToFi: result.yearsToFi,
+      runwayMonths: monthsOfRunway(netWorth, annualExpenses),
+      displayCurrency,
+    };
+  } else {
+    fireCard = { configured: false, displayCurrency };
+  }
+}
 ---
 
 <Layout title="Dashboard">
@@ -80,6 +170,7 @@ const trendSnapshotItems: SnapshotItemWithDate[] = ((snapshotsWithItems ?? []) a
             }}
             client:load
           />
+          {fireCard && <FireProgress {...fireCard} client:load />}
           <AssetsSummary
             assets={assets as AssetWithCategory[]}
             displayCurrency={displayCurrency}
