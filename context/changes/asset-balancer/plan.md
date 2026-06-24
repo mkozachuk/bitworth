@@ -367,28 +367,28 @@ All allocation math is O(n) over a single user's assets (tens, not thousands) co
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly against local Supabase
-- [x] 1.2 database.types.ts contains an allocation_targets key after npx astro sync
-- [x] 1.3 Type checking passes
-- [x] 1.4 Linting passes
+- [x] 1.1 Migration applies cleanly against local Supabase — 82ffafb
+- [x] 1.2 database.types.ts contains an allocation_targets key after npx astro sync — 82ffafb
+- [x] 1.3 Type checking passes — 82ffafb
+- [x] 1.4 Linting passes — 82ffafb
 
 #### Manual
 
-- [x] 1.5 RLS isolates targets per user
-- [x] 1.6 Deleting an asset cascades to its allocation_targets row
-- [x] 1.7 Duplicate (user_id, asset_id) upserts rather than errors
+- [x] 1.5 RLS isolates targets per user — 82ffafb
+- [x] 1.6 Deleting an asset cascades to its allocation_targets row — 82ffafb
+- [x] 1.7 Duplicate (user_id, asset_id) upserts rather than errors — 82ffafb
 
 ### Phase 2: Allocation Math — pure src/lib/allocation.ts
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass (vitest run src/lib/allocation.test.ts)
-- [ ] 2.2 Type checking passes
-- [ ] 2.3 Linting passes
+- [x] 2.1 Unit tests pass (vitest run src/lib/allocation.test.ts)
+- [x] 2.2 Type checking passes
+- [x] 2.3 Linting passes
 
 #### Manual
 
-- [ ] 2.4 Hand-computed 3-asset, 2-currency example matches helper output
+- [x] 2.4 Hand-computed 3-asset, 2-currency example matches helper output
 
 ### Phase 3: API Route — allocation-targets GET + PUT
 
