@@ -426,12 +426,12 @@ All allocation math is O(n) over a single user's assets (tens, not thousands) co
 
 #### Automated
 
-- [x] 5.1 Type checking passes
-- [x] 5.2 Linting passes
+- [x] 5.1 Type checking passes — e5b350d
+- [x] 5.2 Linting passes — e5b350d
 
 #### Manual
 
-- [x] 5.3 Non-liability rows show a sensible 0–100% share; shares sum to ~100%
-- [x] 5.4 Liability rows show no label
-- [x] 5.5 Label updates when display currency changes
-- [x] 5.6 Layout intact on desktop and mobile
+- [x] 5.3 Non-liability rows show a sensible 0–100% share; shares sum to ~100% — e5b350d
+- [x] 5.4 Liability rows show no label — e5b350d
+- [x] 5.5 Label updates when display currency changes — e5b350d
+- [x] 5.6 Layout intact on desktop and mobile — e5b350d
