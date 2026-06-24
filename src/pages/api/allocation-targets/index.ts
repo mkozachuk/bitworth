@@ -57,6 +57,12 @@ function parseTargets(body: unknown): { rows: TargetRow[] } | { error: string } 
   const rows: TargetRow[] = [];
   const seen = new Set<string>();
 
+  // asset_id must be a UUID, not just any string: it is interpolated into the
+  // delete-missing PostgREST `in` filter, so a non-UUID value would be both an
+  // invalid FK and a filter-syntax hazard. Validate here so the filter is
+  // self-defending regardless of statement order.
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
   for (const raw of body) {
     if (typeof raw !== "object" || raw === null) {
       return { error: "Each target must be an object with asset_id and target_pct" };
@@ -65,6 +71,9 @@ function parseTargets(body: unknown): { rows: TargetRow[] } | { error: string } 
 
     if (typeof asset_id !== "string" || asset_id.length === 0) {
       return { error: "asset_id must be a non-empty string" };
+    }
+    if (!UUID_RE.test(asset_id)) {
+      return { error: "asset_id must be a valid UUID" };
     }
     if (typeof target_pct !== "number" || !Number.isFinite(target_pct)) {
       return { error: "target_pct must be a finite number" };
