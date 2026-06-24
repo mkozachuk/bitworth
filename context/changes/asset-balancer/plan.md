@@ -382,28 +382,28 @@ All allocation math is O(n) over a single user's assets (tens, not thousands) co
 
 #### Automated
 
-- [x] 2.1 Unit tests pass (vitest run src/lib/allocation.test.ts)
-- [x] 2.2 Type checking passes
-- [x] 2.3 Linting passes
+- [x] 2.1 Unit tests pass (vitest run src/lib/allocation.test.ts) — ece1af4
+- [x] 2.2 Type checking passes — ece1af4
+- [x] 2.3 Linting passes — ece1af4
 
 #### Manual
 
-- [x] 2.4 Hand-computed 3-asset, 2-currency example matches helper output
+- [x] 2.4 Hand-computed 3-asset, 2-currency example matches helper output — ece1af4
 
 ### Phase 3: API Route — allocation-targets GET + PUT
 
 #### Automated
 
-- [ ] 3.1 Type checking passes
-- [ ] 3.2 Linting passes
+- [x] 3.1 Type checking passes
+- [x] 3.2 Linting passes
 
 #### Manual
 
-- [ ] 3.3 Unauthenticated GET/PUT → 401 with correct error shape
-- [ ] 3.4 PUT persists rows; re-PUT without a row deletes it (de-select)
-- [ ] 3.5 Invalid target_pct / non-number → 400 VALIDATION_ERROR
-- [ ] 3.6 PUT [] clears the user's set
-- [ ] 3.7 Rows scoped per user
+- [x] 3.3 Unauthenticated GET/PUT → 401 with correct error shape
+- [x] 3.4 PUT persists rows; re-PUT without a row deletes it (de-select)
+- [x] 3.5 Invalid target_pct / non-number → 400 VALIDATION_ERROR
+- [x] 3.6 PUT [] clears the user's set
+- [x] 3.7 Rows scoped per user
 
 ### Phase 4: Balance Page + Pie Charts + Nav
 
