@@ -87,3 +87,13 @@
 **Rule**: Every `SECURITY DEFINER` function must either (a) include `SET search_path = <schema>, pg_temp` in its definition or (b) fully qualify every table reference (`public.user_preferences`). The default search_path for SECURITY DEFINER is not the caller's — Postgres strips the caller's mutable schemas as a defense against search_path attacks, so the function effectively lives in `pg_catalog, pg_temp` unless told otherwise.
 
 **Applies to**: Any new trigger or helper marked `SECURITY DEFINER` in `supabase/migrations/`. Also any `SECURITY INVOKER` function that relies on the caller's search_path (less common, but if the caller's role has been customized, prefer explicit settings).
+
+## Nav items live in two files — desktop and mobile
+
+**Context**: src/components/Topbar.astro (desktop horizontal nav, `sm:inline-flex`) and src/components/TopbarMenu.tsx (mobile Radix dropdown, `sm:hidden`). The asset-balancer plan's nav contract named only TopbarMenu.tsx.
+
+**Problem**: The two components render parallel copies of the same nav items at different breakpoints. A plan or change that adds/edits a nav item in only TopbarMenu.tsx (the mobile dropdown) ships a feature that is unreachable from the desktop nav — and vice versa. The asset-balancer "Balance" link had to be added to Topbar.astro as an unplanned completeness fix because the plan referenced only the mobile file.
+
+**Rule**: Any nav-item change must touch BOTH Topbar.astro (desktop) and TopbarMenu.tsx (mobile). When planning a nav change, name both files in the plan's Changes Required.
+
+**Applies to**: Any change that adds, removes, renames, or reorders a top-bar navigation entry.
