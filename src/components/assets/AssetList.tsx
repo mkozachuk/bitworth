@@ -3,6 +3,7 @@ import { InboxIcon, AlertCircle } from "lucide-react";
 import { AssetRow } from "./AssetRow";
 import { AssetCard } from "./AssetCard";
 import type { Tables } from "@/lib/database.types";
+import { totalAssetPool } from "@/lib/allocation";
 
 type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
 type Currency = "USD" | "EUR" | "PLN";
@@ -19,6 +20,14 @@ export function AssetList({ assets, displayCurrency, rates }: Props) {
   const [filter, setFilter] = useState<FilterTab>("all");
   const [_deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Shared denominator for the per-row "% of all assets" sub-label: sum of
+  // positive non-liability converted values, computed once over the full set.
+  const totalAssets = totalAssetPool(
+    assets.map((a) => ({ amount: a.amount, currency: a.currency, is_liability: a.category.is_liability })),
+    displayCurrency,
+    rates,
+  );
 
   const filtered = assets.filter((a) => {
     if (filter === "assets") return !a.category.is_liability;
@@ -109,6 +118,7 @@ export function AssetList({ assets, displayCurrency, rates }: Props) {
                     onDelete={handleDelete}
                     displayCurrency={displayCurrency}
                     rates={rates}
+                    totalAssets={totalAssets}
                   />
                 ))}
               </tbody>
@@ -122,6 +132,7 @@ export function AssetList({ assets, displayCurrency, rates }: Props) {
                 onDelete={handleDelete}
                 displayCurrency={displayCurrency}
                 rates={rates}
+                totalAssets={totalAssets}
               />
             ))}
           </ul>

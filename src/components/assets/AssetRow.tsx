@@ -3,6 +3,7 @@ import { CurrencyBadge } from "./CurrencyBadge";
 import type { Tables } from "@/lib/database.types";
 import { categoryEmoji } from "@/lib/category-icons";
 import { convertAmount, type Currency } from "@/lib/net-worth";
+import { assetSharePct } from "@/lib/allocation";
 
 type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
 
@@ -11,10 +12,12 @@ interface Props {
   onDelete: (id: string) => void;
   displayCurrency: Currency;
   rates: Record<Currency, number>;
+  totalAssets: number;
 }
 
-export function AssetRow({ asset, onDelete, displayCurrency, rates }: Props) {
+export function AssetRow({ asset, onDelete, displayCurrency, rates, totalAssets }: Props) {
   const converted = convertAmount(asset.amount, asset.currency as Currency, displayCurrency, rates);
+  const sharePct = asset.category.is_liability ? null : assetSharePct(converted, totalAssets);
 
   return (
     <tr className="border-b border-zinc-200 last:border-0 dark:border-white/10">
@@ -22,6 +25,9 @@ export function AssetRow({ asset, onDelete, displayCurrency, rates }: Props) {
         <span className="font-medium text-zinc-900 dark:text-white">{asset.name}</span>
         {asset.notes && (
           <p className="mt-0.5 max-w-[200px] truncate text-xs text-zinc-500 dark:text-white/50">{asset.notes}</p>
+        )}
+        {sharePct != null && (
+          <p className="mt-0.5 text-xs text-zinc-500 dark:text-white/40">{sharePct.toFixed(1)}% of all assets</p>
         )}
       </td>
       <td className="py-3 pr-4">

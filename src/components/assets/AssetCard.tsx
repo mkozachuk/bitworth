@@ -3,6 +3,7 @@ import { CurrencyBadge } from "./CurrencyBadge";
 import type { Tables } from "@/lib/database.types";
 import { convertAmount, type Currency } from "@/lib/net-worth";
 import { categoryEmoji } from "@/lib/category-icons";
+import { assetSharePct } from "@/lib/allocation";
 
 type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
 
@@ -11,10 +12,12 @@ interface Props {
   onDelete: (id: string) => void;
   displayCurrency: Currency;
   rates: Record<Currency, number>;
+  totalAssets: number;
 }
 
-export function AssetCard({ asset, onDelete, displayCurrency, rates }: Props) {
+export function AssetCard({ asset, onDelete, displayCurrency, rates, totalAssets }: Props) {
   const converted = convertAmount(asset.amount, asset.currency as Currency, displayCurrency, rates);
+  const sharePct = asset.category.is_liability ? null : assetSharePct(converted, totalAssets);
 
   return (
     <li className="border-b border-zinc-200 transition-colors last:border-0 active:bg-zinc-50 dark:border-white/10 dark:active:bg-white/5">
@@ -53,6 +56,9 @@ export function AssetCard({ asset, onDelete, displayCurrency, rates }: Props) {
         <span>{asset.category.name}</span>
         {asset.category.is_liability && <span className="text-xs text-red-600 dark:text-red-300">(liability)</span>}
       </div>
+      {sharePct != null && (
+        <p className="mt-1 text-xs text-zinc-500 dark:text-white/40">{sharePct.toFixed(1)}% of all assets</p>
+      )}
       <div className="mt-3 flex items-center gap-2 border-t border-zinc-200 pt-3 dark:border-white/10">
         <a
           href={`/dashboard/assets/${asset.id}/edit`}
