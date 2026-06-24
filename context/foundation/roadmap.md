@@ -42,6 +42,7 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 | S-12 | per-asset-trends           | see how individual assets/categories changed over time as a chart, from snapshot history          | F-01, S-02             | —                    | done    |
 | S-13 | data-backup-import-export  | export a full backup of all their data to one file and import it back                             | F-01, S-02, S-05       | —                    | done    |
 | S-14 | fire-dashboard             | toggle a FIRE-progress card on the dashboard showing % to FIRE, runway months, and years-to-FI    | F-01, S-02, S-05, S-09 | —                    | done    |
+| S-15 | asset-balancer             | set target % per asset for an investment set and compare declared vs real allocation as pie charts | F-01, S-01, S-02       | —                    | todo    |
 
 ## Streams
 
@@ -58,6 +59,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | G      | Marketing         | `landing-page`                             | Standalone public page; no data dependency — reuses the design system and auth CTAs. Parallel with everything.                         |
 | H      | Snapshot insights | `F-01` → `S-01` → `S-02` → `S-11` → `S-12` | Reads the per-asset `snapshot_items` already captured by S-02; S-11 introduces the read+matching path, S-12 reuses it for trend charts |
 | I      | Data portability  | `F-01` → `S-02` → `S-05` → `S-13`          | Full-account backup export/import; reuses the S-05 settings page as host and reads every user-owned table                              |
+| J      | Portfolio balance | `F-01` → `S-01` → `S-02` → `S-15`          | Target-allocation layer over existing assets: declared vs real % pie charts on a new "Balance" page + a per-asset share label on the assets list. Reuses `convertAmount`/`computeNetWorth` and the S-02 Recharts lib (first PieChart usage). Parallel with everything after S-02 |
 
 ## Baseline
 
@@ -302,6 +304,25 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Low — read-and-present over an existing, tested engine. Main risks: (a) divide-by-zero / null FIRE inputs must degrade to the placeholder, not crash — mitigant: a pure guarded runway helper with table-driven tests and an explicit "no FIRE data" branch; (b) `computeFireProjection` throws `RangeError` when `safeWithdrawalRate <= 0` — the card must guard before calling, as `FireCalculatorForm` already does; (c) currency cast boundary (DB `string` → `Currency`) per the documented project lesson — reuse the `dashboard/fire.astro` cast pattern.
 - **Status:** todo
 
+### S-15: Asset balancer (target allocation)
+
+- **Outcome:** user opens a new, clearly named "Balance" entry in the menu where they pick which of their existing assets form an investment set, assign a target percentage to each (a share of that configurable investment pool, **not** of their whole net worth), and see two side-by-side pie charts — one of their **declared / target** allocation and one of their **real** allocation computed from current asset values in their display currency — so they can spot drift and know what to rebalance. Separately, on the assets page each asset row gains a calculated "% of all assets" label.
+- **Change ID:** `asset-balancer`
+- **PRD refs:** — (post-MVP portfolio extension; not a PRD functional requirement)
+- **Prerequisites:** `F-01` (new table to persist per-asset target %), `S-01` (assets exist + asset CRUD + the asset list this extends), `S-02` (`convertAmount`/`computeNetWorth` in `src/lib/net-worth.ts` + the Recharts lib)
+- **Parallel with:** all slices after `S-02` (independent; reads existing assets, adds one table + one page + one list column)
+- **Blockers:** —
+- **Unknowns:**
+  - Investment-pool denominator: the target/real % must be "of investment, configurable" rather than "of all assets". Options: (a) denominator = sum of the user-selected balancer assets' current converted values; (b) a user-entered fixed investment total they allocate against; (c) total net worth. (Owner: planner, by: during `/10x-plan`) Recommendation: v1 = the user flags which assets are in the balancer set and the denominator is the sum of those selected assets (option a); keep a manual-override total (option b) as a follow-up. Both pies share this one denominator so declared vs real are comparable.
+  - Persistence model: a dedicated table (e.g. `allocation_targets(user_id, asset_id, target_pct)`) with an FK to `assets(id)` `ON DELETE CASCADE` and RLS, vs a JSON blob on `user_preferences`. (Owner: planner) Recommendation: a dedicated table keyed on `asset_id` — assets have a stable UUID `id` (unlike the `(name, category_id)` matching S-11/S-12 had to use), and `ON DELETE CASCADE` cleans a target when its asset is deleted. Mirror the F-01 migration + `database.types.ts` Row/Insert/Update + RLS pattern.
+  - Target-sum handling: do declared targets have to sum to 100%? (Owner: planner) Recommendation: don't hard-block saving; show a live "targets sum = X%" indicator and either warn when ≠100% or offer a one-click normalize. The **real** pie always normalizes to 100% by construction; the **declared** pie should render the raw entered targets (and visibly flag an under/over-100% sum) so the two charts stay honest.
+  - "% of all assets" label denominator (assets page): liabilities are negative, so "% of net worth" can exceed 100% or go negative. (Owner: planner) Recommendation: define the label as each asset's converted value ÷ sum of all **positive** asset values (exclude liabilities), and either hide the label on liability rows or show it against the liabilities subtotal — pick one and state it in the plan. This is a small, separable concern from the balancer page; it touches `AssetRow`/`AssetCard` and reuses `convertAmount`.
+  - Asset-set composition: should liabilities be selectable into the balancer? (Owner: planner) Recommendation: restrict the balancer set to non-liability assets so every pie slice is a positive contribution.
+  - Charting: reuse Recharts (the one-time S-02 decision) — this is the first **PieChart** in the codebase (existing charts are all `LineChart`: `NetWorthChart`, `AssetTrendsChart`, `FireProjectionChart`). Do **not** introduce a new charting lib; copy the Recharts wiring conventions from those components.
+  - Menu label & route: needs a short, clear name slotted into `TopbarMenu.tsx` (current items: Dashboard / Assets / FIRE / Settings). (Owner: planner) Recommendation: label **"Balance"** at route `/dashboard/balancer`, placed between **Assets** and **FIRE** (it operates on assets); Lucide icon `Scale` (balance) or `PieChart`.
+- **Risk:** Spans three surfaces — a new table + migration, a new page with two pie charts, and an edit to the existing asset list — so the main risks are: (a) the declared and real pies must be computed over the **same** asset set and denominator or the comparison misleads; (b) a deleted asset must not orphan a stale target row — mitigant: FK `ON DELETE CASCADE`; (c) the per-asset "% of all assets" label needs a single, clearly-defined denominator to avoid confusing negative/>100% values once liabilities are in play. Mitigant: isolate the allocation math (target %, real %, per-asset share) in a pure, unit-tested helper (e.g. `src/lib/allocation.ts`), reuse `convertAmount` for every value, and reuse the currency-cast boundary pattern (DB `string` → `Currency`) documented as a project lesson.
+- **Status:** todo
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID                  | Suggested issue title                                         | Ready for `/10x-plan` | Notes                                                                                                                                                            |
@@ -321,6 +342,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-12       | per-asset-trends           | Per-asset / per-category trend charts from snapshot history   | yes                   | depends on S-02; reuses S-11's snapshot_items read + matching; reuse Recharts (S-02), no new charting lib                                                        |
 | S-13       | data-backup-import-export  | Settings: full data backup export/import (one file)           | yes                   | depends on F-01/S-02/S-05; hosts on the S-05 settings page; reads/writes all user-owned tables; no DB transactions — prefer a restore RPC or compensating-delete |
 | S-14       | fire-dashboard             | Dashboard: settings-gated FIRE-progress card                  | yes                   | depends on F-01/S-02/S-05/S-09; reuses `src/lib/fire.ts` + `computeNetWorth`; new `show_fire_dashboard` pref (default TRUE) + a new runway helper; placeholder links to `/dashboard/fire`                                                          |
+| S-15       | asset-balancer             | Balance page: target vs real allocation + per-asset % label   | yes                   | depends on F-01/S-01/S-02; new `allocation_targets` table (FK to `assets`, `ON DELETE CASCADE`) + new `/dashboard/balancer` page with two Recharts PieCharts (first PieChart usage) + a "% of all assets" label on `AssetRow`/`AssetCard`; isolate math in `src/lib/allocation.ts`; new "Balance" nav item |
 
 ## Open Roadmap Questions
 
