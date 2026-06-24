@@ -42,7 +42,7 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 | S-12 | per-asset-trends           | see how individual assets/categories changed over time as a chart, from snapshot history          | F-01, S-02             | —                    | done    |
 | S-13 | data-backup-import-export  | export a full backup of all their data to one file and import it back                             | F-01, S-02, S-05       | —                    | done    |
 | S-14 | fire-dashboard             | toggle a FIRE-progress card on the dashboard showing % to FIRE, runway months, and years-to-FI    | F-01, S-02, S-05, S-09 | —                    | done    |
-| S-15 | asset-balancer             | set target % per asset for an investment set and compare declared vs real allocation as pie charts | F-01, S-01, S-02       | —                    | todo    |
+| S-15 | asset-balancer             | set target % per asset for an investment set and compare declared vs real allocation as pie charts | F-01, S-01, S-02       | —                    | done    |
 
 ## Streams
 
@@ -302,7 +302,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Card placement & gating scope: where in the dashboard stack the card sits, and whether the toggle also gates the FIRE nav link (`Topbar`/`TopbarMenu` → `/dashboard/fire`). (Owner: planner) Recommendation: place it in the `assets &&` block near `NetWorthDisplay`; gate only the dashboard card, leave the nav link always available.
   - Progress-bar animation: CSS transition on width vs a JS-driven count-up. (Owner: planner) Recommendation: CSS `transition`/`@keyframes` on the bar fill — no new dependency, respects `prefers-reduced-motion`.
 - **Risk:** Low — read-and-present over an existing, tested engine. Main risks: (a) divide-by-zero / null FIRE inputs must degrade to the placeholder, not crash — mitigant: a pure guarded runway helper with table-driven tests and an explicit "no FIRE data" branch; (b) `computeFireProjection` throws `RangeError` when `safeWithdrawalRate <= 0` — the card must guard before calling, as `FireCalculatorForm` already does; (c) currency cast boundary (DB `string` → `Currency`) per the documented project lesson — reuse the `dashboard/fire.astro` cast pattern.
-- **Status:** todo
+- **Status:** done
 
 ### S-15: Asset balancer (target allocation)
 
@@ -321,7 +321,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Charting: reuse Recharts (the one-time S-02 decision) — this is the first **PieChart** in the codebase (existing charts are all `LineChart`: `NetWorthChart`, `AssetTrendsChart`, `FireProjectionChart`). Do **not** introduce a new charting lib; copy the Recharts wiring conventions from those components.
   - Menu label & route: needs a short, clear name slotted into `TopbarMenu.tsx` (current items: Dashboard / Assets / FIRE / Settings). (Owner: planner) Recommendation: label **"Balance"** at route `/dashboard/balancer`, placed between **Assets** and **FIRE** (it operates on assets); Lucide icon `Scale` (balance) or `PieChart`.
 - **Risk:** Spans three surfaces — a new table + migration, a new page with two pie charts, and an edit to the existing asset list — so the main risks are: (a) the declared and real pies must be computed over the **same** asset set and denominator or the comparison misleads; (b) a deleted asset must not orphan a stale target row — mitigant: FK `ON DELETE CASCADE`; (c) the per-asset "% of all assets" label needs a single, clearly-defined denominator to avoid confusing negative/>100% values once liabilities are in play. Mitigant: isolate the allocation math (target %, real %, per-asset share) in a pure, unit-tested helper (e.g. `src/lib/allocation.ts`), reuse `convertAmount` for every value, and reuse the currency-cast boundary pattern (DB `string` → `Currency`) documented as a project lesson.
-- **Status:** todo
+- **Status:** done
 
 ## Backlog Handoff
 

@@ -41,6 +41,7 @@ Tracking net worth in a spreadsheet works until it doesn't: formulas drift, curr
 - **Live crypto prices** — adding or editing a crypto holding fetches the current market price from CoinGecko (cached, with manual-entry fallback). Top coins are mapped out of the box (BTC, ETH, SOL, and more).
 - **FIRE calculator** — enter your income, expenses, return, inflation, and safe withdrawal rate to compute your FIRE number, years to FI, estimated retirement age, plus Coast and Barista FIRE — with a year-by-year projection chart in today's money.
 - **FIRE progress card** — a settings-gated card on the dashboard (on by default) that turns your saved FIRE inputs into an at-a-glance view: a progress bar for percent of your FIRE number reached, months of runway at zero income, years to FI, and the FIRE number — all in your display currency. Before you've entered any FIRE data it shows a placeholder linking to the calculator.
+- **Asset balancer** — a dedicated **Balance** page where you pick an investment set from your assets (via a single-choice dropdown with add/remove controls), assign a target % to each, and compare your **declared** allocation against the **real** current-value split as two side-by-side donut charts that share one color per asset. A live "targets sum" indicator warns when your declared percentages don't add up to 100% — without blocking save (the declared pie shows your raw percentages; the real pie is normalized by construction). Each assets-list row also gains a muted **"% of all assets"** share label.
 - **Settings** — choose your display currency (PLN/USD/EUR), theme (light/dark/system), and whether the FIRE progress card appears on your dashboard; everything is persisted per user.
 - **Auth** — email/password authentication via Supabase SSR, with protected dashboard routes.
 
@@ -49,6 +50,8 @@ Tracking net worth in a spreadsheet works until it doesn't: formulas drift, curr
 | [![Assets list](docs/screenshots/assets.png)](docs/screenshots/assets.png) | [![FIRE calculator](docs/screenshots/fire.png)](docs/screenshots/fire.png) |
 
 ![Asset Trends — per-asset trend lines over snapshot history, indexed mode](docs/screenshots/asset-trends.png)
+
+![Asset Balancer — declared vs real allocation as side-by-side donut charts, with a dropdown + add/remove asset picker and a live targets-sum indicator](docs/screenshots/balancer.png)
 
 ![Settings — display currency, theme, FIRE progress card toggle, and backup/restore](docs/screenshots/settings.png)
 
@@ -65,6 +68,7 @@ BitWorth is a real installable Progressive Web App and is built mobile-first.
 <p>
   <img alt="Mobile dashboard" src="docs/screenshots/mobile-dashboard.png" width="30%" />
   <img alt="Mobile assets (card reflow)" src="docs/screenshots/mobile-assets.png" width="30%" />
+  <img alt="Mobile asset balancer (stacked donut charts)" src="docs/screenshots/mobile-balancer.png" width="30%" />
   <img alt="iOS install instructions" src="docs/screenshots/mobile-install.png" width="30%" />
 </p>
 
@@ -141,10 +145,10 @@ The local Supabase instance seeds the 13 asset categories automatically and has 
 ```
 src/
   pages/              Astro routes (landing, auth, dashboard, API endpoints)
-    api/              Server routes: assets, snapshots, categories, rates, crypto-price, user-preferences, auth
-    dashboard/        Dashboard, assets, FIRE, settings pages
-  components/         React islands + Astro components (assets/, fire/, settings/, Install*, NetWorthChart…)
-  lib/                Pure business logic: net-worth, fire, exchange-rates, crypto-prices, supabase
+    api/              Server routes: assets, snapshots, categories, rates, crypto-price, allocation-targets, user-preferences, auth
+    dashboard/        Dashboard, assets, FIRE, balancer, settings pages
+  components/         React islands + Astro components (assets/, fire/, balancer/, settings/, Install*, NetWorthChart…)
+  lib/                Pure business logic: net-worth, fire, allocation, exchange-rates, crypto-prices, supabase
   layouts/            Layout + DashboardLayout (SW registration, head tags, safe-area)
   integrations/pwa.ts Custom Astro integration wrapping vite-plugin-pwa
   middleware.ts       Auth gate for protected routes + preference loading
