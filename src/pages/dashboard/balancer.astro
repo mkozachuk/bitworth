@@ -1,0 +1,65 @@
+---
+import Layout from "@/layouts/DashboardLayout.astro";
+import { createClient } from "@/lib/supabase";
+import { getRates } from "@/lib/exchange-rates";
+import { type Currency } from "@/lib/net-worth";
+import { BalancerView } from "@/components/balancer/BalancerView";
+import type { Tables } from "@/lib/database.types";
+
+type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
+
+const { user } = Astro.locals;
+
+if (!user) {
+  return Astro.redirect("/auth/signin");
+}
+
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+const displayCurrency: Currency = Astro.locals.displayCurrency ?? "USD";
+
+const { data: assets } = await supabase.from("assets").select("*, category:asset_categories(*)").eq("user_id", user.id);
+
+const rates = await getRates(supabase);
+
+const { data: targets } = await supabase
+  .from("allocation_targets")
+  .select("asset_id, target_pct")
+  .eq("user_id", user.id);
+
+// Only non-liability assets form the balancer set; pass raw amount + currency so
+// the island re-runs the same computeAllocation code path (one denominator, one
+// color map across both pies).
+const nonLiabilityAssets = ((assets ?? []) as AssetWithCategory[])
+  .filter((a) => !a.category.is_liability)
+  .map((a) => ({ asset_id: a.id, name: a.name, amount: a.amount, currency: a.currency }));
+
+// The chained Supabase select resolves to `any` in .astro frontmatter (same
+// boundary fire.astro casts its prefs row through), so read the rows through a
+// typed shape before building the map.
+const savedTargets: Record<string, number> = {};
+for (const target of (targets ?? []) as { asset_id: string; target_pct: number }[]) {
+  savedTargets[target.asset_id] = target.target_pct;
+}
+---
+
+<Layout title="Balance">
+  <div class="mx-auto max-w-5xl px-4 py-8">
+    <h1
+      class="mb-2 bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-3xl font-bold text-transparent dark:from-blue-200 dark:to-purple-200"
+    >
+      Asset Balancer
+    </h1>
+    <p class="mb-6 text-sm text-zinc-600 dark:text-blue-100/60">
+      Pick the assets in your investment set, set a target % for each, and compare your declared allocation against the
+      real current-value split. Values are in {displayCurrency}.
+    </p>
+
+    <BalancerView
+      assets={nonLiabilityAssets}
+      savedTargets={savedTargets}
+      displayCurrency={displayCurrency}
+      rates={rates}
+      client:load
+    />
+  </div>
+</Layout>

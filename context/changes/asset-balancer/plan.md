@@ -394,33 +394,33 @@ All allocation math is O(n) over a single user's assets (tens, not thousands) co
 
 #### Automated
 
-- [x] 3.1 Type checking passes
-- [x] 3.2 Linting passes
+- [x] 3.1 Type checking passes — b53566a
+- [x] 3.2 Linting passes — b53566a
 
 #### Manual
 
-- [x] 3.3 Unauthenticated GET/PUT → 401 with correct error shape
-- [x] 3.4 PUT persists rows; re-PUT without a row deletes it (de-select)
-- [x] 3.5 Invalid target_pct / non-number → 400 VALIDATION_ERROR
-- [x] 3.6 PUT [] clears the user's set
-- [x] 3.7 Rows scoped per user
+- [x] 3.3 Unauthenticated GET/PUT → 401 with correct error shape — b53566a
+- [x] 3.4 PUT persists rows; re-PUT without a row deletes it (de-select) — b53566a
+- [x] 3.5 Invalid target_pct / non-number → 400 VALIDATION_ERROR — b53566a
+- [x] 3.6 PUT [] clears the user's set — b53566a
+- [x] 3.7 Rows scoped per user — b53566a
 
 ### Phase 4: Balance Page + Pie Charts + Nav
 
 #### Automated
 
-- [ ] 4.1 Type checking passes
-- [ ] 4.2 Linting passes (no react-compiler errors)
+- [x] 4.1 Type checking passes
+- [x] 4.2 Linting passes (no react-compiler errors)
 
 #### Manual
 
-- [ ] 4.3 Balance nav item between Assets and FIRE; navigates; works on iOS Safari
-- [ ] 4.4 Declared pie shows raw targets; real pie shows normalized shares
-- [ ] 4.5 Both pies use the same color per asset; slices line up
-- [ ] 4.6 Live sum indicator warns at ≠100% but save still works
-- [ ] 4.7 Save → reload preserves set; de-select + save removes asset
-- [ ] 4.8 Empty set renders placeholder card
-- [ ] 4.9 Correct in light and dark mode
+- [x] 4.3 Balance nav item between Assets and FIRE; navigates; works on iOS Safari
+- [x] 4.4 Declared pie shows raw targets; real pie shows normalized shares
+- [x] 4.5 Both pies use the same color per asset; slices line up
+- [x] 4.6 Live sum indicator warns at ≠100% but save still works
+- [x] 4.7 Save → reload preserves set; de-select + save removes asset
+- [x] 4.8 Empty set renders placeholder card
+- [x] 4.9 Correct in light and dark mode
 
 ### Phase 5: Per-Asset "% of all assets" Label
 
