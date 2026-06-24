@@ -121,6 +121,16 @@ const FIRE = {
 // Jan 1 of the current year drives the "Start" reference line + YTD delta.
 const SNAPSHOT_NET_WORTHS = [350000, 362000, 357500, 375000, 388000];
 
+// Asset Balancer (S-15) target set: a subset of non-liability assets with a
+// declared target % each, summing to 100 so the "Balance" shot shows a clean
+// declared-vs-real comparison. Matched to ASSETS by name at seed time.
+const ALLOCATION_TARGETS: { name: string; target_pct: number }[] = [
+  { name: "Index Funds (VWCE)", target_pct: 35 },
+  { name: "Apartment", target_pct: 30 },
+  { name: "Bitcoin", target_pct: 25 },
+  { name: "Emergency Fund", target_pct: 10 },
+];
+
 async function seedAssets(request: import("@playwright/test").APIRequestContext): Promise<void> {
   for (const a of ASSETS) {
     const form = new URLSearchParams();
@@ -208,6 +218,45 @@ async function seedSnapshots(email: string, password: string): Promise<void> {
   if (itemsError) throw new Error(`Seed snapshot_items failed: ${itemsError.message}`);
 }
 
+// Seed the Asset Balancer target set (S-15). Asset ids are generated at insert
+// time, so resolve them by name via an authenticated supabase-js read, then PUT
+// the targets through the same API the Balance page uses.
+async function seedAllocationTargets(
+  request: import("@playwright/test").APIRequestContext,
+  email: string,
+  password: string,
+): Promise<void> {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_KEY;
+  if (!url || !key) {
+    throw new Error("SUPABASE_URL and SUPABASE_KEY must be exported to seed allocation targets.");
+  }
+
+  const supabase = createClient(url, key);
+  const { data: auth, error: authErr } = await supabase.auth.signInWithPassword({ email, password });
+  if (authErr) throw new Error(`supabase signin failed: ${authErr.message}`);
+
+  const { data: rows, error } = await supabase
+    .from("assets")
+    .select("id, name")
+    .eq("user_id", auth.user.id)
+    .overrideTypes<{ id: string; name: string }[], { merge: false }>();
+  if (error) throw new Error(`Read assets for allocation targets failed: ${error.message}`);
+
+  const idByName = new Map(rows.map((r) => [r.name, r.id]));
+  const payload = ALLOCATION_TARGETS.map((t) => {
+    const asset_id = idByName.get(t.name);
+    if (!asset_id) throw new Error(`Allocation target asset not found by name: ${t.name}`);
+    return { asset_id, target_pct: t.target_pct };
+  });
+
+  const res = await request.put("/api/allocation-targets", {
+    headers: { "Content-Type": "application/json" },
+    data: JSON.stringify(payload),
+  });
+  if (!res.ok()) throw new Error(`Seed allocation targets failed: ${res.status()} ${await res.text()}`);
+}
+
 // Recharts draws its line with a ~1.5s reveal animation. This is a render-settle
 // for image capture, not a behavioral wait — hence the bounded timeout below.
 async function settleChart(page: import("@playwright/test").Page, heading: RegExp): Promise<void> {
@@ -264,6 +313,7 @@ test("capture README screenshots", async ({ page, browser }) => {
   await seedAssets(page.request);
   await seedFire(page.request);
   await seedSnapshots(email, password);
+  await seedAllocationTargets(page.request, email, password);
 
   // 3. Desktop product screenshots — dark (primary).
   await page.setViewportSize({ width: 1280, height: 1000 });
@@ -282,6 +332,12 @@ test("capture README screenshots", async ({ page, browser }) => {
   await page.goto("/dashboard/fire");
   await settleChart(page, /projected portfolio/i);
   await page.screenshot({ path: join(SHOTS_DIR, "fire.png"), fullPage: true });
+
+  await page.goto("/dashboard/balancer");
+  await page.getByRole("heading", { name: /asset balancer/i }).waitFor({ state: "visible" });
+  await page.locator(".recharts-surface").first().waitFor({ state: "visible" });
+  await page.waitForLoadState("networkidle");
+  await page.screenshot({ path: join(SHOTS_DIR, "balancer.png"), fullPage: true });
 
   await page.goto("/dashboard/settings");
   await page.getByRole("heading", { name: /settings/i }).waitFor({ state: "visible" });
@@ -328,6 +384,12 @@ test("capture README screenshots", async ({ page, browser }) => {
   await mobilePage.getByRole("heading", { name: /assets/i }).waitFor({ state: "visible" });
   await mobilePage.waitForLoadState("networkidle");
   await mobilePage.screenshot({ path: join(SHOTS_DIR, "mobile-assets.png"), fullPage: true });
+
+  await mobilePage.goto("/dashboard/balancer");
+  await mobilePage.getByRole("heading", { name: /asset balancer/i }).waitFor({ state: "visible" });
+  await mobilePage.locator(".recharts-surface").first().waitFor({ state: "visible" });
+  await mobilePage.waitForLoadState("networkidle");
+  await mobilePage.screenshot({ path: join(SHOTS_DIR, "mobile-balancer.png"), fullPage: true });
   await mobileCtx.close();
 
   // 6. iOS install instructions modal — dark (iPhone UA → InstallInstructionsModal shows).
