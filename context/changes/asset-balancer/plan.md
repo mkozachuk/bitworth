@@ -409,29 +409,29 @@ All allocation math is O(n) over a single user's assets (tens, not thousands) co
 
 #### Automated
 
-- [x] 4.1 Type checking passes
-- [x] 4.2 Linting passes (no react-compiler errors)
+- [x] 4.1 Type checking passes — 1d6f669
+- [x] 4.2 Linting passes (no react-compiler errors) — 1d6f669
 
 #### Manual
 
-- [x] 4.3 Balance nav item between Assets and FIRE; navigates; works on iOS Safari
-- [x] 4.4 Declared pie shows raw targets; real pie shows normalized shares
-- [x] 4.5 Both pies use the same color per asset; slices line up
-- [x] 4.6 Live sum indicator warns at ≠100% but save still works
-- [x] 4.7 Save → reload preserves set; de-select + save removes asset
-- [x] 4.8 Empty set renders placeholder card
-- [x] 4.9 Correct in light and dark mode
+- [x] 4.3 Balance nav item between Assets and FIRE; navigates; works on iOS Safari — 1d6f669
+- [x] 4.4 Declared pie shows raw targets; real pie shows normalized shares — 1d6f669
+- [x] 4.5 Both pies use the same color per asset; slices line up — 1d6f669
+- [x] 4.6 Live sum indicator warns at ≠100% but save still works — 1d6f669
+- [x] 4.7 Save → reload preserves set; de-select + save removes asset — 1d6f669
+- [x] 4.8 Empty set renders placeholder card — 1d6f669
+- [x] 4.9 Correct in light and dark mode — 1d6f669
 
 ### Phase 5: Per-Asset "% of all assets" Label
 
 #### Automated
 
-- [ ] 5.1 Type checking passes
-- [ ] 5.2 Linting passes
+- [x] 5.1 Type checking passes
+- [x] 5.2 Linting passes
 
 #### Manual
 
-- [ ] 5.3 Non-liability rows show a sensible 0–100% share; shares sum to ~100%
-- [ ] 5.4 Liability rows show no label
-- [ ] 5.5 Label updates when display currency changes
-- [ ] 5.6 Layout intact on desktop and mobile
+- [x] 5.3 Non-liability rows show a sensible 0–100% share; shares sum to ~100%
+- [x] 5.4 Liability rows show no label
+- [x] 5.5 Label updates when display currency changes
+- [x] 5.6 Layout intact on desktop and mobile
