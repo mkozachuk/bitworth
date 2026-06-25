@@ -286,30 +286,30 @@ None — volatility is session-only for v1. No schema, `database.types.ts`, `PRE
 
 #### Automated
 
-- [x] 1.1 Type checking passes: `npx astro check`
-- [x] 1.2 Unit tests pass: `npm run test`
-- [x] 1.3 Linting passes: `npm run lint`
+- [x] 1.1 Type checking passes: `npx astro check` — c87439b
+- [x] 1.2 Unit tests pass: `npm run test` — c87439b
+- [x] 1.3 Linting passes: `npm run lint` — c87439b
 
 #### Manual
 
-- [x] 1.4 A fixed seed produces byte-identical results across two runs
-- [x] 1.5 The percentile bands visibly widen year-over-year for non-zero volatility
+- [x] 1.4 A fixed seed produces byte-identical results across two runs — c87439b
+- [x] 1.5 The percentile bands visibly widen year-over-year for non-zero volatility — c87439b
 
 ### Phase 2: Forecast page, island, nav & cross-link
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `npx astro check`
-- [ ] 2.2 Linting passes: `npm run lint`
-- [ ] 2.3 Production build succeeds: `npm run build`
+- [x] 2.1 Type checking passes: `npx astro check`
+- [x] 2.2 Linting passes: `npm run lint`
+- [x] 2.3 Production build succeeds: `npm run build`
 
 #### Manual
 
-- [ ] 2.4 "Forecast" appears in both desktop nav and mobile dropdown and routes correctly
-- [ ] 2.5 Page pre-fills from persisted prefs; unset prefs show defaults + soft CTA
-- [ ] 2.6 Editing volatility re-computes the headline probability; SWR ≤ 0 is guarded
-- [ ] 2.7 FIRE page shows a working cross-link to Forecast
-- [ ] 2.8 Headline probability is deterministic for a given input set
+- [x] 2.4 "Forecast" appears in both desktop nav and mobile dropdown and routes correctly
+- [x] 2.5 Page pre-fills from persisted prefs; unset prefs show defaults + soft CTA
+- [x] 2.6 Editing volatility re-computes the headline probability; SWR ≤ 0 is guarded
+- [x] 2.7 FIRE page shows a working cross-link to Forecast
+- [x] 2.8 Headline probability is deterministic for a given input set
 
 ### Phase 3: Chart & presentation
 
