@@ -315,14 +315,14 @@ None — volatility is session-only for v1. No schema, `database.types.ts`, `PRE
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `npx astro check`
-- [x] 3.2 Linting passes: `npm run lint`
-- [x] 3.3 Production build succeeds: `npm run build`
+- [x] 3.1 Type checking passes: `npx astro check` — 70394fb
+- [x] 3.2 Linting passes: `npm run lint` — 70394fb
+- [x] 3.3 Production build succeeds: `npm run build` — 70394fb
 
 #### Manual
 
-- [x] 3.4 Chart renders ~100 sampled paths + 3 percentile bands + FIRE-number reference line with a widening fan
-- [x] 3.5 No animation jank on render or input change
-- [x] 3.6 Empty-state guard shows a message, not a crash
-- [x] 3.7 Help copy covers bands, volatility-drag, clamp note, and "estimate, not advice" disclaimer
-- [x] 3.8 Sampling cap is logged/visible ("sampled 100 of 1,000")
+- [x] 3.4 Chart renders ~100 sampled paths + 3 percentile bands + FIRE-number reference line with a widening fan — 70394fb
+- [x] 3.5 No animation jank on render or input change — 70394fb
+- [x] 3.6 Empty-state guard shows a message, not a crash — 70394fb
+- [x] 3.7 Help copy covers bands, volatility-drag, clamp note, and "estimate, not advice" disclaimer — 70394fb
+- [x] 3.8 Sampling cap is logged/visible ("sampled 100 of 1,000") — 70394fb
