@@ -89,6 +89,100 @@ export function computeAllocation(
   return { slices, totalSelected, declaredSum };
 }
 
+/** One asset's row in a buy plan: how much to deploy to move toward target. */
+export interface BuyPlanRow {
+  asset_id: string;
+  name: string;
+  currentValue: number; // converted into display currency, raw float
+  targetPct: number; // raw entered target, 0–100
+  buy: number; // amount to buy in display currency, ≥ 0 (buy-only)
+  finalValue: number; // currentValue + buy
+  finalPct: number; // finalValue / finalTotal × 100 (0 when finalTotal ~0)
+}
+
+export interface BuyPlan {
+  rows: BuyPlanRow[]; // same order as the input slices
+  available: number; // budget the user entered (echoed back)
+  deployed: number; // sum of buys actually allocated
+  leftover: number; // available − deployed (≥ 0; undeployable cash)
+  finalTotal: number; // totalSelected + deployed
+}
+
+/**
+ * Given the current allocation and a cash budget, compute how much to BUY of
+ * each asset to move the portfolio toward its declared targets.
+ *
+ * Buy-only: you can deploy fresh cash but cannot sell, so an asset already above
+ * its target weight is clamped (`buy = 0`) and its budget share flows to the
+ * still-underweight assets. This is a water-filling fixpoint — clamp the
+ * overweight, redistribute among the rest, repeat until the active set stabilizes.
+ *
+ * Target weights are normalized by `declaredSum`, not assumed to be 100, so the
+ * plan honors the user's *relative* targets whether or not they add up. Returns
+ * `null` when there is nothing to plan against (no positive targets) — the caller
+ * renders guidance rather than a divide-by-zero artifact.
+ */
+export function computeBuyPlan(slices: AllocationSlice[], available: number): BuyPlan | null {
+  const budget = Math.max(0, available);
+  const declaredSum = slices.reduce((sum, s) => sum + Math.max(0, s.targetPct), 0);
+  if (declaredSum < EPSILON) return null;
+
+  const totalSelected = slices.reduce((sum, s) => sum + s.value, 0);
+  const finalTotal = totalSelected + budget;
+
+  // weight[i] = relative target share (0–1). Negative/blank targets count as 0.
+  const weights = slices.map((s) => Math.max(0, s.targetPct) / declaredSum);
+
+  // Water-filling: `fixed[i]` marks an asset clamped at its current value because
+  // its ideal final value already sits below what it holds (overweight). The
+  // remaining assets share (finalTotal − sum of fixed current values) by weight.
+  const fixed = slices.map(() => false);
+  const ideal = slices.map(() => 0);
+
+  // Bounded by the asset count: each pass fixes at least one asset or stops.
+  for (let pass = 0; pass < slices.length + 1; pass++) {
+    let fixedValue = 0;
+    let activeWeight = 0;
+    for (let i = 0; i < slices.length; i++) {
+      if (fixed[i]) fixedValue += slices[i].value;
+      else activeWeight += weights[i];
+    }
+
+    // No active weight left (every weighted asset is overweight): the rest cannot
+    // absorb more without selling. Remaining budget is simply undeployable.
+    if (activeWeight < EPSILON) break;
+
+    const activeBudget = finalTotal - fixedValue;
+    let movedOne = false;
+    for (let i = 0; i < slices.length; i++) {
+      if (fixed[i]) continue;
+      ideal[i] = activeBudget * (weights[i] / activeWeight);
+      if (ideal[i] < slices[i].value) {
+        fixed[i] = true;
+        movedOne = true;
+      }
+    }
+    if (!movedOne) break;
+  }
+
+  const rows: BuyPlanRow[] = slices.map((s, i) => {
+    const buy = fixed[i] ? 0 : Math.max(0, ideal[i] - s.value);
+    const finalValue = s.value + buy;
+    return {
+      asset_id: s.asset_id,
+      name: s.name,
+      currentValue: s.value,
+      targetPct: s.targetPct,
+      buy,
+      finalValue,
+      finalPct: finalTotal >= EPSILON ? (finalValue / finalTotal) * 100 : 0,
+    };
+  });
+
+  const deployed = rows.reduce((sum, r) => sum + r.buy, 0);
+  return { rows, available: budget, deployed, leftover: Math.max(0, budget - deployed), finalTotal };
+}
+
 /**
  * Sum of positive non-liability converted values — the denominator for the
  * assets-page "% of all assets" label. Liabilities and non-positive values are
