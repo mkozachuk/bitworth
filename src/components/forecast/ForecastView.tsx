@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Dices } from "lucide-react";
 import { ServerError } from "@/components/auth/ServerError";
+import { MonteCarloChart } from "@/components/forecast/MonteCarloChart";
 import { computeMonteCarlo, type MonteCarloInputs } from "@/lib/monte-carlo";
 import type { FireInputs } from "@/lib/fire";
 
@@ -35,6 +36,19 @@ const PATH_COUNT = 1000;
 // A fixed default seed keeps the page reproducible across reloads for a given
 // input set; the "Re-run" button re-rolls it for a fresh draw on demand.
 const DEFAULT_SEED = 1;
+
+// The engine computes all 1,000 paths, but the chart only draws a faint sample
+// of them — element count is the Recharts perf lever. Plot every Nth path so the
+// sample spans the full spread rather than just the first 100 draws.
+const CHART_SAMPLE_CAP = 100;
+
+function samplePaths(paths: number[][], cap: number): number[][] {
+  if (paths.length <= cap) return paths;
+  const stride = Math.ceil(paths.length / cap);
+  const sampled: number[][] = [];
+  for (let i = 0; i < paths.length; i += stride) sampled.push(paths[i]);
+  return sampled;
+}
 
 const DEFAULTS: FormState = {
   startingPrincipal: 0,
@@ -120,135 +134,181 @@ export function ForecastView({ displayCurrency, startingPrincipal, initialInputs
   const result = swrValid ? computeMonteCarlo(inputs) : null;
 
   const showCta = !hasSavedPrefs(initialInputs);
+  const sampledPaths = result ? samplePaths(result.paths, CHART_SAMPLE_CAP) : [];
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <form
-        className="space-y-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-        }}
-        noValidate
-      >
-        <ServerError message={null} />
-
-        <NumberField
-          id="forecast_current_age"
-          label="Current age"
-          value={state.currentAge}
-          onChange={update("currentAge")}
-          min={0}
-          max={120}
-          step={1}
-        />
-        <NumberField
-          id="forecast_starting_principal"
-          label={`Starting principal (${displayCurrency}, today's money)`}
-          help="Seeded from your current net worth. Override it to model a different starting point."
-          value={state.startingPrincipal}
-          onChange={update("startingPrincipal")}
-          min={0}
-          placeholder="0"
-        />
-        <NumberField
-          id="forecast_annual_income"
-          label={`Annual income (${displayCurrency})`}
-          value={state.annualIncome}
-          onChange={update("annualIncome")}
-          min={0}
-          placeholder="0"
-        />
-        <NumberField
-          id="forecast_annual_expenses"
-          label={`Annual expenses (${displayCurrency})`}
-          value={state.annualExpenses}
-          onChange={update("annualExpenses")}
-          min={0}
-          placeholder="0"
-        />
-        <div className="grid grid-cols-2 gap-4">
-          <NumberField
-            id="forecast_expected_return"
-            label="Expected return (nominal, %)"
-            value={state.expectedReturnPct}
-            onChange={update("expectedReturnPct")}
-            min={0}
-            max={100}
-            step={0.1}
-          />
-          <NumberField
-            id="forecast_inflation_rate"
-            label="Inflation rate (%)"
-            value={state.inflationRatePct}
-            onChange={update("inflationRatePct")}
-            min={0}
-            max={100}
-            step={0.1}
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <NumberField
-            id="forecast_safe_withdrawal_rate"
-            label="Safe withdrawal rate (%)"
-            value={state.safeWithdrawalRatePct}
-            onChange={update("safeWithdrawalRatePct")}
-            min={0}
-            max={100}
-            step={0.1}
-          />
-          <NumberField
-            id="forecast_return_volatility"
-            label="Return volatility (%)"
-            help="Year-to-year swing in real returns. Higher volatility widens the range of outcomes."
-            value={state.returnVolatilityPct}
-            onChange={update("returnVolatilityPct")}
-            min={0}
-            max={60}
-            step={0.1}
-          />
-        </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            setSeed((prev) => prev + 1);
+    <div className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
           }}
-          className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-500"
+          noValidate
         >
-          <Dices className="size-4" />
-          Re-run simulation
-        </button>
-      </form>
+          <ServerError message={null} />
 
-      <div className="space-y-4">
-        {showCta && (
-          <div className="rounded-2xl border border-blue-300 bg-blue-50 p-4 text-sm text-blue-900 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-200">
-            Using default assumptions. Set up your FIRE plan on the{" "}
-            <a href="/dashboard/fire" className="font-semibold underline hover:no-underline">
-              FIRE Calculator
-            </a>{" "}
-            to pre-fill these from your saved figures.
+          <NumberField
+            id="forecast_current_age"
+            label="Current age"
+            value={state.currentAge}
+            onChange={update("currentAge")}
+            min={0}
+            max={120}
+            step={1}
+          />
+          <NumberField
+            id="forecast_starting_principal"
+            label={`Starting principal (${displayCurrency}, today's money)`}
+            help="Seeded from your current net worth. Override it to model a different starting point."
+            value={state.startingPrincipal}
+            onChange={update("startingPrincipal")}
+            min={0}
+            placeholder="0"
+          />
+          <NumberField
+            id="forecast_annual_income"
+            label={`Annual income (${displayCurrency})`}
+            value={state.annualIncome}
+            onChange={update("annualIncome")}
+            min={0}
+            placeholder="0"
+          />
+          <NumberField
+            id="forecast_annual_expenses"
+            label={`Annual expenses (${displayCurrency})`}
+            value={state.annualExpenses}
+            onChange={update("annualExpenses")}
+            min={0}
+            placeholder="0"
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <NumberField
+              id="forecast_expected_return"
+              label="Expected return (nominal, %)"
+              value={state.expectedReturnPct}
+              onChange={update("expectedReturnPct")}
+              min={0}
+              max={100}
+              step={0.1}
+            />
+            <NumberField
+              id="forecast_inflation_rate"
+              label="Inflation rate (%)"
+              value={state.inflationRatePct}
+              onChange={update("inflationRatePct")}
+              min={0}
+              max={100}
+              step={0.1}
+            />
           </div>
-        )}
+          <div className="grid grid-cols-2 gap-4">
+            <NumberField
+              id="forecast_safe_withdrawal_rate"
+              label="Safe withdrawal rate (%)"
+              value={state.safeWithdrawalRatePct}
+              onChange={update("safeWithdrawalRatePct")}
+              min={0}
+              max={100}
+              step={0.1}
+            />
+            <NumberField
+              id="forecast_return_volatility"
+              label="Return volatility (%)"
+              help="Year-to-year swing in real returns. Higher volatility widens the range of outcomes."
+              value={state.returnVolatilityPct}
+              onChange={update("returnVolatilityPct")}
+              min={0}
+              max={60}
+              step={0.1}
+            />
+          </div>
 
-        {result === null ? (
-          <div className="rounded-2xl border border-amber-300 bg-amber-50 p-6 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
-            Enter a safe withdrawal rate greater than 0% to run the simulation.
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-zinc-200 bg-white/80 p-6 dark:border-white/10 dark:bg-white/5">
-            <p className="text-sm tracking-wider text-zinc-500 uppercase dark:text-white/50">
-              Probability of reaching FIRE
-            </p>
-            <p className="mt-1 text-5xl font-bold text-zinc-900 dark:text-white">
-              {formatPct(result.successProbability)}
-            </p>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-white/60">
-              of {result.pathCount.toLocaleString("en-US")} simulated paths reach your FIRE number over{" "}
-              {result.horizonYears} {result.horizonYears === 1 ? "year" : "years"}.
-            </p>
-          </div>
-        )}
+          <button
+            type="button"
+            onClick={() => {
+              setSeed((prev) => prev + 1);
+            }}
+            className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-500"
+          >
+            <Dices className="size-4" />
+            Re-run simulation
+          </button>
+        </form>
+
+        <div className="space-y-4">
+          {showCta && (
+            <div className="rounded-2xl border border-blue-300 bg-blue-50 p-4 text-sm text-blue-900 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-200">
+              Using default assumptions. Set up your FIRE plan on the{" "}
+              <a href="/dashboard/fire" className="font-semibold underline hover:no-underline">
+                FIRE Calculator
+              </a>{" "}
+              to pre-fill these from your saved figures.
+            </div>
+          )}
+
+          {result === null ? (
+            <div className="rounded-2xl border border-amber-300 bg-amber-50 p-6 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+              Enter a safe withdrawal rate greater than 0% to run the simulation.
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-zinc-200 bg-white/80 p-6 dark:border-white/10 dark:bg-white/5">
+              <p className="text-sm tracking-wider text-zinc-500 uppercase dark:text-white/50">
+                Probability of reaching FIRE
+              </p>
+              <p className="mt-1 text-5xl font-bold text-zinc-900 dark:text-white">
+                {formatPct(result.successProbability)}
+              </p>
+              <p className="mt-2 text-sm text-zinc-600 dark:text-white/60">
+                of {result.pathCount.toLocaleString("en-US")} simulated paths reach your FIRE number over{" "}
+                {result.horizonYears} {result.horizonYears === 1 ? "year" : "years"}.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {result !== null && (
+        <MonteCarloChart
+          paths={sampledPaths}
+          bands={result.bands}
+          fireNumber={result.fireNumber}
+          displayCurrency={displayCurrency}
+          totalPathCount={result.pathCount}
+        />
+      )}
+
+      <div className="rounded-2xl border border-zinc-200 bg-white/80 p-6 text-sm text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-white/60">
+        <h2 className="mb-2 text-sm font-medium tracking-wider text-zinc-700 uppercase dark:text-white/70">
+          How to read this forecast
+        </h2>
+        <ul className="list-disc space-y-2 pl-5">
+          <li>
+            Each run simulates {PATH_COUNT.toLocaleString("en-US")} possible futures by drawing a random real
+            (after-inflation) return each year from a bell curve centred on your expected return, with the spread set by
+            your volatility input. The headline is the share of those futures whose final balance clears your FIRE
+            number.
+          </li>
+          <li>
+            The <strong>P10 / P50 / P90</strong> bands show the pessimistic, median, and optimistic outcomes: in 10% of
+            runs you end up below the P10 line, in half below the median, and in 90% below the P90 line. The faint lines
+            behind them are a sample of individual simulated paths.
+          </li>
+          <li>
+            <strong>Volatility drag.</strong> Because gains and losses compound unevenly, the median path grows a little
+            slower than your entered return — by roughly half the variance (≈ σ²/2) per year. That is expected, not a
+            bug: the median band will sit below a straight-line projection at the same return.
+          </li>
+          <li>
+            <strong>Left-tail clamp.</strong> A single year&apos;s return is floored at −95% (you can&apos;t lose more
+            than you have), which makes the worst outcomes very marginally rosier than an unbounded model would show.
+          </li>
+        </ul>
+        <p className="mt-4 text-xs text-zinc-500 dark:text-white/40">
+          This is a statistical estimate, not financial advice. Markets don&apos;t follow tidy bell curves, and past
+          returns don&apos;t guarantee future ones. Use it to understand the range of possibilities, not as a
+          prediction.
+        </p>
       </div>
     </div>
   );
