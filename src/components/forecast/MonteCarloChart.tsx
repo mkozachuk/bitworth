@@ -72,6 +72,7 @@ export function MonteCarloChart({ paths, bands, fireNumber, displayCurrency, tot
   // Make the sampling cap visible rather than silent — the chart plots a subset
   // of the simulated paths, and a reader should be able to confirm the count.
   useEffect(() => {
+    if (!import.meta.env.DEV) return;
     // eslint-disable-next-line no-console
     console.info(`MonteCarloChart: sampled ${paths.length} of ${totalPathCount} paths`);
   }, [paths.length, totalPathCount]);
@@ -135,7 +136,7 @@ export function MonteCarloChart({ paths, bands, fireNumber, displayCurrency, tot
               key={`path${i}`}
               type="monotone"
               dataKey={`path${i}`}
-              stroke="var(--chart-2)"
+              stroke="var(--muted-foreground)"
               strokeOpacity={0.12}
               strokeWidth={1}
               dot={false}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Dices } from "lucide-react";
 import { ServerError } from "@/components/auth/ServerError";
 import { MonteCarloChart } from "@/components/forecast/MonteCarloChart";
@@ -130,8 +130,9 @@ export function ForecastView({ displayCurrency, startingPrincipal, initialInputs
   // The only invalid input monte-carlo.ts cannot absorb is a non-positive SWR
   // (the FIRE number divides by it). Guard the call rather than let it throw.
   const swrValid = num(state.safeWithdrawalRatePct) > 0;
-  const inputs = toInputs(state, seed);
-  const result = swrValid ? computeMonteCarlo(inputs) : null;
+  // computeMonteCarlo runs ~70k Gaussian draws + per-year sorts; memoize so it
+  // only re-runs when the inputs or seed actually change, not on every render.
+  const result = useMemo(() => (swrValid ? computeMonteCarlo(toInputs(state, seed)) : null), [state, seed, swrValid]);
 
   const showCta = !hasSavedPrefs(initialInputs);
   const sampledPaths = result ? samplePaths(result.paths, CHART_SAMPLE_CAP) : [];

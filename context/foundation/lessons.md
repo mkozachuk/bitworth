@@ -97,3 +97,10 @@
 **Rule**: Any nav-item change must touch BOTH Topbar.astro (desktop) and TopbarMenu.tsx (mobile). When planning a nav change, name both files in the plan's Changes Required.
 
 **Applies to**: Any change that adds, removes, renames, or reorders a top-bar navigation entry.
+
+## Seed-injected RNG is the testability seam for stochastic modules
+
+- **Context**: Any new pure module that uses randomness/simulation (Monte Carlo, sampling, jitter, shuffles) — e.g. src/lib/monte-carlo.ts.
+- **Problem**: A module that calls Math.random() internally is non-deterministic, so its math can't be pinned with fixed-seed oracles and any UI built on it isn't reproducible across reloads. monte-carlo.ts avoided this by taking an explicit `seed`, threading it through mulberry32, and consuming the RNG in a fixed order (outer paths, inner years, exactly one Gaussian draw per path-year) — which made the stochastic math cheaply unit-testable and the Forecast page reproducible.
+- **Rule**: Any stochastic/randomized module must inject the seed (caller-supplied), never call Math.random() internally, and keep the RNG consumption order fixed and documented so a test can replay the same sequence as an independent oracle.
+- **Applies to**: plan, implement, impl-review
