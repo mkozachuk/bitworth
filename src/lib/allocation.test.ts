@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Currency } from "@/lib/net-worth";
-import type { AllocationAsset, ShareAsset } from "@/lib/allocation";
-import { assetSharePct, computeAllocation, totalAssetPool } from "@/lib/allocation";
+import type { AllocationAsset, AllocationSlice, ShareAsset } from "@/lib/allocation";
+import { assetSharePct, computeAllocation, computeBuyPlan, totalAssetPool } from "@/lib/allocation";
 
 // Pins the allocation math against oracles computed from first principles —
 // never by reading the implementation. Percentages run on a 0–100 scale
@@ -112,6 +112,117 @@ describe("computeAllocation", () => {
     );
     expect(r.totalSelected).toBeCloseTo(100_000, 6);
     expect(r.slices[0].realPct).toBeCloseTo((33_333.33 / 100_000) * 100, 6);
+  });
+});
+
+describe("computeBuyPlan", () => {
+  // computeBuyPlan operates on already-valued slices (value in display currency).
+  function slice(overrides: Partial<AllocationSlice> = {}): AllocationSlice {
+    return { asset_id: "a1", name: "Asset 1", value: 100, targetPct: 50, realPct: null, ...overrides };
+  }
+
+  // Narrowing wrapper: the null path is exercised by its own test, so the rest
+  // can assert against a non-null plan without `!` (forbidden by eslint).
+  function buyPlan(slices: AllocationSlice[], available: number) {
+    const plan = computeBuyPlan(slices, available);
+    if (plan === null) throw new Error("expected a non-null plan");
+    return plan;
+  }
+
+  it("returns null when there is no positive target to plan against", () => {
+    expect(computeBuyPlan([], 1000)).toBeNull();
+    expect(computeBuyPlan([slice({ targetPct: 0 }), slice({ targetPct: 0 })], 1000)).toBeNull();
+  });
+
+  it("splits a budget across equal targets from an empty start", () => {
+    // Both at 0 value, 50/50 targets, deploy 1000 → 500 each; final 50% each.
+    const plan = buyPlan(
+      [slice({ asset_id: "a", value: 0, targetPct: 50 }), slice({ asset_id: "b", value: 0, targetPct: 50 })],
+      1000,
+    );
+    expect(plan.rows[0].buy).toBeCloseTo(500, 6);
+    expect(plan.rows[1].buy).toBeCloseTo(500, 6);
+    expect(plan.deployed).toBeCloseTo(1000, 6);
+    expect(plan.leftover).toBeCloseTo(0, 6);
+    expect(plan.finalTotal).toBeCloseTo(1000, 6);
+    expect(plan.rows[0].finalPct).toBeCloseTo(50, 6);
+  });
+
+  it("buys only the deficit when one asset is underweight", () => {
+    // A=100, B=0, targets 50/50, budget 100. finalTotal=200, ideal 100 each.
+    // A already at 100 → buy 0; B → buy 100. deployed=100, final 50/50.
+    const plan = buyPlan(
+      [slice({ asset_id: "a", value: 100, targetPct: 50 }), slice({ asset_id: "b", value: 0, targetPct: 50 })],
+      100,
+    );
+    expect(plan.rows[0].buy).toBeCloseTo(0, 6);
+    expect(plan.rows[1].buy).toBeCloseTo(100, 6);
+    expect(plan.deployed).toBeCloseTo(100, 6);
+    expect(plan.rows[0].finalPct).toBeCloseTo(50, 6);
+    expect(plan.rows[1].finalPct).toBeCloseTo(50, 6);
+  });
+
+  it("clamps an overweight asset to buy 0 and redistributes its share (water-filling)", () => {
+    // A=900 (target 50), B=100 (target 50), budget 200. finalTotal=1200, ideal 600 each.
+    // A already 900 > 600 → fixed at 900, buy 0. Active={B}: activeBudget=1200-900=300,
+    // B gets all → buy 300-100=200. deployed=200, leftover 0.
+    const plan = buyPlan(
+      [slice({ asset_id: "a", value: 900, targetPct: 50 }), slice({ asset_id: "b", value: 100, targetPct: 50 })],
+      200,
+    );
+    expect(plan.rows[0].buy).toBeCloseTo(0, 6);
+    expect(plan.rows[1].buy).toBeCloseTo(200, 6);
+    expect(plan.deployed).toBeCloseTo(200, 6);
+    expect(plan.leftover).toBeCloseTo(0, 6);
+  });
+
+  it("honors relative targets that do not sum to 100", () => {
+    // Targets 30/10 (sum 40) → weights 0.75/0.25. Empty start, budget 400.
+    // → buy 300 / 100; final 75% / 25%.
+    const plan = buyPlan(
+      [slice({ asset_id: "a", value: 0, targetPct: 30 }), slice({ asset_id: "b", value: 0, targetPct: 10 })],
+      400,
+    );
+    expect(plan.rows[0].buy).toBeCloseTo(300, 6);
+    expect(plan.rows[1].buy).toBeCloseTo(100, 6);
+    expect(plan.rows[0].finalPct).toBeCloseTo(75, 6);
+  });
+
+  it("reports leftover when budget cannot be deployed without selling", () => {
+    // A=1000 (target 1), B=0 (target 0): only A is weighted but it is hugely
+    // overweight relative to its tiny target. declaredSum=1, weight A=1.
+    // ideal A = finalTotal = 1000+budget, always > 1000, so A still buys the budget.
+    // To strand cash we need every POSITIVE-weight asset overweight: give A target 1
+    // and B (value 0) target 99, budget 50. finalTotal=1050. ideal A=10.5 (<1000 → fixed),
+    // active={B}: activeBudget=1050-1000=50 → B buys 50. So deployed=50, no leftover.
+    // True stranding only happens when the lone active asset is itself overweight,
+    // which adding cash prevents — so leftover stays 0 here; assert that explicitly.
+    const plan = buyPlan(
+      [slice({ asset_id: "a", value: 1000, targetPct: 1 }), slice({ asset_id: "b", value: 0, targetPct: 99 })],
+      50,
+    );
+    expect(plan.rows[0].buy).toBeCloseTo(0, 6);
+    expect(plan.rows[1].buy).toBeCloseTo(50, 6);
+    expect(plan.leftover).toBeCloseTo(0, 6);
+  });
+
+  it("treats a non-positive budget as a zero-deploy plan", () => {
+    const plan = buyPlan([slice({ asset_id: "a", value: 100, targetPct: 100 })], -50);
+    expect(plan.available).toBe(0);
+    expect(plan.deployed).toBeCloseTo(0, 6);
+    expect(plan.rows[0].buy).toBeCloseTo(0, 6);
+  });
+
+  it("preserves input order in the plan rows", () => {
+    const plan = buyPlan(
+      [
+        slice({ asset_id: "x", value: 10, targetPct: 33 }),
+        slice({ asset_id: "y", value: 20, targetPct: 33 }),
+        slice({ asset_id: "z", value: 30, targetPct: 34 }),
+      ],
+      300,
+    );
+    expect(plan.rows.map((r) => r.asset_id)).toEqual(["x", "y", "z"]);
   });
 });
 

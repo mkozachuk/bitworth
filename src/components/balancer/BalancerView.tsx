@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Save, Plus, Minus } from "lucide-react";
+import { Save, Plus, Minus, Wallet } from "lucide-react";
 import { PieChart, Pie, Legend, Tooltip, ResponsiveContainer } from "recharts";
 import { ServerError } from "@/components/auth/ServerError";
-import { computeAllocation, type AllocationSlice } from "@/lib/allocation";
+import { computeAllocation, computeBuyPlan, type AllocationSlice } from "@/lib/allocation";
 import type { Currency } from "@/lib/net-worth";
 
 // One selectable non-liability asset, pre-shaped server-side. Raw amount +
@@ -31,6 +31,11 @@ const colorFor = (index: number): string => CHART_COLORS[index % CHART_COLORS.le
 // Empty target box is held as NaN so the field can be cleared and retyped
 // without snapping to 0; num() coerces NaN/undefined to 0 where consumed.
 const num = (value: number | undefined): number => (value === undefined || Number.isNaN(value) ? 0 : value);
+
+// Money in the display currency: two decimals + the currency code, matching the
+// inline `toLocaleString("en-US", …)` convention used across the asset cards.
+const money = (value: number, currency: Currency): string =>
+  `${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
 
 function CustomTooltip({ active, payload }: { active?: boolean; payload?: { name?: string; value?: number }[] }) {
   if (active && payload?.length) {
@@ -94,6 +99,107 @@ function AllocationPie({
           />
         </PieChart>
       </ResponsiveContainer>
+    </div>
+  );
+}
+
+// "How much to buy" card: enter a cash budget and see the buy-only plan that
+// moves the selected assets toward their declared targets. Pure client math
+// (computeBuyPlan over the same slices the pies use) — nothing is persisted.
+function BuyPlanCard({ slices, displayCurrency }: { slices: AllocationSlice[]; displayCurrency: Currency }) {
+  // NaN while the field is empty (same convention as the target inputs).
+  const [budget, setBudget] = useState<number | undefined>(undefined);
+  const plan = computeBuyPlan(slices, num(budget));
+
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-white/80 p-6 lg:col-span-3 dark:border-white/10 dark:bg-white/5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="flex items-center gap-2 text-sm font-medium tracking-wider text-zinc-600 uppercase dark:text-white/60">
+          <Wallet className="size-4" />
+          Buy plan
+        </h2>
+        <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-white/60">
+          Available to invest
+          <div className="relative">
+            <input
+              type="number"
+              inputMode="decimal"
+              aria-label="Available money to invest"
+              value={budget === undefined || Number.isNaN(budget) ? "" : budget}
+              onChange={(e) => {
+                setBudget(e.target.valueAsNumber);
+              }}
+              min={0}
+              step={100}
+              placeholder="0"
+              className="w-36 rounded-lg border border-zinc-300 bg-white px-3 py-2 pr-12 text-right text-sm text-zinc-900 transition-colors focus:ring-2 focus:outline-none dark:border-white/20 dark:bg-white/10 dark:text-white"
+            />
+            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-zinc-500 dark:text-white/40">
+              {displayCurrency}
+            </span>
+          </div>
+        </label>
+      </div>
+
+      {plan === null ? (
+        <p className="text-sm text-zinc-500 dark:text-white/40">
+          Set a target percentage on at least one asset above to compute a buy plan.
+        </p>
+      ) : (
+        <>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-200 text-left text-xs tracking-wider text-zinc-500 uppercase dark:border-white/10 dark:text-white/40">
+                  <th className="py-2 pr-4 font-medium">Asset</th>
+                  <th className="py-2 pr-4 text-right font-medium">Current</th>
+                  <th className="py-2 pr-4 text-right font-medium">Target</th>
+                  <th className="py-2 pr-4 text-right font-medium">Buy</th>
+                  <th className="py-2 text-right font-medium">After</th>
+                </tr>
+              </thead>
+              <tbody>
+                {plan.rows.map((row, index) => (
+                  <tr key={row.asset_id} className="border-b border-zinc-100 dark:border-white/5">
+                    <td className="flex items-center gap-2 py-2 pr-4 text-zinc-900 dark:text-white">
+                      <span className="size-2.5 shrink-0 rounded-full" style={{ background: colorFor(index) }} />
+                      <span className="truncate">{row.name}</span>
+                    </td>
+                    <td className="py-2 pr-4 text-right text-zinc-600 dark:text-white/60">
+                      {money(row.currentValue, displayCurrency)}
+                    </td>
+                    <td className="py-2 pr-4 text-right text-zinc-500 dark:text-white/40">
+                      {row.targetPct.toFixed(1)}%
+                    </td>
+                    <td
+                      className={
+                        row.buy > 0
+                          ? "py-2 pr-4 text-right font-medium text-emerald-600 dark:text-emerald-400"
+                          : "py-2 pr-4 text-right text-zinc-400 dark:text-white/30"
+                      }
+                    >
+                      {row.buy > 0 ? `+${money(row.buy, displayCurrency)}` : "—"}
+                    </td>
+                    <td className="py-2 text-right text-zinc-600 dark:text-white/60">{row.finalPct.toFixed(1)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-end gap-x-6 gap-y-1 text-sm">
+            <span className="text-zinc-600 dark:text-white/60">
+              Deployed{" "}
+              <strong className="text-zinc-900 dark:text-white">{money(plan.deployed, displayCurrency)}</strong>
+            </span>
+            {plan.leftover > 0.01 && (
+              <span className="text-amber-600 dark:text-amber-400">
+                Leftover {money(plan.leftover, displayCurrency)} — everything else is already at or above target
+              </span>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -333,6 +439,9 @@ export function BalancerView({ assets, savedTargets, displayCurrency, rates }: P
           </div>
         )}
       </div>
+
+      {/* Full-width buy-plan card: deploy a cash budget toward the targets. */}
+      {hasSelection && <BuyPlanCard slices={result.slices} displayCurrency={displayCurrency} />}
     </div>
   );
 }
