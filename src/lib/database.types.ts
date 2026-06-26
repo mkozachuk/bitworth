@@ -20,9 +20,37 @@ export interface Database {
   };
   public: {
     Tables: {
+      allocation_cards: {
+        Row: {
+          created_at: string;
+          id: string;
+          name: string;
+          position: number;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          name: string;
+          position?: number;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          name?: string;
+          position?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       allocation_targets: {
         Row: {
           asset_id: string;
+          card_id: string;
           created_at: string;
           id: string;
           target_pct: number;
@@ -31,6 +59,7 @@ export interface Database {
         };
         Insert: {
           asset_id: string;
+          card_id: string;
           created_at?: string;
           id?: string;
           target_pct: number;
@@ -39,6 +68,7 @@ export interface Database {
         };
         Update: {
           asset_id?: string;
+          card_id?: string;
           created_at?: string;
           id?: string;
           target_pct?: number;
@@ -51,6 +81,13 @@ export interface Database {
             columns: ["asset_id"];
             isOneToOne: false;
             referencedRelation: "assets";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "allocation_targets_card_id_fkey";
+            columns: ["card_id"];
+            isOneToOne: false;
+            referencedRelation: "allocation_cards";
             referencedColumns: ["id"];
           },
         ];

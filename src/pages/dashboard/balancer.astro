@@ -21,10 +21,15 @@ const { data: assets } = await supabase.from("assets").select("*, category:asset
 
 const rates = await getRates(supabase);
 
-const { data: targets } = await supabase
-  .from("allocation_targets")
-  .select("asset_id, target_pct")
-  .eq("user_id", user.id);
+// Each portfolio card carries its own target set; the same asset may appear in
+// several cards with different targets. Targets are embedded per card so the
+// island gets one self-contained list per tab.
+const { data: cardRows } = await supabase
+  .from("allocation_cards")
+  .select("id, name, position, allocation_targets(asset_id, target_pct)")
+  .eq("user_id", user.id)
+  .order("position", { ascending: true })
+  .order("created_at", { ascending: true });
 
 // Only non-liability assets form the balancer set; pass raw amount + currency so
 // the island re-runs the same computeAllocation code path (one denominator, one
@@ -35,11 +40,20 @@ const nonLiabilityAssets = ((assets ?? []) as AssetWithCategory[])
 
 // The chained Supabase select resolves to `any` in .astro frontmatter (same
 // boundary fire.astro casts its prefs row through), so read the rows through a
-// typed shape before building the map.
-const savedTargets: Record<string, number> = {};
-for (const target of (targets ?? []) as { asset_id: string; target_pct: number }[]) {
-  savedTargets[target.asset_id] = target.target_pct;
+// typed shape before reshaping each card's targets into an asset_id -> pct map.
+interface RawCard {
+  id: string;
+  name: string;
+  position: number;
+  allocation_targets: { asset_id: string; target_pct: number }[];
 }
+const cards = ((cardRows ?? []) as RawCard[]).map((card) => {
+  const targets: Record<string, number> = {};
+  for (const t of card.allocation_targets) {
+    targets[t.asset_id] = t.target_pct;
+  }
+  return { id: card.id, name: card.name, position: card.position, targets };
+});
 ---
 
 <Layout title="Balance">
@@ -56,7 +70,7 @@ for (const target of (targets ?? []) as { asset_id: string; target_pct: number }
 
     <BalancerView
       assets={nonLiabilityAssets}
-      savedTargets={savedTargets}
+      cards={cards}
       displayCurrency={displayCurrency}
       rates={rates}
       client:load

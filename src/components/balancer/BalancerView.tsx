@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Save, Plus, Minus, Wallet } from "lucide-react";
+import { Save, Plus, Minus, Wallet, Trash2 } from "lucide-react";
 import { PieChart, Pie, Legend, Tooltip, ResponsiveContainer } from "recharts";
 import { ServerError } from "@/components/auth/ServerError";
 import { computeAllocation, computeBuyPlan, type AllocationSlice } from "@/lib/allocation";
-import type { Currency } from "@/lib/net-worth";
+import { convertAmount, type Currency } from "@/lib/net-worth";
 
 // One selectable non-liability asset, pre-shaped server-side. Raw amount +
 // currency (not a pre-converted value) so the island can re-run the SAME
@@ -16,9 +16,19 @@ interface BalancerAsset {
   currency: string;
 }
 
+// One portfolio card: a named, independent target set. The same asset may live
+// in several cards with different targets (e.g. an "ETFs" card and a
+// "Bonds & funds" card), so `targets` is this card's own asset_id -> pct map.
+interface CardData {
+  id: string;
+  name: string;
+  position: number;
+  targets: Record<string, number>; // asset_id -> saved target_pct (0–100)
+}
+
 interface Props {
   assets: BalancerAsset[];
-  savedTargets: Record<string, number>; // asset_id -> saved target_pct (0–100)
+  cards: CardData[];
   displayCurrency: Currency;
   rates: Record<Currency, number>;
 }
@@ -27,6 +37,10 @@ interface Props {
 // across declared + real because both iterate the same ordered slice list.
 const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 const colorFor = (index: number): string => CHART_COLORS[index % CHART_COLORS.length];
+
+// Currencies the buy-plan budget can be entered in. Mirrors the `Currency` union
+// (exchange-rates.ts) — USD first to match the system default ordering.
+const CURRENCIES: Currency[] = ["USD", "EUR", "PLN"];
 
 // Empty target box is held as NaN so the field can be cleared and retyped
 // without snapping to 0; num() coerces NaN/undefined to 0 where consumed.
@@ -106,10 +120,27 @@ function AllocationPie({
 // "How much to buy" card: enter a cash budget and see the buy-only plan that
 // moves the selected assets toward their declared targets. Pure client math
 // (computeBuyPlan over the same slices the pies use) — nothing is persisted.
-function BuyPlanCard({ slices, displayCurrency }: { slices: AllocationSlice[]; displayCurrency: Currency }) {
+function BuyPlanCard({
+  slices,
+  displayCurrency,
+  rates,
+}: {
+  slices: AllocationSlice[];
+  displayCurrency: Currency;
+  rates: Record<Currency, number>;
+}) {
   // NaN while the field is empty (same convention as the target inputs).
   const [budget, setBudget] = useState<number | undefined>(undefined);
-  const plan = computeBuyPlan(slices, num(budget));
+  // Currency the budget is entered in. Slices (and so the whole plan math) live
+  // in `displayCurrency`, so we convert the budget into it before planning and
+  // convert every money output back into `planCurrency` for display — the pies
+  // and real % stay untouched in `displayCurrency`.
+  const [planCurrency, setPlanCurrency] = useState<Currency>(displayCurrency);
+  const budgetInDisplay = convertAmount(num(budget), planCurrency, displayCurrency, rates);
+  const plan = computeBuyPlan(slices, budgetInDisplay);
+  // Render a display-currency value in the chosen budget currency.
+  const show = (value: number): string =>
+    money(convertAmount(value, displayCurrency, planCurrency, rates), planCurrency);
 
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white/80 p-6 lg:col-span-3 dark:border-white/10 dark:bg-white/5">
@@ -120,24 +151,33 @@ function BuyPlanCard({ slices, displayCurrency }: { slices: AllocationSlice[]; d
         </h2>
         <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-white/60">
           Available to invest
-          <div className="relative">
-            <input
-              type="number"
-              inputMode="decimal"
-              aria-label="Available money to invest"
-              value={budget === undefined || Number.isNaN(budget) ? "" : budget}
-              onChange={(e) => {
-                setBudget(e.target.valueAsNumber);
-              }}
-              min={0}
-              step={100}
-              placeholder="0"
-              className="w-36 rounded-lg border border-zinc-300 bg-white px-3 py-2 pr-12 text-right text-sm text-zinc-900 transition-colors focus:ring-2 focus:outline-none dark:border-white/20 dark:bg-white/10 dark:text-white"
-            />
-            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-zinc-500 dark:text-white/40">
-              {displayCurrency}
-            </span>
-          </div>
+          <input
+            type="number"
+            inputMode="decimal"
+            aria-label="Available money to invest"
+            value={budget === undefined || Number.isNaN(budget) ? "" : budget}
+            onChange={(e) => {
+              setBudget(e.target.valueAsNumber);
+            }}
+            min={0}
+            step={100}
+            placeholder="0"
+            className="w-32 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-right text-sm text-zinc-900 transition-colors focus:ring-2 focus:outline-none dark:border-white/20 dark:bg-white/10 dark:text-white"
+          />
+          <select
+            aria-label="Budget currency"
+            value={planCurrency}
+            onChange={(e) => {
+              setPlanCurrency(e.target.value as Currency);
+            }}
+            className="appearance-none rounded-lg border border-zinc-300 bg-white px-2 py-2 text-sm text-zinc-900 transition-colors focus:ring-2 focus:outline-none dark:border-white/20 dark:bg-white/10 dark:text-white"
+          >
+            {CURRENCIES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
         </label>
       </div>
 
@@ -165,9 +205,7 @@ function BuyPlanCard({ slices, displayCurrency }: { slices: AllocationSlice[]; d
                       <span className="size-2.5 shrink-0 rounded-full" style={{ background: colorFor(index) }} />
                       <span className="truncate">{row.name}</span>
                     </td>
-                    <td className="py-2 pr-4 text-right text-zinc-600 dark:text-white/60">
-                      {money(row.currentValue, displayCurrency)}
-                    </td>
+                    <td className="py-2 pr-4 text-right text-zinc-600 dark:text-white/60">{show(row.currentValue)}</td>
                     <td className="py-2 pr-4 text-right text-zinc-500 dark:text-white/40">
                       {row.targetPct.toFixed(1)}%
                     </td>
@@ -178,7 +216,7 @@ function BuyPlanCard({ slices, displayCurrency }: { slices: AllocationSlice[]; d
                           : "py-2 pr-4 text-right text-zinc-400 dark:text-white/30"
                       }
                     >
-                      {row.buy > 0 ? `+${money(row.buy, displayCurrency)}` : "—"}
+                      {row.buy > 0 ? `+${show(row.buy)}` : "—"}
                     </td>
                     <td className="py-2 text-right text-zinc-600 dark:text-white/60">{row.finalPct.toFixed(1)}%</td>
                   </tr>
@@ -189,12 +227,11 @@ function BuyPlanCard({ slices, displayCurrency }: { slices: AllocationSlice[]; d
 
           <div className="mt-4 flex flex-wrap items-center justify-end gap-x-6 gap-y-1 text-sm">
             <span className="text-zinc-600 dark:text-white/60">
-              Deployed{" "}
-              <strong className="text-zinc-900 dark:text-white">{money(plan.deployed, displayCurrency)}</strong>
+              Deployed <strong className="text-zinc-900 dark:text-white">{show(plan.deployed)}</strong>
             </span>
             {plan.leftover > 0.01 && (
               <span className="text-amber-600 dark:text-amber-400">
-                Leftover {money(plan.leftover, displayCurrency)} — everything else is already at or above target
+                Leftover {show(plan.leftover)} — everything else is already at or above target
               </span>
             )}
           </div>
@@ -204,16 +241,41 @@ function BuyPlanCard({ slices, displayCurrency }: { slices: AllocationSlice[]; d
   );
 }
 
-export function BalancerView({ assets, savedTargets, displayCurrency, rates }: Props) {
-  const [selected, setSelected] = useState<Set<string>>(() => new Set(Object.keys(savedTargets)));
+// One portfolio card's full editor: select panel + both pies + buy plan, plus an
+// inline-editable name and a delete control. State is seeded from `card.targets`
+// and lives locally; the component is keyed by card id in the parent so a tab
+// switch remounts it fresh (unsaved edits don't bleed across tabs). On save it
+// lifts the persisted targets back up via `onSaved` so switching away and back
+// reflects what's stored.
+function PortfolioCard({
+  card,
+  assets,
+  displayCurrency,
+  rates,
+  onRename,
+  onDelete,
+  onSaved,
+}: {
+  card: CardData;
+  assets: BalancerAsset[];
+  displayCurrency: Currency;
+  rates: Record<Currency, number>;
+  onRename: (id: string, name: string) => void;
+  onDelete: (id: string) => void;
+  onSaved: (id: string, targets: Record<string, number>) => void;
+}) {
+  const [selected, setSelected] = useState<Set<string>>(() => new Set(Object.keys(card.targets)));
   // A selected asset with no saved target has no key here, so the value is
   // genuinely `number | undefined` at runtime; num() coerces the gap to 0.
-  const [targets, setTargets] = useState<Record<string, number | undefined>>(() => ({ ...savedTargets }));
+  const [targets, setTargets] = useState<Record<string, number | undefined>>(() => ({ ...card.targets }));
   // The asset currently chosen in the "add" dropdown, before the + button
   // commits it to the selected set. "" means nothing picked.
   const [pick, setPick] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  // Local mirror of the card name so the input is editable without a round-trip;
+  // committed (PATCH via onRename) on blur / Enter.
+  const [name, setName] = useState(card.name);
 
   function addPicked() {
     if (!pick) return;
@@ -266,7 +328,7 @@ export function BalancerView({ assets, savedTargets, displayCurrency, rates }: P
     setError(null);
     setPending(true);
 
-    const payload = assets
+    const payloadTargets = assets
       .filter((a) => selected.has(a.asset_id))
       .map((a) => ({ asset_id: a.asset_id, target_pct: num(targets[a.asset_id]) }));
 
@@ -274,7 +336,7 @@ export function BalancerView({ assets, savedTargets, displayCurrency, rates }: P
       const res = await fetch("/api/allocation-targets", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ card_id: card.id, targets: payloadTargets }),
       });
       const json = (await res.json()) as { error?: { message: string } };
 
@@ -284,11 +346,274 @@ export function BalancerView({ assets, savedTargets, displayCurrency, rates }: P
         return;
       }
 
-      window.location.reload();
+      // Lift the persisted set up so the parent's card state stays in sync (no
+      // full-page reload needed — current values haven't changed).
+      const savedMap: Record<string, number> = {};
+      for (const t of payloadTargets) savedMap[t.asset_id] = t.target_pct;
+      onSaved(card.id, savedMap);
+      setPending(false);
     } catch {
       setError("Network error. Please try again.");
       setPending(false);
     }
+  }
+
+  // Commit a rename on blur / Enter; reset to the saved name if cleared/unchanged.
+  function commitName() {
+    const trimmed = name.trim();
+    if (!trimmed || trimmed === card.name) {
+      setName(card.name);
+      return;
+    }
+    onRename(card.id, trimmed);
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Card header: inline-editable name + delete. */}
+      <div className="flex items-center justify-between gap-3">
+        <input
+          aria-label="Portfolio name"
+          value={name}
+          onChange={(e) => {
+            setName(e.target.value);
+          }}
+          onBlur={commitName}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+          }}
+          maxLength={60}
+          className="min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-2 py-1 text-lg font-semibold text-zinc-900 transition-colors hover:border-zinc-200 focus:border-zinc-300 focus:ring-2 focus:outline-none dark:text-white dark:hover:border-white/10 dark:focus:border-white/20"
+        />
+        <button
+          type="button"
+          onClick={() => {
+            onDelete(card.id);
+          }}
+          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 transition-colors hover:border-red-300 hover:text-red-600 dark:border-white/20 dark:text-white/60 dark:hover:border-red-400/40 dark:hover:text-red-300"
+        >
+          <Trash2 className="size-4" />
+          Delete
+        </button>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="rounded-2xl border border-zinc-200 bg-white/80 p-6 lg:col-span-1 dark:border-white/10 dark:bg-white/5">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-sm font-medium tracking-wider text-zinc-600 uppercase dark:text-white/60">
+              Select assets &amp; targets
+            </h2>
+            <span
+              className={
+                sumOffBy100
+                  ? "text-xs font-medium text-amber-600 dark:text-amber-400"
+                  : "text-xs text-zinc-500 dark:text-white/40"
+              }
+            >
+              Targets sum = {result.declaredSum.toFixed(1)}%
+            </span>
+          </div>
+
+          {/* Add control: single-choice dropdown of not-yet-selected assets + a
+            "+" button that commits the pick to the set. */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <select
+                aria-label="Choose an asset to add"
+                value={pick}
+                onChange={(e) => {
+                  setPick(e.target.value);
+                }}
+                disabled={available.length === 0}
+                className="w-full appearance-none rounded-lg border border-zinc-300 bg-white px-3 py-2 pr-8 text-sm text-zinc-900 transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/20 dark:bg-white/10 dark:text-white"
+              >
+                <option value="">{available.length === 0 ? "All assets added" : "Add an asset…"}</option>
+                {available.map((asset) => (
+                  <option key={asset.asset_id} value={asset.asset_id}>
+                    {asset.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="button"
+              onClick={addPicked}
+              disabled={!pick}
+              aria-label="Add selected asset"
+              className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-purple-600 text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Plus className="size-4" />
+            </button>
+          </div>
+
+          {/* Configurable list: one row per selected asset with its target input
+            and a "−" button to remove it from the set. */}
+          {selectedAssets.length === 0 ? (
+            <p className="mt-4 text-sm text-zinc-500 dark:text-white/40">
+              No assets selected yet. Add one above to set its target.
+            </p>
+          ) : (
+            <div className="mt-4 space-y-2">
+              {selectedAssets.map((asset) => {
+                const target = targets[asset.asset_id];
+                return (
+                  <div
+                    key={asset.asset_id}
+                    className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 dark:border-white/10"
+                  >
+                    <span className="flex-1 truncate text-sm text-zinc-900 dark:text-white">{asset.name}</span>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      aria-label={`Target percentage for ${asset.name}`}
+                      value={target === undefined || Number.isNaN(target) ? "" : target}
+                      onChange={updateTarget(asset.asset_id)}
+                      min={0}
+                      max={100}
+                      step={0.1}
+                      placeholder="0"
+                      className="w-20 rounded-lg border border-zinc-300 bg-white px-2 py-1 text-right text-sm text-zinc-900 transition-colors focus:ring-2 focus:outline-none dark:border-white/20 dark:bg-white/10 dark:text-white"
+                    />
+                    <span className="text-sm text-zinc-500 dark:text-white/40">%</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        removeAsset(asset.asset_id);
+                      }}
+                      aria-label={`Remove ${asset.name}`}
+                      className="flex size-7 shrink-0 items-center justify-center rounded-lg border border-zinc-300 text-zinc-500 transition-colors hover:border-red-300 hover:text-red-600 dark:border-white/20 dark:text-white/50 dark:hover:border-red-400/40 dark:hover:text-red-300"
+                    >
+                      <Minus className="size-4" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {sumOffBy100 && (
+            <p className="mt-3 text-xs text-amber-600 dark:text-amber-400">
+              Your targets don&apos;t add up to 100%. You can still save — the declared pie shows your raw percentages.
+            </p>
+          )}
+
+          <ServerError message={error} />
+
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={pending}
+            className="mt-4 flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {pending ? (
+              <>
+                <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="size-4" />
+                Save
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Both pies share one card: side by side on desktop, stacked on mobile. */}
+        <div className="rounded-2xl border border-zinc-200 bg-white/80 p-6 lg:col-span-2 dark:border-white/10 dark:bg-white/5">
+          {hasSelection ? (
+            <div className="grid gap-6 md:grid-cols-2">
+              <AllocationPie title="Declared (target %)" slices={result.slices} mode="declared" />
+              <AllocationPie title="Real (current value)" slices={result.slices} mode="real" />
+            </div>
+          ) : (
+            <div className="flex h-full items-center justify-center py-12 text-center">
+              <p className="text-sm text-zinc-600 dark:text-white/60">
+                Add one or more assets to compare your declared targets against their real current-value allocation.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Full-width buy-plan card: deploy a cash budget toward the targets. */}
+        {hasSelection && <BuyPlanCard slices={result.slices} displayCurrency={displayCurrency} rates={rates} />}
+      </div>
+    </div>
+  );
+}
+
+// Tab manager: one tab per portfolio card plus an "add" affordance. Renders the
+// active card's editor. Card metadata (name, membership) lives here so create /
+// rename / delete update the tab bar immediately; each card's target editing is
+// owned by the keyed PortfolioCard below.
+export function BalancerView({ assets, cards: initialCards, displayCurrency, rates }: Props) {
+  const [cards, setCards] = useState<CardData[]>(initialCards);
+  const [activeId, setActiveId] = useState<string | null>(initialCards[0]?.id ?? null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function addCard() {
+    setError(null);
+    setBusy(true);
+    try {
+      const res = await fetch("/api/allocation-cards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: `Portfolio ${cards.length + 1}` }),
+      });
+      const json = (await res.json()) as {
+        data?: { id: string; name: string; position: number };
+        error?: { message: string };
+      };
+      if (json.error || !json.data) {
+        setError(json.error?.message ?? "Failed to create portfolio.");
+        setBusy(false);
+        return;
+      }
+      const created: CardData = { ...json.data, targets: {} };
+      setCards((prev) => [...prev, created]);
+      setActiveId(created.id);
+      setBusy(false);
+    } catch {
+      setError("Network error. Please try again.");
+      setBusy(false);
+    }
+  }
+
+  // Optimistic rename — the PATCH is fire-and-forget; the tab updates instantly.
+  function renameCard(id: string, name: string) {
+    setCards((prev) => prev.map((c) => (c.id === id ? { ...c, name } : c)));
+    void fetch(`/api/allocation-cards/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+  }
+
+  async function deleteCard(id: string) {
+    if (!window.confirm("Delete this portfolio? Its targets will be removed.")) return;
+    setError(null);
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/allocation-cards/${id}`, { method: "DELETE" });
+      const json = (await res.json()) as { error?: { message: string } };
+      if (json.error) {
+        setError(json.error.message);
+        setBusy(false);
+        return;
+      }
+      const remaining = cards.filter((c) => c.id !== id);
+      setCards(remaining);
+      if (activeId === id) setActiveId(remaining[0]?.id ?? null);
+      setBusy(false);
+    } catch {
+      setError("Network error. Please try again.");
+      setBusy(false);
+    }
+  }
+
+  function handleSaved(id: string, targets: Record<string, number>) {
+    setCards((prev) => prev.map((c) => (c.id === id ? { ...c, targets } : c)));
   }
 
   if (assets.length === 0) {
@@ -301,147 +626,68 @@ export function BalancerView({ assets, savedTargets, displayCurrency, rates }: P
     );
   }
 
+  const activeCard = cards.find((c) => c.id === activeId) ?? null;
+
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
-      <div className="rounded-2xl border border-zinc-200 bg-white/80 p-6 lg:col-span-1 dark:border-white/10 dark:bg-white/5">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-medium tracking-wider text-zinc-600 uppercase dark:text-white/60">
-            Select assets &amp; targets
-          </h2>
-          <span
+    <div className="space-y-6">
+      {/* Tab bar: one tab per card + an "add portfolio" button. */}
+      <div className="flex flex-wrap items-center gap-2">
+        {cards.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => {
+              setActiveId(c.id);
+            }}
             className={
-              sumOffBy100
-                ? "text-xs font-medium text-amber-600 dark:text-amber-400"
-                : "text-xs text-zinc-500 dark:text-white/40"
+              c.id === activeId
+                ? "max-w-[12rem] truncate rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white"
+                : "max-w-[12rem] truncate rounded-lg border border-zinc-300 px-4 py-2 text-sm text-zinc-600 transition-colors hover:border-purple-300 hover:text-purple-700 dark:border-white/20 dark:text-white/60 dark:hover:border-purple-400/40 dark:hover:text-purple-200"
             }
           >
-            Targets sum = {result.declaredSum.toFixed(1)}%
-          </span>
-        </div>
-
-        {/* Add control: single-choice dropdown of not-yet-selected assets + a
-            "+" button that commits the pick to the set. */}
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <select
-              aria-label="Choose an asset to add"
-              value={pick}
-              onChange={(e) => {
-                setPick(e.target.value);
-              }}
-              disabled={available.length === 0}
-              className="w-full appearance-none rounded-lg border border-zinc-300 bg-white px-3 py-2 pr-8 text-sm text-zinc-900 transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/20 dark:bg-white/10 dark:text-white"
-            >
-              <option value="">{available.length === 0 ? "All assets added" : "Add an asset…"}</option>
-              {available.map((asset) => (
-                <option key={asset.asset_id} value={asset.asset_id}>
-                  {asset.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button
-            type="button"
-            onClick={addPicked}
-            disabled={!pick}
-            aria-label="Add selected asset"
-            className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-purple-600 text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Plus className="size-4" />
+            {c.name}
           </button>
-        </div>
-
-        {/* Configurable list: one row per selected asset with its target input
-            and a "−" button to remove it from the set. */}
-        {selectedAssets.length === 0 ? (
-          <p className="mt-4 text-sm text-zinc-500 dark:text-white/40">
-            No assets selected yet. Add one above to set its target.
-          </p>
-        ) : (
-          <div className="mt-4 space-y-2">
-            {selectedAssets.map((asset) => {
-              const target = targets[asset.asset_id];
-              return (
-                <div
-                  key={asset.asset_id}
-                  className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 dark:border-white/10"
-                >
-                  <span className="flex-1 truncate text-sm text-zinc-900 dark:text-white">{asset.name}</span>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    aria-label={`Target percentage for ${asset.name}`}
-                    value={target === undefined || Number.isNaN(target) ? "" : target}
-                    onChange={updateTarget(asset.asset_id)}
-                    min={0}
-                    max={100}
-                    step={0.1}
-                    placeholder="0"
-                    className="w-20 rounded-lg border border-zinc-300 bg-white px-2 py-1 text-right text-sm text-zinc-900 transition-colors focus:ring-2 focus:outline-none dark:border-white/20 dark:bg-white/10 dark:text-white"
-                  />
-                  <span className="text-sm text-zinc-500 dark:text-white/40">%</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      removeAsset(asset.asset_id);
-                    }}
-                    aria-label={`Remove ${asset.name}`}
-                    className="flex size-7 shrink-0 items-center justify-center rounded-lg border border-zinc-300 text-zinc-500 transition-colors hover:border-red-300 hover:text-red-600 dark:border-white/20 dark:text-white/50 dark:hover:border-red-400/40 dark:hover:text-red-300"
-                  >
-                    <Minus className="size-4" />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {sumOffBy100 && (
-          <p className="mt-3 text-xs text-amber-600 dark:text-amber-400">
-            Your targets don&apos;t add up to 100%. You can still save — the declared pie shows your raw percentages.
-          </p>
-        )}
-
-        <ServerError message={error} />
-
+        ))}
         <button
           type="button"
-          onClick={handleSave}
-          disabled={pending}
-          className="mt-4 flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
+          onClick={addCard}
+          disabled={busy}
+          className="flex items-center gap-1.5 rounded-lg border border-dashed border-zinc-300 px-4 py-2 text-sm text-zinc-600 transition-colors hover:border-purple-400 hover:text-purple-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/20 dark:text-white/60 dark:hover:border-purple-400/40 dark:hover:text-purple-200"
         >
-          {pending ? (
-            <>
-              <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="size-4" />
-              Save
-            </>
-          )}
+          <Plus className="size-4" />
+          Add portfolio
         </button>
       </div>
 
-      {/* Both pies share one card: side by side on desktop, stacked on mobile. */}
-      <div className="rounded-2xl border border-zinc-200 bg-white/80 p-6 lg:col-span-2 dark:border-white/10 dark:bg-white/5">
-        {hasSelection ? (
-          <div className="grid gap-6 md:grid-cols-2">
-            <AllocationPie title="Declared (target %)" slices={result.slices} mode="declared" />
-            <AllocationPie title="Real (current value)" slices={result.slices} mode="real" />
-          </div>
-        ) : (
-          <div className="flex h-full items-center justify-center py-12 text-center">
-            <p className="text-sm text-zinc-600 dark:text-white/60">
-              Add one or more assets to compare your declared targets against their real current-value allocation.
-            </p>
-          </div>
-        )}
-      </div>
+      <ServerError message={error} />
 
-      {/* Full-width buy-plan card: deploy a cash budget toward the targets. */}
-      {hasSelection && <BuyPlanCard slices={result.slices} displayCurrency={displayCurrency} />}
+      {activeCard ? (
+        <PortfolioCard
+          key={activeCard.id}
+          card={activeCard}
+          assets={assets}
+          displayCurrency={displayCurrency}
+          rates={rates}
+          onRename={renameCard}
+          onDelete={deleteCard}
+          onSaved={handleSaved}
+        />
+      ) : (
+        <div className="rounded-2xl border border-zinc-200 bg-white/80 p-8 text-center dark:border-white/10 dark:bg-white/5">
+          <p className="mb-4 text-sm text-zinc-600 dark:text-white/60">
+            No portfolios yet. Create one to set target allocations and compare them against your real split.
+          </p>
+          <button
+            type="button"
+            onClick={addCard}
+            disabled={busy}
+            className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Plus className="size-4" />
+            Create your first portfolio
+          </button>
+        </div>
+      )}
     </div>
   );
 }
