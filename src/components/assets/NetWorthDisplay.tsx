@@ -136,6 +136,7 @@ function SaveButton({
         </div>
         <div className="px-5 py-5">
           <ContributionField
+            id="save-net-contribution"
             value={contribution}
             onChange={setContribution}
             currency={displayCurrency}
