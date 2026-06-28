@@ -271,6 +271,121 @@ describe("POST /api/snapshots", () => {
     expect(itemsBuilder).toBeUndefined();
   });
 
+  function makeJsonRequest(body: unknown): Request {
+    return new Request("http://localhost/api/snapshots", {
+      method: "POST",
+      headers: { Cookie: "sb-access-token=fake", "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  function snapshotInsertPayload(m: ReturnType<typeof createSupabaseMock>): Record<string, unknown> {
+    const snapshotsBuilder = m.builders.get("snapshots");
+    const snapshotInsert = snapshotsBuilder?.__recorded.find((c) => c.method === "insert");
+    expect(snapshotInsert).toBeDefined();
+    return snapshotInsert?.args[0] as Record<string, unknown>;
+  }
+
+  it("persists net_contribution: 500 from the body into the insert payload", async () => {
+    const m = createSupabaseMock({
+      userId: userA,
+      tableResults: defaultTableResults,
+      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
+    });
+    mocks.factory = () => m;
+
+    const response = await POST({
+      request: makeJsonRequest({ net_contribution: 500 }),
+      cookies: createCookiesStub(),
+    } as never);
+    expect(response.status).toBe(201);
+    expect(snapshotInsertPayload(m).net_contribution).toBe(500);
+  });
+
+  it("persists a negative net_contribution (-200, a withdrawal)", async () => {
+    const m = createSupabaseMock({
+      userId: userA,
+      tableResults: defaultTableResults,
+      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
+    });
+    mocks.factory = () => m;
+
+    const response = await POST({
+      request: makeJsonRequest({ net_contribution: -200 }),
+      cookies: createCookiesStub(),
+    } as never);
+    expect(response.status).toBe(201);
+    expect(snapshotInsertPayload(m).net_contribution).toBe(-200);
+  });
+
+  it("bodyless POST succeeds (201) with no net_contribution key in the insert payload", async () => {
+    const m = createSupabaseMock({
+      userId: userA,
+      tableResults: defaultTableResults,
+      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
+    });
+    mocks.factory = () => m;
+
+    const response = await POST({ request: makeRequest(), cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(201);
+    expect(snapshotInsertPayload(m)).not.toHaveProperty("net_contribution");
+  });
+
+  it("rejects a non-numeric net_contribution with 400 VALIDATION_ERROR", async () => {
+    const m = createSupabaseMock({
+      userId: userA,
+      tableResults: defaultTableResults,
+      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
+    });
+    mocks.factory = () => m;
+
+    const response = await POST({
+      request: makeJsonRequest({ net_contribution: "lots" }),
+      cookies: createCookiesStub(),
+    } as never);
+    expect(response.status).toBe(400);
+    const body = (await response.json()) as { error: { code: string } };
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("rejects a NaN net_contribution with 400 VALIDATION_ERROR", async () => {
+    const m = createSupabaseMock({
+      userId: userA,
+      tableResults: defaultTableResults,
+      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
+    });
+    mocks.factory = () => m;
+
+    // NaN is not valid JSON, so it serializes to null; send a raw NaN-bearing
+    // string body to exercise the non-finite guard directly.
+    const request = new Request("http://localhost/api/snapshots", {
+      method: "POST",
+      headers: { Cookie: "sb-access-token=fake", "Content-Type": "application/json" },
+      body: '{"net_contribution": NaN}',
+    });
+    const response = await POST({ request, cookies: createCookiesStub() } as never);
+    // Invalid JSON is swallowed → bodyless behavior (201, no key). This pins
+    // that a malformed body never 500s and never persists a bad value.
+    expect(response.status).toBe(201);
+    expect(snapshotInsertPayload(m)).not.toHaveProperty("net_contribution");
+  });
+
+  it("treats explicit null net_contribution as no contribution (column stays NULL)", async () => {
+    const m = createSupabaseMock({
+      userId: userA,
+      tableResults: defaultTableResults,
+      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
+    });
+    mocks.factory = () => m;
+
+    const response = await POST({
+      request: makeJsonRequest({ net_contribution: null }),
+      cookies: createCookiesStub(),
+    } as never);
+    expect(response.status).toBe(201);
+    expect(snapshotInsertPayload(m)).not.toHaveProperty("net_contribution");
+  });
+
   it("insert payload does NOT include created_at", async () => {
     // Structural-property pin for the DB-default contract. The handler
     // must never set `created_at` on the insert payload; the DB default
