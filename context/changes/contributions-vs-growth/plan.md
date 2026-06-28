@@ -372,27 +372,27 @@ The migration is purely additive and nullable — no backfill, no data transform
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly against local Supabase
-- [x] 1.2 Type checking passes (`npx tsc --noEmit` / `npm run build`)
-- [x] 1.3 Linting passes (`npm run lint`)
+- [x] 1.1 Migration applies cleanly against local Supabase — efad988
+- [x] 1.2 Type checking passes (`npx tsc --noEmit` / `npm run build`) — efad988
+- [x] 1.3 Linting passes (`npm run lint`) — efad988
 
 #### Manual
 
-- [x] 1.4 `net_contribution` column visible, nullable, type `numeric` in Supabase Studio (verified: psql information_schema → `numeric(18,2)`, is_nullable=YES)
-- [x] 1.5 Existing snapshots show `NULL` for the new column (verified: psql → 5 snapshots, 0 non-null net_contribution)
+- [x] 1.4 `net_contribution` column visible, nullable, type `numeric` in Supabase Studio (verified: psql information_schema → `numeric(18,2)`, is_nullable=YES) — efad988
+- [x] 1.5 Existing snapshots show `NULL` for the new column (verified: psql → 5 snapshots, 0 non-null net_contribution) — efad988
 
 ### Phase 2: Pure Split Library + Tests
 
 #### Automated
 
-- [ ] 2.1 New tests pass (`npx vitest run src/lib/contributions.test.ts`)
-- [ ] 2.2 Full suite still green (`npx vitest run`)
-- [ ] 2.3 Type checking passes (`npx tsc --noEmit`)
-- [ ] 2.4 Linting passes (`npm run lint`)
+- [x] 2.1 New tests pass (`npx vitest run src/lib/contributions.test.ts`)
+- [x] 2.2 Full suite still green (`npx vitest run`)
+- [x] 2.3 Type checking passes (`npx tsc --noEmit`)
+- [x] 2.4 Linting passes (`npm run lint`)
 
 #### Manual
 
-- [ ] 2.5 Hand-checked one split against the formula (oracle, not implementation)
+- [x] 2.5 Hand-checked one split against the formula (oracle, not implementation) (verified: PLN→USD cross-currency case — 1000 PLN ÷ 3.85 = 259.7402597 USD, growth = 1000 − 259.7402597 = 740.2597403; identity holds independent of impl)
 
 ### Phase 3: API Write Path
 
