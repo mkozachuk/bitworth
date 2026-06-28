@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { CurrencyBadge } from "./CurrencyBadge";
+import { ContributionField } from "./ContributionField";
 import type { Tables } from "@/lib/database.types";
 import { convertAmount, type Currency } from "@/lib/net-worth";
 
@@ -33,14 +34,58 @@ function DeltaIndicator({ label, value, percentage }: { label: string; value: nu
   );
 }
 
-function SaveButton({ onSuccess, onError }: { onSuccess: () => void; onError: (msg: string) => void }) {
+function SaveButton({
+  displayCurrency,
+  onSuccess,
+  onError,
+}: {
+  displayCurrency: Currency;
+  onSuccess: () => void;
+  onError: (msg: string) => void;
+}) {
   const [state, setState] = useState<ButtonState>("idle");
+  const [contribution, setContribution] = useState("");
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
-  const handleClick = useCallback(async () => {
-    if (state !== "idle") return;
+  const openDialog = useCallback(() => {
+    if (state === "loading") return;
+    setContribution("");
+    setState("idle");
+    const dialog = dialogRef.current;
+    if (dialog && !dialog.open) dialog.showModal();
+  }, [state]);
+
+  const closeDialog = useCallback(() => {
+    const dialog = dialogRef.current;
+    if (dialog?.open) dialog.close();
+  }, []);
+
+  const handleConfirm = useCallback(async () => {
+    if (state === "loading") return;
+
+    // Build the request body: a blank field records an unknown split (no body),
+    // a filled field sends a parsed signed number. Guard NaN client-side.
+    const trimmed = contribution.trim();
+    let init: RequestInit = {
+      method: "POST",
+      credentials: "include",
+    };
+    if (trimmed !== "") {
+      const parsed = Number(trimmed);
+      if (!Number.isFinite(parsed)) {
+        onError("Net contribution must be a number");
+        return;
+      }
+      init = {
+        ...init,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ net_contribution: parsed }),
+      };
+    }
+
     setState("loading");
     try {
-      const res = await fetch("/api/snapshots", { method: "POST", credentials: "include" });
+      const res = await fetch("/api/snapshots", init);
       if (!res.ok) {
         const json = (await res.json()) as { error?: { message?: string } };
         throw new Error(json.error?.message ?? `HTTP ${res.status}`);
@@ -55,57 +100,83 @@ function SaveButton({ onSuccess, onError }: { onSuccess: () => void; onError: (m
         setState("idle");
       }, 3000);
     }
-  }, [state, onSuccess, onError]);
+  }, [state, contribution, onSuccess, onError]);
 
-  if (state === "saved") {
-    return (
-      <button
-        disabled
-        className="w-full rounded-lg border border-green-500/50 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 transition-colors dark:bg-green-500/20 dark:text-green-300"
-      >
-        Saved!
-      </button>
-    );
-  }
-
-  if (state === "error") {
-    return (
-      <button
-        onClick={handleClick}
-        className="w-full rounded-lg border border-red-500/50 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 dark:bg-red-500/20 dark:text-red-300 dark:hover:bg-red-500/30"
-      >
-        Retry
-      </button>
-    );
-  }
-
-  if (state === "loading") {
-    return (
-      <button
-        disabled
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-purple-600/50 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-white/70"
-      >
-        <svg
-          className="h-4 w-4 animate-spin text-zinc-700 dark:text-white/70"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-        Saving...
-      </button>
-    );
-  }
+  const triggerLabel = state === "error" ? "Retry" : "Save Snapshot";
+  const triggerClass =
+    state === "error"
+      ? "w-full rounded-lg border border-red-500/50 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 dark:bg-red-500/20 dark:text-red-300 dark:hover:bg-red-500/30"
+      : "w-full rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-500";
 
   return (
-    <button
-      onClick={handleClick}
-      className="w-full rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-500"
-    >
-      Save Snapshot
-    </button>
+    <>
+      {state === "saved" ? (
+        <button
+          disabled
+          className="w-full rounded-lg border border-green-500/50 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 transition-colors dark:bg-green-500/20 dark:text-green-300"
+        >
+          Saved!
+        </button>
+      ) : (
+        <button onClick={openDialog} className={triggerClass}>
+          {triggerLabel}
+        </button>
+      )}
+
+      <dialog
+        ref={dialogRef}
+        onClose={closeDialog}
+        onClick={(e) => {
+          if (e.target === dialogRef.current) closeDialog();
+        }}
+        className="w-[min(92vw,28rem)] rounded-2xl border border-zinc-200 bg-white/95 p-0 text-zinc-800 shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-sm dark:border-white/10 dark:bg-zinc-900/95 dark:text-zinc-100"
+      >
+        <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-3 dark:border-white/10">
+          <h2 className="text-base font-semibold">Save Snapshot</h2>
+        </div>
+        <div className="px-5 py-5">
+          <ContributionField
+            value={contribution}
+            onChange={setContribution}
+            currency={displayCurrency}
+            disabled={state === "loading"}
+          />
+        </div>
+        <div className="flex justify-end gap-2 border-t border-zinc-200 px-5 py-3 dark:border-white/10">
+          <button
+            type="button"
+            onClick={closeDialog}
+            disabled={state === "loading"}
+            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-white/15 dark:text-white/80 dark:hover:bg-white/10"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={state === "loading"}
+            className="flex items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:bg-purple-600/50"
+          >
+            {state === "loading" ? (
+              <>
+                <svg
+                  className="h-4 w-4 animate-spin text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Saving...
+              </>
+            ) : (
+              "Confirm"
+            )}
+          </button>
+        </div>
+      </dialog>
+    </>
   );
 }
 
@@ -247,6 +318,7 @@ export function NetWorthDisplay({ assets, displayCurrency, rates, snapshots = []
       {snapshotError && <p className="mb-2 text-xs text-red-600 dark:text-red-300">{snapshotError}</p>}
 
       <SaveButton
+        displayCurrency={displayCurrency}
         onSuccess={() => {
           setSnapshotError(null);
           onSnapshotSaved?.();
