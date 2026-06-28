@@ -398,26 +398,26 @@ The migration is purely additive and nullable — no backfill, no data transform
 
 #### Automated
 
-- [x] 3.1 API tests pass (`npx vitest run src/pages/api/snapshots`)
-- [x] 3.2 Full suite green (`npx vitest run`)
-- [x] 3.3 Type checking passes (`npx tsc --noEmit`)
-- [x] 3.4 Linting passes (`npm run lint`)
+- [x] 3.1 API tests pass (`npx vitest run src/pages/api/snapshots`) — 48422a3
+- [x] 3.2 Full suite green (`npx vitest run`) — 48422a3
+- [x] 3.3 Type checking passes (`npx tsc --noEmit`) — 48422a3
+- [x] 3.4 Linting passes (`npm run lint`) — 48422a3
 
 #### Manual
 
-- [x] 3.5 POST with contribution persists it; bodyless POST → NULL; non-numeric → 400; PATCH updates user-scoped; cross-user PATCH no-op (verified: real HTTP round-trip vs local Supabase — POST{500}→persisted 500; bodyless→null; "lots"→400 VALIDATION_ERROR; A PATCH own row→−200/null/999 all 200; user B PATCH on A's row left it at 999.00 unchanged. Note: cross-user/not-found PATCH returns 500 UPDATE_FAILED, not 404 — but this matches the assets-route precedent the plan mirrors, since real PostgREST `.single()` errors on 0 rows; the row-isolation security property holds either way)
+- [x] 3.5 POST with contribution persists it; bodyless POST → NULL; non-numeric → 400; PATCH updates user-scoped; cross-user PATCH no-op (verified: real HTTP round-trip vs local Supabase — POST{500}→persisted 500; bodyless→null; "lots"→400 VALIDATION_ERROR; A PATCH own row→−200/null/999 all 200; user B PATCH on A's row left it at 999.00 unchanged. Note: cross-user/not-found PATCH returns 500 UPDATE_FAILED, not 404 — but this matches the assets-route precedent the plan mirrors, since real PostgREST `.single()` errors on 0 rows; the row-isolation security property holds either way) — 48422a3
 
 ### Phase 4: Save Dialog UI
 
 #### Automated
 
-- [ ] 4.1 Type checking passes (`npx tsc --noEmit`)
-- [ ] 4.2 Linting passes incl. `react-compiler` (`npm run lint`)
-- [ ] 4.3 Build passes (`npm run build`)
+- [x] 4.1 Type checking passes (`npx tsc --noEmit`)
+- [x] 4.2 Linting passes incl. `react-compiler` (`npm run lint`)
+- [x] 4.3 Build passes (`npm run build`)
 
 #### Manual
 
-- [ ] 4.4 Dialog captures `+`, `−`, and blank contributions correctly; states + reload intact
+- [x] 4.4 Dialog captures `+`, `−`, and blank contributions correctly; states + reload intact (verified: Playwright drove the live dialog vs local Supabase — +500→persisted 500, −200→persisted −200, blank→NULL, Cancel→no snapshot, all with 201 + reload to /dashboard. Also fixed a regression the dialog introduced in e2e/empty-snapshot.spec.ts which expected an immediate POST on click)
 
 ### Phase 5: Edit / Backfill UI
 
