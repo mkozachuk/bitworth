@@ -44,6 +44,9 @@ const DEFAULTS: FormState = {
 
 const num = (v: number): number => (Number.isNaN(v) ? 0 : v);
 
+// Convert a fraction (0.07) to a percent (7), rounding away float artifacts like 7.000000000000001.
+const toPct = (v: number): number => Math.round(v * 10000) / 100;
+
 function seedState(startingPrincipal: number, initial: Partial<FireInputs>): FormState {
   return {
     // The override (initial.startingPrincipal) wins over the seeded net worth;
@@ -51,10 +54,10 @@ function seedState(startingPrincipal: number, initial: Partial<FireInputs>): For
     startingPrincipal: initial.startingPrincipal ?? startingPrincipal,
     annualIncome: initial.annualIncome ?? DEFAULTS.annualIncome,
     annualExpenses: initial.annualExpenses ?? DEFAULTS.annualExpenses,
-    expectedReturnPct: initial.nominalReturn !== undefined ? initial.nominalReturn * 100 : DEFAULTS.expectedReturnPct,
-    inflationRatePct: initial.inflationRate !== undefined ? initial.inflationRate * 100 : DEFAULTS.inflationRatePct,
+    expectedReturnPct: initial.nominalReturn !== undefined ? toPct(initial.nominalReturn) : DEFAULTS.expectedReturnPct,
+    inflationRatePct: initial.inflationRate !== undefined ? toPct(initial.inflationRate) : DEFAULTS.inflationRatePct,
     safeWithdrawalRatePct:
-      initial.safeWithdrawalRate !== undefined ? initial.safeWithdrawalRate * 100 : DEFAULTS.safeWithdrawalRatePct,
+      initial.safeWithdrawalRate !== undefined ? toPct(initial.safeWithdrawalRate) : DEFAULTS.safeWithdrawalRatePct,
     currentAge: initial.currentAge ?? DEFAULTS.currentAge,
     traditionalRetirementAge: initial.traditionalRetirementAge ?? DEFAULTS.traditionalRetirementAge,
     baristaIncome: initial.baristaIncome ?? DEFAULTS.baristaIncome,
