@@ -30,7 +30,7 @@ export const GET: APIRoute = async ({ request, cookies }) => {
 
   const { data, error } = await supabase
     .from("snapshots")
-    .select("id, total_net_worth, display_currency, source, created_at")
+    .select("id, total_net_worth, display_currency, source, created_at, net_contribution")
     .eq("user_id", user.id)
     .order("created_at", { ascending: true });
 
@@ -61,6 +61,31 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Not authenticated" } } satisfies ErrorShape),
       { status: 401, headers: { "Content-Type": "application/json" } },
     );
+  }
+
+  // Parse optional JSON body defensively: a bodyless legacy call must still
+  // succeed, so missing/empty/invalid JSON is treated as no contribution.
+  let netContribution: number | undefined;
+  try {
+    const body: unknown = await request.json();
+    if (typeof body === "object" && body !== null && "net_contribution" in body) {
+      const raw = (body as Record<string, unknown>).net_contribution;
+      // Signed values allowed (negatives are withdrawals); reject only
+      // non-finite / non-numeric. `null` leaves the column NULL (omitted).
+      if (raw !== null && raw !== undefined) {
+        if (typeof raw !== "number" || !Number.isFinite(raw)) {
+          return new Response(
+            JSON.stringify({
+              error: { code: "VALIDATION_ERROR", message: "net_contribution must be a finite number" },
+            } satisfies ErrorShape),
+            { status: 400, headers: { "Content-Type": "application/json" } },
+          );
+        }
+        netContribution = raw;
+      }
+    }
+  } catch {
+    // No body / invalid JSON → treat as no contribution (legacy bodyless call).
   }
 
   // Fetch current assets
@@ -116,6 +141,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         display_currency: displayCurrency,
         base_currency: "USD",
         source: "manual",
+        // Only set the key when a finite number was provided; omitting it
+        // leaves the nullable column NULL (unknown split).
+        ...(netContribution !== undefined ? { net_contribution: netContribution } : {}),
       })
       .select()
       .single();

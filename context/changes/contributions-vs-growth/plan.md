@@ -385,27 +385,27 @@ The migration is purely additive and nullable — no backfill, no data transform
 
 #### Automated
 
-- [x] 2.1 New tests pass (`npx vitest run src/lib/contributions.test.ts`)
-- [x] 2.2 Full suite still green (`npx vitest run`)
-- [x] 2.3 Type checking passes (`npx tsc --noEmit`)
-- [x] 2.4 Linting passes (`npm run lint`)
+- [x] 2.1 New tests pass (`npx vitest run src/lib/contributions.test.ts`) — 127bda4
+- [x] 2.2 Full suite still green (`npx vitest run`) — 127bda4
+- [x] 2.3 Type checking passes (`npx tsc --noEmit`) — 127bda4
+- [x] 2.4 Linting passes (`npm run lint`) — 127bda4
 
 #### Manual
 
-- [x] 2.5 Hand-checked one split against the formula (oracle, not implementation) (verified: PLN→USD cross-currency case — 1000 PLN ÷ 3.85 = 259.7402597 USD, growth = 1000 − 259.7402597 = 740.2597403; identity holds independent of impl)
+- [x] 2.5 Hand-checked one split against the formula (oracle, not implementation) (verified: PLN→USD cross-currency case — 1000 PLN ÷ 3.85 = 259.7402597 USD, growth = 1000 − 259.7402597 = 740.2597403; identity holds independent of impl) — 127bda4
 
 ### Phase 3: API Write Path
 
 #### Automated
 
-- [ ] 3.1 API tests pass (`npx vitest run src/pages/api/snapshots`)
-- [ ] 3.2 Full suite green (`npx vitest run`)
-- [ ] 3.3 Type checking passes (`npx tsc --noEmit`)
-- [ ] 3.4 Linting passes (`npm run lint`)
+- [x] 3.1 API tests pass (`npx vitest run src/pages/api/snapshots`)
+- [x] 3.2 Full suite green (`npx vitest run`)
+- [x] 3.3 Type checking passes (`npx tsc --noEmit`)
+- [x] 3.4 Linting passes (`npm run lint`)
 
 #### Manual
 
-- [ ] 3.5 POST with contribution persists it; bodyless POST → NULL; non-numeric → 400; PATCH updates user-scoped; cross-user PATCH no-op
+- [x] 3.5 POST with contribution persists it; bodyless POST → NULL; non-numeric → 400; PATCH updates user-scoped; cross-user PATCH no-op (verified: real HTTP round-trip vs local Supabase — POST{500}→persisted 500; bodyless→null; "lots"→400 VALIDATION_ERROR; A PATCH own row→−200/null/999 all 200; user B PATCH on A's row left it at 999.00 unchanged. Note: cross-user/not-found PATCH returns 500 UPDATE_FAILED, not 404 — but this matches the assets-route precedent the plan mirrors, since real PostgREST `.single()` errors on 0 rows; the row-isolation security property holds either way)
 
 ### Phase 4: Save Dialog UI
 
