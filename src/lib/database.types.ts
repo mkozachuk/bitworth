@@ -280,6 +280,7 @@ export interface Database {
           created_at: string;
           display_currency: string;
           id: string;
+          net_contribution: number | null;
           note: string | null;
           source: string;
           total_net_worth: number;
@@ -290,6 +291,7 @@ export interface Database {
           created_at?: string;
           display_currency: string;
           id?: string;
+          net_contribution?: number | null;
           note?: string | null;
           source: string;
           total_net_worth: number;
@@ -300,6 +302,7 @@ export interface Database {
           created_at?: string;
           display_currency?: string;
           id?: string;
+          net_contribution?: number | null;
           note?: string | null;
           source?: string;
           total_net_worth?: number;
