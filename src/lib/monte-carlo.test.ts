@@ -130,18 +130,21 @@ describe("computeMonteCarlo", () => {
     const annualSavings = base.annualIncome - base.annualExpenses;
     const rng = mulberry32(SEED);
     const terminal: number[] = [];
+    let everReached = 0;
     for (let i = 0; i < PATHS; i++) {
       let balance = base.startingPrincipal;
+      let reached = balance >= fireNumber;
       for (let year = 1; year <= HORIZON; year++) {
         const growth = Math.max(0.05, 1 + nextGaussian(rng, realReturn, base.returnVolatility));
         balance = growth * balance + annualSavings;
+        if (balance >= fireNumber) reached = true;
       }
+      if (reached) everReached++;
       terminal.push(balance);
     }
-    const successes = terminal.filter((b) => b >= fireNumber).length;
     const sortedTerminal = [...terminal].sort((a, b) => a - b);
 
-    expect(result.successProbability).toBeCloseTo(successes / PATHS, 6);
+    expect(result.successProbability).toBeCloseTo(everReached / PATHS, 6);
     expect(result.bands[result.bands.length - 1].p50).toBeCloseTo(percentile(sortedTerminal, 0.5), 6);
   });
 
@@ -175,7 +178,8 @@ describe("computeMonteCarlo", () => {
       expect(band.p10).toBeCloseTo(band.p50, 6);
       expect(band.p50).toBeCloseTo(band.p90, 6);
     }
-    // Terminal-wealth success is therefore all-or-nothing.
+    // Ever-reached success is therefore all-or-nothing: identical paths either
+    // all clear the FIRE number or none do.
     expect([0, 1]).toContain(result.successProbability);
   });
 

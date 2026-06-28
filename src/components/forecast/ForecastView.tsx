@@ -3,7 +3,7 @@ import { Dices } from "lucide-react";
 import { ServerError } from "@/components/auth/ServerError";
 import { MonteCarloChart } from "@/components/forecast/MonteCarloChart";
 import { computeMonteCarlo, type MonteCarloInputs } from "@/lib/monte-carlo";
-import type { FireInputs } from "@/lib/fire";
+import { computeFireProjection, type FireInputs } from "@/lib/fire";
 
 type Currency = "USD" | "EUR" | "PLN";
 
@@ -80,7 +80,10 @@ function seedState(startingPrincipal: number, initial: Partial<FireInputs>): For
   };
 }
 
-function toInputs(state: FormState, seed: number): MonteCarloInputs {
+// The shared FireInputs base — fed to both the deterministic FIRE projection
+// (to find the projected retirement year) and the Monte Carlo engine, so the
+// two views agree on assumptions exactly as fire.ts and monte-carlo.ts intend.
+function toFireInputs(state: FormState): FireInputs {
   return {
     startingPrincipal: num(state.startingPrincipal),
     annualIncome: num(state.annualIncome),
@@ -89,12 +92,21 @@ function toInputs(state: FormState, seed: number): MonteCarloInputs {
     inflationRate: num(state.inflationRatePct) / 100,
     safeWithdrawalRate: num(state.safeWithdrawalRatePct) / 100,
     currentAge: num(state.currentAge),
-    // traditionalRetirementAge is part of FireInputs but unused by the MC engine;
-    // pass a harmless value so the type is satisfied without inventing a UI field.
+    // traditionalRetirementAge is part of FireInputs but unused by the MC engine
+    // and irrelevant to yearsToFi; pass a harmless value to satisfy the type.
     traditionalRetirementAge: 65,
+  };
+}
+
+function toInputs(state: FormState, seed: number, maxYears: number): MonteCarloInputs {
+  return {
+    ...toFireInputs(state),
     returnVolatility: num(state.returnVolatilityPct) / 100,
     seed,
     pathCount: PATH_COUNT,
+    // Cap the simulation at the year you'd actually retire (not age 100) so the
+    // chart and the headline probability both answer "by your retirement age".
+    maxYears,
   };
 }
 
@@ -130,12 +142,26 @@ export function ForecastView({ displayCurrency, startingPrincipal, initialInputs
     };
   }
 
-  // The only invalid input monte-carlo.ts cannot absorb is a non-positive SWR
-  // (the FIRE number divides by it). Guard the call rather than let it throw.
+  // The only invalid input neither engine can absorb is a non-positive SWR (the
+  // FIRE number divides by it). Guard the calls rather than let them throw.
   const swrValid = num(state.safeWithdrawalRatePct) > 0;
+
+  // The deterministic FIRE projection gives the year you'd reach FIRE on a
+  // steady return (yearsToFi) — that is the horizon the user cares about. Anchor
+  // both the simulation and the chart to it so the headline reads "by your
+  // retirement age" instead of "by age 100", where ~70 years of compounding
+  // pins success at a meaningless 100%. If FIRE isn't reached on the steady-
+  // return schedule, fall back to the full age-100 horizon.
+  const fireResult = useMemo(() => (swrValid ? computeFireProjection(toFireInputs(state)) : null), [state, swrValid]);
+  const fullHorizon = Math.max(1, 100 - num(state.currentAge));
+  const targetHorizon = fireResult?.yearsToFi != null ? Math.max(1, fireResult.yearsToFi) : fullHorizon;
+
   // computeMonteCarlo runs ~70k Gaussian draws + per-year sorts; memoize so it
-  // only re-runs when the inputs or seed actually change, not on every render.
-  const result = useMemo(() => (swrValid ? computeMonteCarlo(toInputs(state, seed)) : null), [state, seed, swrValid]);
+  // only re-runs when the inputs, seed, or horizon actually change.
+  const result = useMemo(
+    () => (swrValid ? computeMonteCarlo(toInputs(state, seed, targetHorizon)) : null),
+    [state, seed, swrValid, targetHorizon],
+  );
 
   const showCta = !hasSavedPrefs(initialInputs);
   const sampledPaths = result ? samplePaths(result.paths, CHART_SAMPLE_CAP) : [];
@@ -263,10 +289,19 @@ export function ForecastView({ displayCurrency, startingPrincipal, initialInputs
               <p className="mt-1 text-5xl font-bold text-zinc-900 dark:text-white">
                 {formatPct(result.successProbability)}
               </p>
-              <p className="mt-2 text-sm text-zinc-600 dark:text-white/60">
-                of {result.pathCount.toLocaleString("en-US")} simulated paths reach your FIRE number over{" "}
-                {result.horizonYears} {result.horizonYears === 1 ? "year" : "years"}.
-              </p>
+              {fireResult?.retirementAge != null ? (
+                <p className="mt-2 text-sm text-zinc-600 dark:text-white/60">
+                  of {result.pathCount.toLocaleString("en-US")} simulated paths reach your FIRE number by your projected
+                  retirement age of {fireResult.retirementAge} — about {result.horizonYears}{" "}
+                  {result.horizonYears === 1 ? "year" : "years"} from now.
+                </p>
+              ) : (
+                <p className="mt-2 text-sm text-zinc-600 dark:text-white/60">
+                  of {result.pathCount.toLocaleString("en-US")} simulated paths reach your FIRE number within{" "}
+                  {result.horizonYears} {result.horizonYears === 1 ? "year" : "years"}. On a steady return you wouldn’t
+                  reach FIRE in that window — this is the chance market volatility gets you there.
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -290,8 +325,8 @@ export function ForecastView({ displayCurrency, startingPrincipal, initialInputs
           <li>
             Each run simulates {PATH_COUNT.toLocaleString("en-US")} possible futures by drawing a random real
             (after-inflation) return each year from a bell curve centred on your expected return, with the spread set by
-            your volatility input. The headline is the share of those futures whose final balance clears your FIRE
-            number.
+            your volatility input. The headline is the share of those futures that reach your FIRE number by your
+            projected retirement age — the year a steady-return projection says you’d hit it. The chart stops there too.
           </li>
           <li>
             The <strong>P10 / P50 / P90</strong> bands show the pessimistic, median, and optimistic outcomes: in 10% of
