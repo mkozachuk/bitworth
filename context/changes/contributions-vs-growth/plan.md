@@ -423,23 +423,23 @@ The migration is purely additive and nullable — no backfill, no data transform
 
 #### Automated
 
-- [x] 5.1 Type checking passes (`npx tsc --noEmit`)
-- [x] 5.2 Linting passes (`npm run lint`)
-- [x] 5.3 Build passes (`npm run build`)
+- [x] 5.1 Type checking passes (`npx tsc --noEmit`) — 71cef80
+- [x] 5.2 Linting passes (`npm run lint`) — 71cef80
+- [x] 5.3 Build passes (`npm run build`) — 71cef80
 
 #### Manual
 
-- [ ] 5.4 Editing an old snapshot converts "unknown split" → real split; clearing reverts; correct snapshot targeted
+- [x] 5.4 Editing an old snapshot converts "unknown split" → real split; clearing reverts; correct snapshot targeted (verified during Phase 6 once the chart wired the edit affordance: Playwright drove the live edit dialog on the unknown (Apr) interval — set 1500 → PATCH 200, DB persisted 1500, the "unknown split" tag disappeared; cleared the field → PATCH 200, DB back to null, "unknown split" tag returned. Edit targeted curr.id (s3) as specified)
 
 ### Phase 6: Stacked-Bar Chart + Dashboard Wiring
 
 #### Automated
 
-- [ ] 6.1 Type checking passes (`npx tsc --noEmit`)
-- [ ] 6.2 Linting passes incl. `react-compiler` (`npm run lint`)
-- [ ] 6.3 Build passes (`npm run build`)
-- [ ] 6.4 Full test suite green (`npx vitest run`)
+- [x] 6.1 Type checking passes (`npx tsc --noEmit`)
+- [x] 6.2 Linting passes incl. `react-compiler` (`npm run lint`)
+- [x] 6.3 Build passes (`npm run build`)
+- [x] 6.4 Full test suite green (`npx vitest run`)
 
 #### Manual
 
-- [ ] 6.5 Split, negative-growth, and unknown-split intervals all render correctly; tooltip/legend correct; no chart regressions
+- [x] 6.5 Split, negative-growth, and unknown-split intervals all render correctly; tooltip/legend correct; no chart regressions (verified: Playwright drove the live dashboard with seeded snapshots covering all three kinds + a /tmp screenshot inspected visually — Feb interval split with positive growth above zero, Mar split with growth diverging BELOW the zero ReferenceLine and contribution above, Apr neutral "unknown split" bar; legend showed Contribution/Growth/Unknown split; Net Worth Trend chart still rendered (no regression). Also fixed a duplicate-id a11y defect: both ContributionField instances defaulted id="net-contribution" → now save-/edit- prefixed)

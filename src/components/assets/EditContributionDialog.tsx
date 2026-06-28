@@ -111,6 +111,7 @@ function EditContributionForm({
           Contribution recorded for <span className="font-medium text-zinc-900 dark:text-white">{dateLabel}</span>
         </p>
         <ContributionField
+          id="edit-net-contribution"
           value={contribution}
           onChange={setContribution}
           currency={displayCurrency}
