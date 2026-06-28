@@ -1,7 +1,7 @@
 ---
 change_id: contributions-vs-growth
 title: Split each snapshot-to-snapshot net-worth change into contributions vs market growth
-status: implementing
+status: implemented
 created: 2026-06-28
 updated: 2026-06-28
 archived_at: null
