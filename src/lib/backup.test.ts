@@ -64,6 +64,7 @@ function makeInput(): BackupInput {
         base_currency: "USD",
         source: "manual",
         note: null,
+        net_contribution: null,
         created_at: ISO,
       },
       {
@@ -74,6 +75,7 @@ function makeInput(): BackupInput {
         base_currency: "USD",
         source: "manual",
         note: null,
+        net_contribution: null,
         created_at: ISO,
       },
     ],
