@@ -90,7 +90,7 @@ export interface MonteCarloResult {
   horizonYears: number;
   paths: number[][]; // paths[i] = [b0, b1, …, bHorizon]; b0 = startingPrincipal
   bands: MonteCarloBand[]; // per-year cross-sectional P10/P50/P90 (length horizon + 1)
-  successProbability: number; // share of paths whose TERMINAL balance ≥ fireNumber
+  successProbability: number; // share of paths that reach fireNumber at any year within the horizon
   pathCount: number;
 }
 
@@ -113,8 +113,12 @@ const MIN_GROWTH_MULTIPLIER = 0.05;
  * `annualSavings` is `annualIncome - annualExpenses`, already a today's-dollars
  * value. Percentile bands are CROSS-SECTIONAL: for each year index, the N path
  * balances are sorted and the type-7 quantile is taken — that is what produces
- * the widening fan. `successProbability` is the share of paths whose final-year
- * balance clears the FIRE number (terminal-wealth metric; no decumulation).
+ * the widening fan. `successProbability` is the share of paths that reach the
+ * FIRE number at ANY year within the horizon (ever-reached / first-crossing) —
+ * once a path touches your number you are financially independent, even if a
+ * later down-year dips it back below. Set the horizon (`maxYears`) to the year
+ * you'd actually retire so this answers "by my retirement age", not "by age 100"
+ * where decades of compounding make success trivially certain.
  *
  * Throws `RangeError` on a non-positive safe withdrawal rate (the FIRE number
  * would divide by zero) — the same invalid-input guard as fire.ts; the caller
@@ -148,17 +152,23 @@ export function computeMonteCarlo(inputs: MonteCarloInputs): MonteCarloResult {
   const rng = mulberry32(seed);
 
   // Outer loop over paths, inner loop over years — exactly one Gaussian draw per
-  // path-year. This fixed consumption order is the contract a test replays.
+  // path-year. This fixed consumption order is the contract a test replays. We
+  // also record, per path, whether the balance ever touched the FIRE number —
+  // the ever-reached metric below — including year 0 for an already-FI start.
   const paths: number[][] = [];
+  let successes = 0;
   for (let i = 0; i < count; i++) {
     const path = new Array<number>(horizon + 1);
     let balance = startingPrincipal;
     path[0] = balance;
+    let reached = balance >= fireNumber;
     for (let year = 1; year <= horizon; year++) {
       const growth = Math.max(MIN_GROWTH_MULTIPLIER, 1 + nextGaussian(rng, realReturn, returnVolatility));
       balance = growth * balance + annualSavings;
       path[year] = balance;
+      if (balance >= fireNumber) reached = true;
     }
+    if (reached) successes++;
     paths.push(path);
   }
 
@@ -177,7 +187,6 @@ export function computeMonteCarlo(inputs: MonteCarloInputs): MonteCarloResult {
     });
   }
 
-  const successes = paths.reduce((acc, path) => acc + (path[horizon] >= fireNumber ? 1 : 0), 0);
   const successProbability = count > 0 ? successes / count : 0;
 
   return {
