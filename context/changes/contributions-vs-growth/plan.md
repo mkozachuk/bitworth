@@ -411,21 +411,21 @@ The migration is purely additive and nullable — no backfill, no data transform
 
 #### Automated
 
-- [x] 4.1 Type checking passes (`npx tsc --noEmit`)
-- [x] 4.2 Linting passes incl. `react-compiler` (`npm run lint`)
-- [x] 4.3 Build passes (`npm run build`)
+- [x] 4.1 Type checking passes (`npx tsc --noEmit`) — 35c1581
+- [x] 4.2 Linting passes incl. `react-compiler` (`npm run lint`) — 35c1581
+- [x] 4.3 Build passes (`npm run build`) — 35c1581
 
 #### Manual
 
-- [x] 4.4 Dialog captures `+`, `−`, and blank contributions correctly; states + reload intact (verified: Playwright drove the live dialog vs local Supabase — +500→persisted 500, −200→persisted −200, blank→NULL, Cancel→no snapshot, all with 201 + reload to /dashboard. Also fixed a regression the dialog introduced in e2e/empty-snapshot.spec.ts which expected an immediate POST on click)
+- [x] 4.4 Dialog captures `+`, `−`, and blank contributions correctly; states + reload intact (verified: Playwright drove the live dialog vs local Supabase — +500→persisted 500, −200→persisted −200, blank→NULL, Cancel→no snapshot, all with 201 + reload to /dashboard. Also fixed a regression the dialog introduced in e2e/empty-snapshot.spec.ts which expected an immediate POST on click) — 35c1581
 
 ### Phase 5: Edit / Backfill UI
 
 #### Automated
 
-- [ ] 5.1 Type checking passes (`npx tsc --noEmit`)
-- [ ] 5.2 Linting passes (`npm run lint`)
-- [ ] 5.3 Build passes (`npm run build`)
+- [x] 5.1 Type checking passes (`npx tsc --noEmit`)
+- [x] 5.2 Linting passes (`npm run lint`)
+- [x] 5.3 Build passes (`npm run build`)
 
 #### Manual
 
