@@ -244,15 +244,24 @@ async function seedAllocationTargets(
   if (error) throw new Error(`Read assets for allocation targets failed: ${error.message}`);
 
   const idByName = new Map(rows.map((r) => [r.name, r.id]));
-  const payload = ALLOCATION_TARGETS.map((t) => {
+  const targets = ALLOCATION_TARGETS.map((t) => {
     const asset_id = idByName.get(t.name);
     if (!asset_id) throw new Error(`Allocation target asset not found by name: ${t.name}`);
     return { asset_id, target_pct: t.target_pct };
   });
 
+  // Multi-card portfolios (S-16): targets belong to a card. A fresh user has
+  // none, so create one and PUT the targets under its id.
+  const cardRes = await request.post("/api/allocation-cards", {
+    headers: { "Content-Type": "application/json" },
+    data: JSON.stringify({ name: "My allocation" }),
+  });
+  if (!cardRes.ok()) throw new Error(`Create allocation card failed: ${cardRes.status()} ${await cardRes.text()}`);
+  const { data: card } = await cardRes.json();
+
   const res = await request.put("/api/allocation-targets", {
     headers: { "Content-Type": "application/json" },
-    data: JSON.stringify(payload),
+    data: JSON.stringify({ card_id: card.id, targets }),
   });
   if (!res.ok()) throw new Error(`Seed allocation targets failed: ${res.status()} ${await res.text()}`);
 }

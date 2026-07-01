@@ -41,7 +41,7 @@ Tracking net worth in a spreadsheet works until it doesn't: formulas drift, curr
 - **Live crypto prices** — adding or editing a crypto holding fetches the current market price from CoinGecko (cached, with manual-entry fallback). Top coins are mapped out of the box (BTC, ETH, SOL, and more).
 - **FIRE calculator** — enter your income, expenses, return, inflation, and safe withdrawal rate to compute your FIRE number, years to FI, estimated retirement age, plus Coast and Barista FIRE — with a year-by-year projection chart in today's money.
 - **FIRE progress card** — a settings-gated card on the dashboard (on by default) that turns your saved FIRE inputs into an at-a-glance view: a progress bar for percent of your FIRE number reached, months of runway at zero income, years to FI, and the FIRE number — all in your display currency. Before you've entered any FIRE data it shows a placeholder linking to the calculator.
-- **Asset balancer** — a dedicated **Balance** page where you pick an investment set from your assets (via a single-choice dropdown with add/remove controls), assign a target % to each, and compare your **declared** allocation against the **real** current-value split as two side-by-side donut charts that share one color per asset. A live "targets sum" indicator warns when your declared percentages don't add up to 100% — without blocking save (the declared pie shows your raw percentages; the real pie is normalized by construction). Each assets-list row also gains a muted **"% of all assets"** share label.
+- **Asset balancer** — a dedicated **Balance** page where you pick an investment set from your assets (via a single-choice dropdown with add/remove controls), assign a target % to each, and compare your **declared** allocation against the **real** current-value split as two side-by-side donut charts that share one color per asset. A live "targets sum" indicator warns when your declared percentages don't add up to 100% — without blocking save (the declared pie shows your raw percentages; the real pie is normalized by construction). You can keep **multiple portfolio cards** side by side, each with its own target set. Enter a cash budget and the **buy plan** computes a buy-only, water-filling deployment across your under-target assets — in your chosen currency. Each assets-list row also gains a muted **"% of all assets"** share label.
 - **Settings** — choose your display currency (PLN/USD/EUR), theme (light/dark/system), and whether the FIRE progress card appears on your dashboard; everything is persisted per user.
 - **Auth** — email/password authentication via Supabase SSR, with protected dashboard routes.
 
@@ -52,6 +52,8 @@ Tracking net worth in a spreadsheet works until it doesn't: formulas drift, curr
 ![Asset Trends — per-asset trend lines over snapshot history, indexed mode](docs/screenshots/asset-trends.png)
 
 ![Asset Balancer — declared vs real allocation as side-by-side donut charts, with a dropdown + add/remove asset picker and a live targets-sum indicator](docs/screenshots/balancer.png)
+
+![Buy plan — enter a cash budget and get a buy-only, water-filling deployment across under-target assets, in your chosen currency](docs/screenshots/buy-plan/buy-plan-card-dark.png)
 
 ![Settings — display currency, theme, FIRE progress card toggle, and backup/restore](docs/screenshots/settings.png)
 

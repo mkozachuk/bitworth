@@ -59,10 +59,20 @@ test("capture buy plan card", async ({ page, browser }) => {
     .overrideTypes<{ id: string; name: string }[], { merge: false }>();
   if (error) throw new Error(`Read assets failed: ${error.message}`);
   const idByName = new Map(rows.map((r) => [r.name, r.id]));
-  const payload = TARGETS.map((t) => ({ asset_id: idByName.get(t.name), target_pct: t.target_pct }));
+  const targets = TARGETS.map((t) => ({ asset_id: idByName.get(t.name), target_pct: t.target_pct }));
+
+  // Multi-card portfolios (S-16): targets belong to a card. A fresh user has
+  // none, so create one and PUT the targets under its id.
+  const cardRes = await page.request.post("/api/allocation-cards", {
+    headers: { "Content-Type": "application/json" },
+    data: JSON.stringify({ name: "My allocation" }),
+  });
+  if (!cardRes.ok()) throw new Error(`Create card failed: ${cardRes.status()} ${await cardRes.text()}`);
+  const { data: newCard } = await cardRes.json();
+
   const putRes = await page.request.put("/api/allocation-targets", {
     headers: { "Content-Type": "application/json" },
-    data: JSON.stringify(payload),
+    data: JSON.stringify({ card_id: newCard.id, targets }),
   });
   if (!putRes.ok()) throw new Error(`Seed targets failed: ${putRes.status()} ${await putRes.text()}`);
 
