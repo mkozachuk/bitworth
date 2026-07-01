@@ -68,7 +68,7 @@ test("capture buy plan card", async ({ page, browser }) => {
     data: JSON.stringify({ name: "My allocation" }),
   });
   if (!cardRes.ok()) throw new Error(`Create card failed: ${cardRes.status()} ${await cardRes.text()}`);
-  const { data: newCard } = await cardRes.json();
+  const { data: newCard } = (await cardRes.json()) as { data: { id: string } };
 
   const putRes = await page.request.put("/api/allocation-targets", {
     headers: { "Content-Type": "application/json" },

@@ -257,7 +257,7 @@ async function seedAllocationTargets(
     data: JSON.stringify({ name: "My allocation" }),
   });
   if (!cardRes.ok()) throw new Error(`Create allocation card failed: ${cardRes.status()} ${await cardRes.text()}`);
-  const { data: card } = await cardRes.json();
+  const { data: card } = (await cardRes.json()) as { data: { id: string } };
 
   const res = await request.put("/api/allocation-targets", {
     headers: { "Content-Type": "application/json" },
