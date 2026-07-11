@@ -1,11 +1,11 @@
 ---
 change_id: asset-management
 title: Asset management
-status: impl_reviewed
+status: archived
 created: 2026-05-29
-updated: 2026-05-30
+updated: 2026-07-11
 
-archived_at: null
+archived_at: 2026-07-11T20:55:40Z
 ---
 
 ## Notes
