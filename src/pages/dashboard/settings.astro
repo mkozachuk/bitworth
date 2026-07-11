@@ -20,19 +20,21 @@ const supabase = createClient(Astro.request.headers, Astro.cookies);
 
 const { data: prefs } = await supabase
   .from("user_preferences")
-  .select("display_currency, theme, show_fire_dashboard")
+  .select("display_currency, theme, show_fire_dashboard, show_drift_alerts")
   .eq("user_id", user.id)
   .maybeSingle();
 
 const rawCurrency = (prefs as { display_currency?: string } | null)?.display_currency;
 const rawTheme = (prefs as { theme?: string } | null)?.theme;
 const rawShowFireDashboard = (prefs as { show_fire_dashboard?: boolean } | null)?.show_fire_dashboard;
+const rawShowDriftAlerts = (prefs as { show_drift_alerts?: boolean } | null)?.show_drift_alerts;
 
 const initialDisplayCurrency: Currency = VALID_CURRENCIES.includes(rawCurrency as Currency)
   ? (rawCurrency as Currency)
   : "USD";
 const initialTheme: Theme = VALID_THEMES.includes(rawTheme as Theme) ? (rawTheme as Theme) : "system";
 const initialShowFireDashboard: boolean = rawShowFireDashboard ?? true;
+const initialShowDriftAlerts: boolean = rawShowDriftAlerts ?? true;
 ---
 
 <Layout title="Settings">
@@ -50,6 +52,7 @@ const initialShowFireDashboard: boolean = rawShowFireDashboard ?? true;
         initialDisplayCurrency={initialDisplayCurrency}
         initialTheme={initialTheme}
         initialShowFireDashboard={initialShowFireDashboard}
+        initialShowDriftAlerts={initialShowDriftAlerts}
         client:load
       />
     </div>

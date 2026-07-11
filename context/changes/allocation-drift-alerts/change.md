@@ -1,7 +1,7 @@
 ---
 change_id: allocation-drift-alerts
 title: Dashboard drift-alert card with a settings toggle to enable/disable
-status: new
+status: implementing
 created: 2026-07-11
 updated: 2026-07-11
 archived_at: null
