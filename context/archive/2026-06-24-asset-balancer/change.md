@@ -1,10 +1,10 @@
 ---
 change_id: asset-balancer
 title: Asset balancer — target vs real allocation
-status: impl_reviewed
+status: archived
 created: 2026-06-24
-updated: 2026-06-24
-archived_at: null
+updated: 2026-07-11
+archived_at: 2026-07-11T20:55:40Z
 ---
 
 ## Notes
