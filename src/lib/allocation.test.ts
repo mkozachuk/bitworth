@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { Currency } from "@/lib/net-worth";
-import type { AllocationAsset, AllocationSlice, ShareAsset } from "@/lib/allocation";
-import { assetSharePct, computeAllocation, computeBuyPlan, totalAssetPool } from "@/lib/allocation";
+import type { AllocationAsset, AllocationSlice, DriftCardInput, ShareAsset } from "@/lib/allocation";
+import {
+  assetSharePct,
+  computeAllocation,
+  computeBuyPlan,
+  computeDrift,
+  DRIFT_THRESHOLD_PCT,
+  totalAssetPool,
+} from "@/lib/allocation";
 
 // Pins the allocation math against oracles computed from first principles —
 // never by reading the implementation. Percentages run on a 0–100 scale
@@ -276,5 +283,153 @@ describe("assetSharePct", () => {
 
   it("survives a 333.33-class FP probe without scaling drift", () => {
     expect(assetSharePct(33_333.33, 100_000)).toBeCloseTo((33_333.33 / 100_000) * 100, 6);
+  });
+});
+
+describe("computeDrift", () => {
+  // Oracles computed from first principles: realPct = value/totalSelected*100 (normalized
+  // to 100 by computeAllocation), normalizedTargetPct = targetPct/declaredSum*100, and
+  // drift = realPct − normalizedTargetPct (signed pp, positive = over target). `toBe` for
+  // provably-exact integers/nulls; `toBeCloseTo(_, 6)` for any division.
+  function card(id: string, name: string, assets: AllocationAsset[]): DriftCardInput {
+    return { id, name, assets };
+  }
+
+  it("computes signed drift and severity for a card whose targets sum to 100", () => {
+    // total 100 → realPct A 60, B 30, C 10. declaredSum 100 → normalized target = raw target.
+    // drift A 60−40=+20, B 30−40=−10, C 10−20=−10. severity = 20 (A). Offenders by |drift|:
+    // A(20) first; B and C tie at 10 → input order B before C.
+    const r = computeDrift(
+      [
+        card("c1", "Portfolio", [
+          asset({ asset_id: "a", name: "A", amount: 60, currency: "USD", targetPct: 40 }),
+          asset({ asset_id: "b", name: "B", amount: 30, currency: "USD", targetPct: 40 }),
+          asset({ asset_id: "c", name: "C", amount: 10, currency: "USD", targetPct: 20 }),
+        ]),
+      ],
+      "USD",
+      rates,
+    );
+    expect(r.worst).not.toBeNull();
+    expect(r.worst?.id).toBe("c1");
+    expect(r.worst?.name).toBe("Portfolio");
+    expect(r.worst?.declaredSum).toBe(100);
+    expect(r.worst?.severity).toBeCloseTo(20, 6);
+    expect(r.worst?.offenders.map((o) => o.asset_id)).toEqual(["a", "b", "c"]);
+    expect(r.worst?.offenders[0].drift).toBeCloseTo(20, 6);
+    expect(r.worst?.offenders[1].drift).toBeCloseTo(-10, 6);
+    expect(r.worst?.offenders[2].drift).toBeCloseTo(-10, 6);
+    expect(r.otherBreachingNames).toEqual([]);
+    expect(r.threshold).toBe(DRIFT_THRESHOLD_PCT);
+  });
+
+  it("normalizes targets to a 100 base before differencing when declared sum ≠ 100", () => {
+    // declaredSum 60+20=80 (≠100). total 100 → realPct A 80, B 20.
+    // normalized target A = 60/80*100 = 75, B = 20/80*100 = 25.
+    // drift A = 80−75 = +5, B = 20−25 = −5. severity 5 (== threshold → breaches).
+    const r = computeDrift(
+      [
+        card("c1", "Skewed", [
+          asset({ asset_id: "a", name: "A", amount: 80, currency: "USD", targetPct: 60 }),
+          asset({ asset_id: "b", name: "B", amount: 20, currency: "USD", targetPct: 20 }),
+        ]),
+      ],
+      "USD",
+      rates,
+    );
+    expect(r.worst?.declaredSum).toBe(80);
+    expect(r.worst?.offenders[0].normalizedTargetPct).toBeCloseTo(75, 6);
+    expect(r.worst?.offenders[1].normalizedTargetPct).toBeCloseTo(25, 6);
+    expect(r.worst?.offenders[0].drift).toBeCloseTo(5, 6);
+    expect(r.worst?.offenders[1].drift).toBeCloseTo(-5, 6);
+    expect(r.worst?.severity).toBeCloseTo(5, 6);
+  });
+
+  it("excludes a card whose selected values sum below EPSILON (null realPct), no crash", () => {
+    const r = computeDrift(
+      [
+        card("c1", "Empty values", [
+          asset({ asset_id: "a", name: "A", amount: 0, currency: "USD", targetPct: 60 }),
+          asset({ asset_id: "b", name: "B", amount: 0, currency: "USD", targetPct: 40 }),
+        ]),
+      ],
+      "USD",
+      rates,
+    );
+    expect(r.worst).toBeNull();
+    expect(r.otherBreachingNames).toEqual([]);
+  });
+
+  it("excludes an empty card and a card with no positive targets (declaredSum < EPSILON)", () => {
+    const r = computeDrift(
+      [
+        card("c1", "Empty", []),
+        card("c2", "No targets", [
+          asset({ asset_id: "a", name: "A", amount: 100, currency: "USD", targetPct: 0 }),
+          asset({ asset_id: "b", name: "B", amount: 50, currency: "USD", targetPct: 0 }),
+        ]),
+      ],
+      "USD",
+      rates,
+    );
+    expect(r.worst).toBeNull();
+    expect(r.otherBreachingNames).toEqual([]);
+  });
+
+  it("does not flag a card whose worst drift is below the threshold", () => {
+    // total 100 → realPct 52, 48. targets 50/50. drift +2 / −2. severity 2 < 5 → not breaching.
+    const r = computeDrift(
+      [
+        card("c1", "On target", [
+          asset({ asset_id: "a", name: "A", amount: 52, currency: "USD", targetPct: 50 }),
+          asset({ asset_id: "b", name: "B", amount: 48, currency: "USD", targetPct: 50 }),
+        ]),
+      ],
+      "USD",
+      rates,
+    );
+    expect(r.worst).toBeNull();
+    expect(r.otherBreachingNames).toEqual([]);
+  });
+
+  it("selects the worst breaching card by severity, returns others by name, stable on ties", () => {
+    // Alpha & Beta: 70/30 split, 50/50 targets → drift ±20, severity 20 (tie).
+    // Gamma: 58/42 split, 50/50 targets → drift ±8, severity 8. All breach (≥5).
+    // Sorted severity desc: [Alpha 20, Beta 20, Gamma 8]; Alpha/Beta tie → input order wins.
+    const twoAsset = (idPrefix: string, aAmount: number, bAmount: number): AllocationAsset[] => [
+      asset({ asset_id: `${idPrefix}a`, name: `${idPrefix}A`, amount: aAmount, currency: "USD", targetPct: 50 }),
+      asset({ asset_id: `${idPrefix}b`, name: `${idPrefix}B`, amount: bAmount, currency: "USD", targetPct: 50 }),
+    ];
+    const r = computeDrift(
+      [
+        card("c1", "Alpha", twoAsset("al", 70, 30)),
+        card("c2", "Beta", twoAsset("be", 70, 30)),
+        card("c3", "Gamma", twoAsset("ga", 58, 42)),
+      ],
+      "USD",
+      rates,
+    );
+    expect(r.worst?.name).toBe("Alpha");
+    expect(r.worst?.severity).toBeCloseTo(20, 6);
+    expect(r.otherBreachingNames).toEqual(["Beta", "Gamma"]);
+  });
+
+  it("orders offenders within a card largest absolute drift first", () => {
+    // total 100 → realPct A 30, B 50, C 20. targets 10/40/50 (declaredSum 100).
+    // drift A +20, B +10, C −30. |drift|: C 30, A 20, B 10 → order [c, a, b]. severity 30.
+    const r = computeDrift(
+      [
+        card("c1", "Mixed", [
+          asset({ asset_id: "a", name: "A", amount: 30, currency: "USD", targetPct: 10 }),
+          asset({ asset_id: "b", name: "B", amount: 50, currency: "USD", targetPct: 40 }),
+          asset({ asset_id: "c", name: "C", amount: 20, currency: "USD", targetPct: 50 }),
+        ]),
+      ],
+      "USD",
+      rates,
+    );
+    expect(r.worst?.offenders.map((o) => o.asset_id)).toEqual(["c", "a", "b"]);
+    expect(r.worst?.offenders[0].drift).toBeCloseTo(-30, 6);
+    expect(r.worst?.severity).toBeCloseTo(30, 6);
   });
 });

@@ -280,29 +280,29 @@ One additive, non-destructive column (`show_drift_alerts`, default TRUE) — exi
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly against a fresh DB
-- [x] 1.2 Type checking passes (`npx tsc --noEmit`)
-- [x] 1.3 Linting passes (`npm run lint`)
-- [x] 1.4 Build passes (`npm run build`)
+- [x] 1.1 Migration applies cleanly against a fresh DB — fc4e466
+- [x] 1.2 Type checking passes (`npx tsc --noEmit`) — fc4e466
+- [x] 1.3 Linting passes (`npm run lint`) — fc4e466
+- [x] 1.4 Build passes (`npm run build`) — fc4e466
 
 #### Manual
 
-- [x] 1.5 Settings page shows a "Show allocation drift alerts" checkbox, checked by default (verified: Playwright against dev server — checkbox visible + checked by default)
-- [x] 1.6 Unchecking + saving persists across reload; re-checking + saving persists (verified: Playwright — uncheck→save→reload shows unchecked, re-check→save→reload shows checked)
-- [x] 1.7 Backup export includes `show_drift_alerts` and import restores the toggle state (verified: Playwright round-trip — export captured OFF, import restored OFF; required RPC fix in 20260711130000)
-- [x] 1.8 PUT with a non-boolean `show_drift_alerts` returns 400 with `{ error: { code, message } }` (verified: Playwright — PUT "yes" → 400, error.code string, message names the field)
+- [x] 1.5 Settings page shows a "Show allocation drift alerts" checkbox, checked by default (verified: Playwright against dev server — checkbox visible + checked by default) — fc4e466
+- [x] 1.6 Unchecking + saving persists across reload; re-checking + saving persists (verified: Playwright — uncheck→save→reload shows unchecked, re-check→save→reload shows checked) — fc4e466
+- [x] 1.7 Backup export includes `show_drift_alerts` and import restores the toggle state (verified: Playwright round-trip — export captured OFF, import restored OFF; required RPC fix in 20260711130000) — fc4e466
+- [x] 1.8 PUT with a non-boolean `show_drift_alerts` returns 400 with `{ error: { code, message } }` (verified: Playwright — PUT "yes" → 400, error.code string, message names the field) — fc4e466
 
 ### Phase 2: `computeDrift` Pure Helper + Unit Tests
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass (`npx vitest run src/lib/allocation.test.ts`)
-- [ ] 2.2 Type checking passes (`npx tsc --noEmit`)
-- [ ] 2.3 Linting passes (`npm run lint`)
+- [x] 2.1 Unit tests pass (`npx vitest run src/lib/allocation.test.ts`)
+- [x] 2.2 Type checking passes (`npx tsc --noEmit`)
+- [x] 2.3 Linting passes (`npm run lint`)
 
 #### Manual
 
-- [ ] 2.4 One oracle spot-checked by hand (targets ≠100 case) confirms expected signed drift
+- [x] 2.4 One oracle spot-checked by hand (targets ≠100 case) confirms expected signed drift (verified: hand-calc declaredSum 80 → normalized 75/25 → drift +5/−5, matches test oracle)
 
 ### Phase 3: `DriftAlerts` Island + Dashboard Wiring
 
