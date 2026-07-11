@@ -127,4 +127,15 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Tailwind Preflight resets `margin: 0` on every element, which clobbers the
+     user-agent `margin: auto` that centers a modal <dialog>. Restore it so all
+     showModal() dialogs sit in the middle of the viewport. The max-* bounds and
+     scroll keep tall dialogs on-screen and centered on mobile (dvh accounts for
+     the mobile browser chrome; the safe-area insets clear notches/home bars). */
+  dialog:modal {
+    margin: auto;
+    max-width: calc(100vw - 1.5rem);
+    max-height: calc(100dvh - var(--safe-top) - var(--safe-bottom) - 1.5rem);
+    overflow: auto;
+  }
 }
