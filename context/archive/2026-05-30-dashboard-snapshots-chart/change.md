@@ -6,9 +6,12 @@ branch: master
 repository: bitworth
 topic: "dashboard-snapshots-chart: internal code patterns, schema, and integration points for net worth display, delta indicators, trend chart, and snapshot save"
 tags: [research, dashboard, snapshots, recharts, supabase]
-status: impl_reviewed
+status: archived
 last_updated: "2026-05-31"
 last_updated_by: maksymkozachuk
+created: 2026-05-30
+updated: 2026-07-11
+archived_at: 2026-07-11T20:55:40Z
 ---
 
 # Research: dashboard-snapshots-chart — Internal Patterns, Schema, and Integration
