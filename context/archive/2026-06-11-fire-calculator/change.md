@@ -1,10 +1,10 @@
 ---
 change_id: fire-calculator
 title: FIRE calculator
-status: implemented
+status: archived
 created: 2026-06-11
-updated: 2026-06-11
-archived_at: null
+updated: 2026-07-11
+archived_at: 2026-07-11T20:55:40Z
 ---
 
 ## Notes
