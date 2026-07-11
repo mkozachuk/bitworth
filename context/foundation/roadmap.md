@@ -3,7 +3,7 @@ project: "BitWorth"
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-07-07
+updated: 2026-07-11
 prd_version: 1
 main_goal: market-feedback
 top_blocker: capacity
@@ -464,3 +464,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **S-14: FIRE dashboard card** — Implemented 2026-06-23 → `context/changes/fire-dashboard/`. Note: settings-gated `show_fire_dashboard` pref (default TRUE) threaded schema→`database.types.ts`→`PREFS_SELECT`→validation→`SettingsForm`; pure runway helper + guarded `computeFireProjection` reuse; `FireProgress` island on the dashboard with CSS-transition progress bar; "no FIRE data" placeholder links to `/dashboard/fire`. Impl-review on file. Lessons: —.
 - **S-15: Asset balancer (target allocation)** — Implemented 2026-06-24 → `context/changes/asset-balancer/`. Note: new `allocation_targets` table (FK to `assets`, `ON DELETE CASCADE`, RLS); pure, unit-tested `src/lib/allocation.ts` (target %, real %, per-asset share, buy-plan water-filling); `/dashboard/balancer` page with two Recharts PieCharts (first PieChart usage) + buy-plan card; "% of all assets" label on `AssetRow`/`AssetCard`; new "Balance" nav item. Impl-review on file. Lessons: —.
 - **S-16: Monte Carlo simulation** — Implemented 2026-06-25 → `context/changes/monte-carlo-simulation/`. Note: pure, **seed-injected** `src/lib/monte-carlo.ts` (mulberry32 + Box–Muller + type-7 percentiles; parametric Normal real returns, clamped per-year growth multiplier); `/dashboard/forecast` page renders ~100 sampled paths + P10/P50/P90 bands + FIRE-number `ReferenceLine` in Recharts (reuses `FireProjectionChart` conventions); session-only volatility input (no migration); new "Forecast" nav item + FIRE-page cross-link. Impl-review NEEDS ATTENTION → all findings fixed (memoized compute, distinct sampled-path color, DEV-gated sampling log). Lessons: seed-injected RNG as the testability seam for stochastic modules.
+- **F-01: Supabase schema and migrations** — Archived 2026-07-11 → `context/archive/2026-05-28-supabase-schema-migrations/`. Lesson: —.

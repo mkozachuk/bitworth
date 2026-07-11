@@ -1,10 +1,10 @@
 ---
 change_id: supabase-schema-migrations
 title: Design and migrate Supabase schema
-status: implemented
+status: archived
 created: 2026-05-28
-updated: 2026-05-29
-archived_at: null
+updated: 2026-07-11
+archived_at: 2026-07-11T20:55:40Z
 ---
 
 ## Notes
