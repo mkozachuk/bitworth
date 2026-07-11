@@ -471,3 +471,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **S-04: Dashboard assets summary** — Archived 2026-07-11 → `context/archive/2026-05-31-dashboard-assets-summary/`. Lesson: —.
 - **S-05: User settings** — Archived 2026-07-11 → `context/archive/2026-06-03-user-settings/`. Lesson: —.
 - **S-06: Mobile refactor** — Archived 2026-07-11 → `context/archive/2026-06-03-mobile-refactor/`. Lesson: —.
+- **S-07: AssetList mobile reflow** — Archived 2026-07-11 → `context/archive/2026-06-03-asset-list-mobile-reflow/`. Lesson: —.
