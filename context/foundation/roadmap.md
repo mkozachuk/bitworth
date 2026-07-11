@@ -480,3 +480,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **S-13: Data backup import/export** — Archived 2026-07-11 → `context/archive/2026-06-20-data-backup-import-export/`. Lesson: —.
 - **S-14: FIRE dashboard card** — Archived 2026-07-11 → `context/archive/2026-06-23-fire-dashboard/`. Lesson: —.
 - **S-15: Asset balancer (target allocation)** — Archived 2026-07-11 → `context/archive/2026-06-24-asset-balancer/`. Lesson: —.
+- **S-16: Monte Carlo simulation** — Archived 2026-07-11 → `context/archive/2026-06-25-monte-carlo-simulation/`. Lesson: —.
