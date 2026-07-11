@@ -475,3 +475,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **S-08: PWA / installable mobile app** — Archived 2026-07-11 → `context/archive/2026-06-03-pwa-installable/`. Lesson: —.
 - **S-09: FIRE calculator** — Archived 2026-07-11 → `context/archive/2026-06-11-fire-calculator/`. Lesson: —.
 - **S-10: Dedicated landing page** — Archived 2026-07-11 → `context/archive/2026-06-16-landing-page/`. Lesson: —.
+- **S-11: Dashboard top movers** — Archived 2026-07-11 → `context/archive/2026-06-19-dashboard-top-movers/`. Lesson: —.

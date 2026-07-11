@@ -1,10 +1,10 @@
 ---
 change_id: dashboard-top-movers
 title: Dashboard top movers — gainers/losers since the last snapshot
-status: implemented
+status: archived
 created: 2026-06-19
-updated: 2026-06-19
-archived_at: null
+updated: 2026-07-11
+archived_at: 2026-07-11T20:55:40Z
 ---
 
 ## Notes
