@@ -477,3 +477,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **S-10: Dedicated landing page** — Archived 2026-07-11 → `context/archive/2026-06-16-landing-page/`. Lesson: —.
 - **S-11: Dashboard top movers** — Archived 2026-07-11 → `context/archive/2026-06-19-dashboard-top-movers/`. Lesson: —.
 - **S-12: Per-asset trends** — Archived 2026-07-11 → `context/archive/2026-06-19-per-asset-trends/`. Lesson: —.
+- **S-13: Data backup import/export** — Archived 2026-07-11 → `context/archive/2026-06-20-data-backup-import-export/`. Lesson: —.

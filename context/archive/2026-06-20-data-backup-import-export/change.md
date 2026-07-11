@@ -1,10 +1,10 @@
 ---
 change_id: data-backup-import-export
 title: Full data backup — export all data to one file and import it back (replace or merge)
-status: impl_reviewed
+status: archived
 created: 2026-06-20
-updated: 2026-06-21
-archived_at: null
+updated: 2026-07-11
+archived_at: 2026-07-11T20:55:40Z
 ---
 
 ## Notes
