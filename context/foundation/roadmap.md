@@ -469,3 +469,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **S-02: Dashboard — net worth display, snapshots, and trend chart** — Archived 2026-07-11 → `context/archive/2026-05-30-dashboard-snapshots-chart/`. Lesson: —.
 - **S-03: Crypto price fetch on asset entry** — Archived 2026-07-11 → `context/archive/2026-05-31-crypto-price-fetch/`. Lesson: —.
 - **S-04: Dashboard assets summary** — Archived 2026-07-11 → `context/archive/2026-05-31-dashboard-assets-summary/`. Lesson: —.
+- **S-05: User settings** — Archived 2026-07-11 → `context/archive/2026-06-03-user-settings/`. Lesson: —.
