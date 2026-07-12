@@ -49,6 +49,7 @@ function makeInput(): BackupInput {
         amount: 1500,
         currency: "USD",
         crypto_symbol: null,
+        metal_symbol: null,
         notes: null,
         quantity: null,
         show_on_chart: true,

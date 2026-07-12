@@ -127,6 +127,7 @@ export interface Database {
           crypto_symbol: string | null;
           currency: string;
           id: string;
+          metal_symbol: string | null;
           name: string;
           notes: string | null;
           quantity: number | null;
@@ -141,6 +142,7 @@ export interface Database {
           crypto_symbol?: string | null;
           currency: string;
           id?: string;
+          metal_symbol?: string | null;
           name: string;
           notes?: string | null;
           quantity?: number | null;
@@ -155,6 +157,7 @@ export interface Database {
           crypto_symbol?: string | null;
           currency?: string;
           id?: string;
+          metal_symbol?: string | null;
           name?: string;
           notes?: string | null;
           quantity?: number | null;
@@ -192,6 +195,30 @@ export interface Database {
           coin_symbol?: string;
           fetched_at?: string;
           id?: string;
+          price_usd?: number;
+        };
+        Relationships: [];
+      };
+      metal_price_cache: {
+        Row: {
+          fetched_at: string;
+          id: string;
+          metal_id: string;
+          metal_symbol: string;
+          price_usd: number;
+        };
+        Insert: {
+          fetched_at?: string;
+          id?: string;
+          metal_id: string;
+          metal_symbol: string;
+          price_usd: number;
+        };
+        Update: {
+          fetched_at?: string;
+          id?: string;
+          metal_id?: string;
+          metal_symbol?: string;
           price_usd?: number;
         };
         Relationships: [];
@@ -376,6 +403,10 @@ export interface Database {
       };
       upsert_crypto_price_cache: {
         Args: { p_coin_id: string; p_coin_symbol: string; p_price_usd: number };
+        Returns: undefined;
+      };
+      upsert_metal_price_cache: {
+        Args: { p_metal_id: string; p_metal_symbol: string; p_price_usd: number };
         Returns: undefined;
       };
     };
