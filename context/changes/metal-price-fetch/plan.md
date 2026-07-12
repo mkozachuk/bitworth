@@ -334,10 +334,10 @@ Global cache keyed by metal (not per-user) keeps GoldAPI.io call volume far belo
 
 #### Automated
 
-- [x] 4.1 Migration applies cleanly: `npx supabase db reset`
-- [x] 4.2 Type checking passes: `npx tsc --noEmit`
-- [x] 4.3 Linting passes: `npm run lint`
-- [x] 4.4 Tests pass: `npm run test`
+- [x] 4.1 Migration applies cleanly: `npx supabase db reset` — 4523e9b
+- [x] 4.2 Type checking passes: `npx tsc --noEmit` — 4523e9b
+- [x] 4.3 Linting passes: `npm run lint` — 4523e9b
+- [x] 4.4 Tests pass: `npm run test` — 4523e9b
 
 #### Manual
 
