@@ -18,6 +18,7 @@ function astroEnvServerStub() {
           "export const SUPABASE_URL = process.env.SUPABASE_URL;",
           "export const SUPABASE_KEY = process.env.SUPABASE_KEY;",
           "export const COINGECKO_API_KEY = process.env.COINGECKO_API_KEY;",
+          "export const METALS_API_KEY = process.env.METALS_API_KEY;",
         ].join("\n");
       }
     },

@@ -16,6 +16,7 @@ function makeAsset(overrides: Partial<AssetWithCategory> & { amount: number; cur
     name: "Test",
     category_id: "c1",
     crypto_symbol: null,
+    metal_symbol: null,
     notes: null,
     quantity: null,
     show_on_chart: false,
