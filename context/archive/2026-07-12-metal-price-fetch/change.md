@@ -1,10 +1,10 @@
 ---
 change_id: metal-price-fetch
 title: Precious-metals spot-price fetch on asset entry
-status: implementing
+status: archived
 created: 2026-07-12
 updated: 2026-07-12
-archived_at: null
+archived_at: 2026-07-12T16:50:14Z
 ---
 
 ## Notes

@@ -46,7 +46,7 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 | S-16 | monte-carlo-simulation     | run thousands of randomized market paths to see the probability of reaching their FIRE goal        | F-01, S-01, S-02, S-09 | —                    | done    |
 | S-17 | contributions-vs-growth    | see each period's net-worth change split into contributions vs market growth                       | F-01, S-01, S-02, S-05 | —                    | done    |
 | S-18 | allocation-drift-alerts    | get a dashboard alert when real allocation drifts past a threshold from a card's target            | F-01, S-01, S-02, S-15 | —                    | done |
-| S-19 | metal-price-fetch          | see live gold/silver spot prices (in display currency) when adding a precious-metals asset         | F-01, S-01, S-03       | —                    | planned |
+| S-19 | metal-price-fetch          | see live gold/silver spot prices (in display currency) when adding a precious-metals asset         | F-01, S-01, S-03       | —                    | done    |
 
 ## Streams
 
@@ -399,7 +399,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - **Form UX.** Add a `categoryId === "precious_metals"` conditional branch to `AssetForm.tsx` alongside the existing `crypto` branch (metal picker + quantity-in-oz + onBlur→fetch→`amount = qty × price` + status messages). (Owner: planner) Recommendation: extract the shared crypto/metal fetch-and-calculate UI into one reusable block rather than copy-pasting the crypto branch, so the two pricing flows don't drift.
   - **"Have" vs "add" scope.** The request mentions users who _have_ metals assets, not only those adding one. Crypto only fetches at entry/edit time (no background refresh). (Owner: planner) Recommendation: keep v1 to the entry/edit-time fetch like S-03; a background/on-load re-price of existing metals holdings is a separate, larger concern (touches the dashboard read path) — defer it and note it here.
 - **Risk:** Low-to-moderate — a near-clone of the tested S-03 flow, so the main risks are the two S-03 already taught: (a) **provider reachability from Workers** — a provider that works in a browser but 403s from Cloudflare Workers ships broken; mitigant: verify from the deployment target before committing, and implement the cache/manual-entry fallback concurrently, not as a later patch (same as S-03); (b) **unit/currency correctness** — spot prices are per troy ounce in USD and must be converted through `getRates()` before display, and quantity units (oz vs grams) must be stated and consistent; mitigant: isolate the fetch/convert/cache logic in a pure, unit-tested `src/lib/metal-prices.ts` mirroring `crypto-prices.ts`, and reuse `exchange-rates.ts` rather than re-deriving conversion.
-- **Status:** planned
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -483,3 +483,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **S-16: Monte Carlo simulation** — Archived 2026-07-11 → `context/archive/2026-06-25-monte-carlo-simulation/`. Lesson: —.
 - **S-17: Contributions vs market growth** — Archived 2026-07-11 → `context/archive/2026-06-28-contributions-vs-growth/`. Lesson: —.
 - **S-18: Allocation-drift alerts** — Archived 2026-07-12 → `context/archive/2026-07-11-allocation-drift-alerts/`. Lesson: —.
+- **S-19: Precious-metals price fetch on asset entry** — Archived 2026-07-12 → `context/archive/2026-07-12-metal-price-fetch/`. Lesson: —.
