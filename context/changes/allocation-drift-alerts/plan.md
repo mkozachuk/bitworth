@@ -296,28 +296,28 @@ One additive, non-destructive column (`show_drift_alerts`, default TRUE) — exi
 
 #### Automated
 
-- [x] 2.1 Unit tests pass (`npx vitest run src/lib/allocation.test.ts`)
-- [x] 2.2 Type checking passes (`npx tsc --noEmit`)
-- [x] 2.3 Linting passes (`npm run lint`)
+- [x] 2.1 Unit tests pass (`npx vitest run src/lib/allocation.test.ts`) — b59725c
+- [x] 2.2 Type checking passes (`npx tsc --noEmit`) — b59725c
+- [x] 2.3 Linting passes (`npm run lint`) — b59725c
 
 #### Manual
 
-- [x] 2.4 One oracle spot-checked by hand (targets ≠100 case) confirms expected signed drift (verified: hand-calc declaredSum 80 → normalized 75/25 → drift +5/−5, matches test oracle)
+- [x] 2.4 One oracle spot-checked by hand (targets ≠100 case) confirms expected signed drift (verified: hand-calc declaredSum 80 → normalized 75/25 → drift +5/−5, matches test oracle) — b59725c
 
 ### Phase 3: `DriftAlerts` Island + Dashboard Wiring
 
 #### Automated
 
-- [ ] 3.1 Type checking passes (`npx tsc --noEmit`)
-- [ ] 3.2 Linting passes including `react-compiler` on `DriftAlerts.tsx`
-- [ ] 3.3 Build passes (`npm run build`)
+- [x] 3.1 Type checking passes (`npx tsc --noEmit`)
+- [x] 3.2 Linting passes including `react-compiler` on `DriftAlerts.tsx`
+- [x] 3.3 Build passes (`npm run build`)
 
 #### Manual
 
-- [ ] 3.4 With toggle off, no drift card appears
-- [ ] 3.5 With toggle on and no cards/targets, no drift card appears
-- [ ] 3.6 A card drifted ≥5pp shows the worst card, top offenders with correct signed over/under drift, and a working `/dashboard/balancer` link
-- [ ] 3.7 Two drifting cards → worst shown in detail, other named in "Also drifting" note
-- [ ] 3.8 A card with targets summing ≠100 shows the proportional-comparison note
-- [ ] 3.9 All cards within threshold → card is absent
-- [ ] 3.10 No regression to FIRE card, assets summary, or net-worth chart
+- [x] 3.4 With toggle off, no drift card appears (verified: Playwright — user with ≥5pp drift + `show_drift_alerts:false` PUT → no "Allocation drift" on dashboard)
+- [x] 3.5 With toggle on and no cards/targets, no drift card appears (verified: Playwright — user with assets but no allocation cards → no drift card)
+- [x] 3.6 A card drifted ≥5pp shows the worst card, top offenders with correct signed over/under drift, and a working `/dashboard/balancer` link (verified: Playwright + screenshot — "Aggressive", "Stocks +20pp over target", "Crypto −20pp under target", link href=/dashboard/balancer)
+- [x] 3.7 Two drifting cards → worst shown in detail, other named in "Also drifting" note (verified: Playwright — Aggressive sev 20 detailed, "Also drifting: Conservative" sev 10)
+- [x] 3.8 A card with targets summing ≠100 shows the proportional-comparison note (verified: Playwright — targets 40/40 → "Targets sum to 80% — compared proportionally")
+- [x] 3.9 All cards within threshold → card is absent (verified: Playwright — real 52/48 vs 50/50 target, drift ±2pp → no drift card)
+- [x] 3.10 No regression to FIRE card, assets summary, or net-worth chart (verified: Playwright + screenshot — FIRE progress, Net worth 10,000 USD, Assets by currency, net-worth/contributions/trends cards all render; zero console/page errors)

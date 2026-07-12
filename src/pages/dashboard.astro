@@ -11,6 +11,8 @@ import { ContributionsChart } from "@/components/ContributionsChart";
 import { TopMovers } from "@/components/assets/TopMovers";
 import { AssetTrendsChart, type SnapshotItemWithDate } from "@/components/AssetTrendsChart";
 import { FireProgress } from "@/components/fire/FireProgress";
+import { computeDrift, type AllocationAsset, type DriftCardInput } from "@/lib/allocation";
+import { DriftAlerts, type DriftAlertsProps } from "@/components/balancer/DriftAlerts";
 import type { Tables } from "@/lib/database.types";
 
 type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
@@ -70,7 +72,7 @@ const trendSnapshotItems: SnapshotItemWithDate[] = ((snapshotsWithItems ?? []) a
 const { data: prefs } = await supabase
   .from("user_preferences")
   .select(
-    "show_fire_dashboard, fire_current_age, fire_annual_income, fire_annual_expenses, fire_expected_return, fire_inflation_rate, fire_safe_withdrawal_rate, fire_starting_principal_override, fire_traditional_retirement_age, fire_barista_income",
+    "show_fire_dashboard, show_drift_alerts, fire_current_age, fire_annual_income, fire_annual_expenses, fire_expected_return, fire_inflation_rate, fire_safe_withdrawal_rate, fire_starting_principal_override, fire_traditional_retirement_age, fire_barista_income",
   )
   .eq("user_id", user.id)
   .maybeSingle();
@@ -151,6 +153,69 @@ if (showFireDashboard) {
     fireCard = { configured: false, displayCurrency };
   }
 }
+
+// Allocation-drift card. Gated by `show_drift_alerts` (default TRUE). When on,
+// load the user's balancer cards + their nested targets (same query the balancer
+// page uses), reshape each into computeDrift's input by joining targets to the
+// non-liability assets already loaded above, and compute drift server-side so the
+// island stays presentational. The props object is built only when a card is
+// actually breaching the threshold — otherwise the card renders nothing.
+const showDriftAlerts: boolean = (prefs?.show_drift_alerts ?? true) as boolean;
+
+let driftAlerts: DriftAlertsProps | null = null;
+if (showDriftAlerts) {
+  const { data: driftCardRows } = await supabase
+    .from("allocation_cards")
+    .select("id, name, allocation_targets(asset_id, target_pct)")
+    .eq("user_id", user.id)
+    .order("position", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  // Non-liability assets keyed by id, so each card's targets can be joined back to
+  // a raw amount + currency for computeDrift (mirrors balancer.astro's asset set).
+  const nonLiabilityById = new Map(
+    ((assets ?? []) as AssetWithCategory[]).filter((a) => !a.category.is_liability).map((a) => [a.id, a] as const),
+  );
+
+  // The chained select resolves to `any` in frontmatter (same boundary as the
+  // prefs/balancer casts), so read the rows through a typed shape before reshaping.
+  interface RawDriftCard {
+    id: string;
+    name: string;
+    allocation_targets: { asset_id: string; target_pct: number }[];
+  }
+  const driftCards: DriftCardInput[] = ((driftCardRows ?? []) as RawDriftCard[]).map((card) => ({
+    id: card.id,
+    name: card.name,
+    // A target whose asset was deleted (or is a liability) drops out — it has no
+    // current value to weigh, so it cannot contribute drift.
+    assets: card.allocation_targets
+      .map((t): AllocationAsset | null => {
+        const asset = nonLiabilityById.get(t.asset_id);
+        if (!asset) return null;
+        return {
+          asset_id: asset.id,
+          name: asset.name,
+          amount: asset.amount,
+          currency: asset.currency,
+          targetPct: t.target_pct,
+        };
+      })
+      .filter((a): a is AllocationAsset => a !== null),
+  }));
+
+  const drift = computeDrift(driftCards, displayCurrency, rates);
+  if (drift.worst) {
+    driftAlerts = {
+      worstName: drift.worst.name,
+      declaredSum: drift.worst.declaredSum,
+      offenders: drift.worst.offenders.map((o) => ({ asset_id: o.asset_id, name: o.name, drift: o.drift })),
+      otherBreachingNames: drift.otherBreachingNames,
+      threshold: drift.threshold,
+      displayCurrency,
+    };
+  }
+}
 ---
 
 <Layout title="Dashboard">
@@ -175,6 +240,7 @@ if (showFireDashboard) {
             client:load
           />
           {fireCard && <FireProgress {...fireCard} client:load />}
+          {driftAlerts && <DriftAlerts {...driftAlerts} client:load />}
           <AssetsSummary
             assets={assets as AssetWithCategory[]}
             displayCurrency={displayCurrency}
