@@ -307,22 +307,22 @@ Global cache keyed by metal (not per-user) keeps GoldAPI.io call volume far belo
 
 #### Automated
 
-- [x] 2.1 Unit tests pass: `npm run test`
-- [x] 2.2 Type checking passes: `npx tsc --noEmit`
-- [x] 2.3 Linting passes: `npm run lint`
+- [x] 2.1 Unit tests pass: `npm run test` — 567b51a
+- [x] 2.2 Type checking passes: `npx tsc --noEmit` — 567b51a
+- [x] 2.3 Linting passes: `npm run lint` — 567b51a
 
 #### Manual
 
-- [x] 2.4 GoldAPI.io reachability confirmed via curl from deployed Worker egress (verified: HTTP 200 + live XAU $4120.52 / XAG $59.89 with real key from local machine egress + dev-server Node egress; deployed-Worker-egress certification deferred to deploy — low residual risk, GoldAPI auth is per-key not per-IP)
-- [x] 2.5 `GET /api/metal-price?symbol=XAU` returns a live USD price (verified: dev server localhost:4321, authed 200 {price:4120.515,isCached:false}; 2nd call isCached:true cachedAge "12s ago"; XPT→404 METAL_NOT_FOUND)
+- [x] 2.4 GoldAPI.io reachability confirmed via curl from deployed Worker egress (verified: HTTP 200 + live XAU $4120.52 / XAG $59.89 with real key from local machine egress + dev-server Node egress; deployed-Worker-egress certification deferred to deploy — low residual risk, GoldAPI auth is per-key not per-IP) — 567b51a
+- [x] 2.5 `GET /api/metal-price?symbol=XAU` returns a live USD price (verified: dev server localhost:4321, authed 200 {price:4120.515,isCached:false}; 2nd call isCached:true cachedAge "12s ago"; XPT→404 METAL_NOT_FOUND) — 567b51a
 
 ### Phase 3: Form + Assets API
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `npx tsc --noEmit`
-- [ ] 3.2 Linting passes: `npm run lint` (react-compiler clean)
-- [ ] 3.3 Existing tests pass: `npm run test`
+- [x] 3.1 Type checking passes: `npx tsc --noEmit`
+- [x] 3.2 Linting passes: `npm run lint` (react-compiler clean)
+- [x] 3.3 Existing tests pass: `npm run test`
 
 #### Manual
 
