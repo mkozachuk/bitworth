@@ -320,9 +320,9 @@ Global cache keyed by metal (not per-user) keeps GoldAPI.io call volume far belo
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `npx tsc --noEmit`
-- [x] 3.2 Linting passes: `npm run lint` (react-compiler clean)
-- [x] 3.3 Existing tests pass: `npm run test`
+- [x] 3.1 Type checking passes: `npx tsc --noEmit` — bc11d3c
+- [x] 3.2 Linting passes: `npm run lint` (react-compiler clean) — bc11d3c
+- [x] 3.3 Existing tests pass: `npm run test` — bc11d3c
 
 #### Manual
 
@@ -334,10 +334,10 @@ Global cache keyed by metal (not per-user) keeps GoldAPI.io call volume far belo
 
 #### Automated
 
-- [ ] 4.1 Migration applies cleanly: `npx supabase db reset`
-- [ ] 4.2 Type checking passes: `npx tsc --noEmit`
-- [ ] 4.3 Linting passes: `npm run lint`
-- [ ] 4.4 Tests pass: `npm run test`
+- [x] 4.1 Migration applies cleanly: `npx supabase db reset`
+- [x] 4.2 Type checking passes: `npx tsc --noEmit`
+- [x] 4.3 Linting passes: `npm run lint`
+- [x] 4.4 Tests pass: `npm run test`
 
 #### Manual
 
