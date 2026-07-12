@@ -88,6 +88,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const category_id = form.get("category_id") as string | null;
   const notes = form.get("notes") as string | null;
   const crypto_symbol = form.get("crypto_symbol") as string | null;
+  const metal_symbol = form.get("metal_symbol") as string | null;
   const quantity = form.get("quantity") as string | null;
   const show_on_chart = form.get("show_on_chart");
 
@@ -124,6 +125,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       category_id,
       notes: notes !== "" ? notes : null,
       crypto_symbol: crypto_symbol !== "" ? crypto_symbol : null,
+      metal_symbol: metal_symbol !== "" ? metal_symbol : null,
       quantity: quantity !== "" && quantity !== null ? parseFloat(quantity) : null,
       show_on_chart: show_on_chart === "true",
       user_id: user.id,

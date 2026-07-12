@@ -3,6 +3,7 @@ import { Plus, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ServerError } from "@/components/auth/ServerError";
 import { CategorySelect } from "./CategorySelect";
+import { PricedQuantityFields } from "./PricedQuantityFields";
 import type { Tables } from "@/lib/database.types";
 
 interface Props {
@@ -27,21 +28,19 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
   );
   const [categoryId, setCategoryId] = useState(asset ? asset.category_id : "");
   const [notes, setNotes] = useState(asset ? (asset.notes ?? "") : "");
-  const [cryptoSymbol, setCryptoSymbol] = useState(asset ? (asset.crypto_symbol ?? "") : "");
-  const [cryptoPrice, setCryptoPrice] = useState<{ price: number; isCached: boolean } | null>(null);
-  const [priceStatus, setPriceStatus] = useState<"idle" | "loading" | "success" | "cached" | "error">("idle");
-  const [quantity, setQuantity] = useState(asset ? (asset.quantity != null ? String(asset.quantity) : "") : "");
   const [showOnChart, setShowOnChart] = useState(asset?.show_on_chart ?? false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [pending, setPending] = useState(false);
+
+  const isPriced = categoryId === "crypto" || categoryId === "precious_metals";
 
   function validate(): boolean {
     const next: FormErrors = {};
     if (!name.trim()) {
       next.name = "Name is required";
     }
-    // For crypto, amount is auto-calculated from quantity × price — skip validation
-    if (categoryId !== "crypto") {
+    // For priced categories, amount is auto-calculated from quantity × price — skip validation
+    if (!isPriced) {
       const amountNum = parseFloat(amount);
       if (!amount.trim()) {
         next.amount = "Amount is required";
@@ -121,7 +120,7 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
         {errors.name && <p className="mt-1 text-xs text-red-600 dark:text-red-300">{errors.name}</p>}
       </div>
 
-      {categoryId !== "crypto" && (
+      {!isPriced && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="amount" className="mb-1 block text-sm text-zinc-700 dark:text-blue-100/80">
@@ -192,122 +191,33 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
       />
 
       {categoryId === "crypto" && (
-        <div className="space-y-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-white/10 dark:bg-white/5">
-          <div>
-            <label htmlFor="crypto_symbol" className="mb-1 block text-sm text-zinc-700 dark:text-blue-100/80">
-              Crypto Symbol
-            </label>
-            <input
-              id="crypto_symbol"
-              name="crypto_symbol"
-              type="text"
-              value={cryptoSymbol}
-              onChange={(e) => {
-                setCryptoSymbol(e.target.value.toUpperCase());
-              }}
-              onBlur={() => {
-                setQuantity("");
-                if (!cryptoSymbol.trim()) return;
-                setPriceStatus("loading");
-                fetch(`/api/crypto-price?symbol=${encodeURIComponent(cryptoSymbol.trim())}`)
-                  .then((r) => r.json())
-                  .then(
-                    (data: {
-                      price?: number;
-                      isCached?: boolean;
-                      cachedAge?: string;
-                      error?: { code: string; message: string };
-                    }) => {
-                      if (data.error) {
-                        setPriceStatus("error");
-                        return;
-                      }
-                      if (data.price !== undefined && data.isCached !== undefined) {
-                        setCryptoPrice({ price: data.price, isCached: data.isCached });
-                        setPriceStatus(data.isCached ? "cached" : "success");
-                        if (quantity) {
-                          const qty = parseFloat(quantity);
-                          if (!isNaN(qty) && qty > 0) {
-                            setAmount(String(Math.round(qty * data.price * 100) / 100));
-                          }
-                        }
-                        if (data.cachedAge) {
-                          setCryptoPrice((prev) => (prev ? { ...prev } : null));
-                        }
-                      }
-                    },
-                  )
-                  .catch(() => {
-                    setPriceStatus("error");
-                  });
-              }}
-              placeholder="BTC, ETH, SOL..."
-              className="w-full rounded-lg border bg-white px-3 py-2 text-zinc-900 placeholder-zinc-500 transition-colors focus:ring-2 focus:outline-none dark:bg-white/10 dark:text-white dark:placeholder-white/40"
-              style={{ borderColor: "rgb(212 212 216)", boxShadow: "0 0 0 2px rgba(192,132,252,0.4)" }}
-            />
-            {priceStatus === "loading" && (
-              <p className="mt-1 text-xs text-zinc-500 dark:text-white/50">Fetching price…</p>
-            )}
-            {(priceStatus === "success" || priceStatus === "cached") && cryptoPrice && (
-              <p className="mt-1 text-xs text-zinc-700 dark:text-white/70">
-                {cryptoSymbol} — ${cryptoPrice.price.toLocaleString()}
-                {priceStatus === "cached" && ` (cached · ${(cryptoPrice as { cachedAge?: string }).cachedAge ?? ""})`}
-              </p>
-            )}
-            {priceStatus === "error" && (
-              <p className="mt-1 text-xs text-zinc-500 dark:text-white/40">Price unavailable</p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="quantity" className="mb-1 block text-sm text-zinc-700 dark:text-blue-100/80">
+        <PricedQuantityFields
+          symbolFieldName="crypto_symbol"
+          quantityLabel={
+            <>
               Quantity <span className="text-zinc-500 dark:text-white/40">(e.g., 0.5 BTC)</span>
-            </label>
-            <input
-              id="quantity"
-              name="quantity"
-              type="number"
-              step="any"
-              min="0"
-              placeholder="0"
-              value={quantity}
-              onChange={(e) => {
-                setQuantity(e.target.value);
-                if (cryptoPrice) {
-                  const qty = parseFloat(e.target.value);
-                  if (!isNaN(qty) && qty > 0) {
-                    setAmount(String(Math.round(qty * cryptoPrice.price * 100) / 100));
-                  }
-                }
-              }}
-              className="w-full rounded-lg border bg-white px-3 py-2 text-zinc-900 placeholder-zinc-500 transition-colors focus:ring-2 focus:outline-none dark:bg-white/10 dark:text-white dark:placeholder-white/40"
-              style={{ borderColor: "rgb(212 212 216)", boxShadow: "0 0 0 2px rgba(192,132,252,0.4)" }}
-            />
-            {cryptoPrice && (
-              <p className="mt-1 text-xs text-zinc-500 dark:text-white/40">
-                Enter quantity below — total value auto-calculates
-              </p>
-            )}
-          </div>
+            </>
+          }
+          priceEndpoint="/api/crypto-price"
+          symbolInput="crypto"
+          initialSymbol={asset ? (asset.crypto_symbol ?? "") : ""}
+          initialQuantity={asset ? (asset.quantity != null ? String(asset.quantity) : "") : ""}
+        />
+      )}
 
-          <div>
-            <label htmlFor="amount" className="mb-1 block text-sm text-zinc-700 dark:text-blue-100/80">
-              Total Value (USD) <span className="text-zinc-500 dark:text-white/40">— auto</span>
-            </label>
-            <input
-              id="amount"
-              name="amount"
-              type="number"
-              step="0.01"
-              min="0"
-              value={amount}
-              readOnly
-              placeholder="0.00"
-              className="w-full cursor-not-allowed rounded-lg border border-zinc-300 bg-zinc-100 px-3 py-2 text-zinc-700 placeholder-zinc-500 transition-colors dark:border-white/20 dark:bg-white/5 dark:text-white/70 dark:placeholder-white/40"
-            />
-            <input type="hidden" name="currency" value="USD" />
-          </div>
-        </div>
+      {categoryId === "precious_metals" && (
+        <PricedQuantityFields
+          symbolFieldName="metal_symbol"
+          quantityLabel={
+            <>
+              Quantity <span className="text-zinc-500 dark:text-white/40">(troy ounces)</span>
+            </>
+          }
+          priceEndpoint="/api/metal-price"
+          symbolInput="metals"
+          initialSymbol={asset ? (asset.metal_symbol ?? "") : ""}
+          initialQuantity={asset ? (asset.quantity != null ? String(asset.quantity) : "") : ""}
+        />
       )}
 
       <div>

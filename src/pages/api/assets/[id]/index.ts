@@ -50,6 +50,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
   const category_id = form.get("category_id") as string | null;
   const notes = form.get("notes") as string | null;
   const crypto_symbol = form.get("crypto_symbol") as string | null;
+  const metal_symbol = form.get("metal_symbol") as string | null;
   const quantity = form.get("quantity") as string | null;
   const show_on_chart = form.get("show_on_chart");
 
@@ -74,6 +75,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
   if (category_id !== null) updates.category_id = category_id;
   if (notes !== null) updates.notes = notes !== "" ? notes : null;
   if (crypto_symbol !== null) updates.crypto_symbol = crypto_symbol !== "" ? crypto_symbol : null;
+  if (metal_symbol !== null) updates.metal_symbol = metal_symbol !== "" ? metal_symbol : null;
   if (quantity !== null) updates.quantity = quantity !== "" ? parseFloat(quantity) : null;
   // The hidden mirror in AssetForm makes this always present on submit, so
   // toggle-off ("false") is captured rather than omitted.
