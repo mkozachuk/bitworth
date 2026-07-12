@@ -201,17 +201,17 @@ None. No schema, data, or API changes; no persisted state affected.
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `npm run typecheck`
-- [x] 2.2 Linting passes (including `react-compiler`): `npm run lint`
-- [x] 2.3 Production build succeeds: `npm run build`
-- [x] 2.4 Prettier formatting clean: `npm run format` leaves the file unchanged
+- [x] 2.1 Type checking passes: `npm run typecheck` — f3280ff
+- [x] 2.2 Linting passes (including `react-compiler`): `npm run lint` — f3280ff
+- [x] 2.3 Production build succeeds: `npm run build` — f3280ff
+- [x] 2.4 Prettier formatting clean: `npm run format` leaves the file unchanged — f3280ff
 
 #### Manual
 
-- [x] 2.5 Top-3 offenders each show a correctly-sided, severity-scaled diverging bar with current→target label and matching arrow (verified: read DriftAlerts.tsx:46-113 — over-target fills `left-1/2 rounded-r-full` with `ArrowUp`, under-target `right-1/2 rounded-l-full` with `ArrowDown`; fill width `min(|drift|/20,1)*50%` scales with severity; label built from `realPct`/`normalizedTargetPct`/`formatDrift`; `slice(0,3)`)
-- [x] 2.6 Amber severity palette reads as "attention", not good/bad (verified: read DriftAlerts.tsx — single amber accent `bg-amber-500`/`dark:bg-amber-400` for both fill and arrows, no green/red good-bad split; direction shown only by fill side + arrow)
-- [x] 2.7 Extreme drift clamps within the track; near-threshold drift still renders a visible correctly-sided fill (verified: clamp `Math.min(|drift|/20,1)*50` caps fill at the 50% half-width inside the `overflow-hidden` track, so +37pp cannot overflow; ~5pp near-threshold → 12.5% visible correctly-sided fill)
-- [x] 2.8 "Also drifting" line and proportional-targets note appear only under their existing conditions and are legible (verified: read DriftAlerts.tsx:116-124 — conditions `otherBreachingNames.length > 0` and `declaredSumOffTarget` unchanged from prior; standard legible text classes reused)
-- [ ] 2.9 Dark mode legibility verified
-- [x] 2.10 Reduced-motion: bars do not animate width when OS reduce-motion is on (verified: `motion-reduce:transition-none` on the sole width-animated fill div at DriftAlerts.tsx:85 — the exact Tailwind `prefers-reduced-motion` mechanism; `transition-[width]` is the only animation, so reduce-motion disables it deterministically)
-- [x] 2.11 No regression to sibling cards; card still absent when no card breaches the threshold (verified: change confined to DriftAlerts.tsx per touched-file set — sibling cards untouched; gating `{driftAlerts && …}` lives in dashboard.astro, not touched this phase)
+- [x] 2.5 Top-3 offenders each show a correctly-sided, severity-scaled diverging bar with current→target label and matching arrow (verified: read DriftAlerts.tsx:46-113 — over-target fills `left-1/2 rounded-r-full` with `ArrowUp`, under-target `right-1/2 rounded-l-full` with `ArrowDown`; fill width `min(|drift|/20,1)*50%` scales with severity; label built from `realPct`/`normalizedTargetPct`/`formatDrift`; `slice(0,3)`) — f3280ff
+- [x] 2.6 Amber severity palette reads as "attention", not good/bad (verified: read DriftAlerts.tsx — single amber accent `bg-amber-500`/`dark:bg-amber-400` for both fill and arrows, no green/red good-bad split; direction shown only by fill side + arrow) — f3280ff
+- [x] 2.7 Extreme drift clamps within the track; near-threshold drift still renders a visible correctly-sided fill (verified: clamp `Math.min(|drift|/20,1)*50` caps fill at the 50% half-width inside the `overflow-hidden` track, so +37pp cannot overflow; ~5pp near-threshold → 12.5% visible correctly-sided fill) — f3280ff
+- [x] 2.8 "Also drifting" line and proportional-targets note appear only under their existing conditions and are legible (verified: read DriftAlerts.tsx:116-124 — conditions `otherBreachingNames.length > 0` and `declaredSumOffTarget` unchanged from prior; standard legible text classes reused) — f3280ff
+- [x] 2.9 Dark mode legibility verified (verified: rendered the real DriftAlerts in a headless Chromium under a `.dark` wrapper with fabricated drift data and inspected the screenshot — amber-400 fill is bright/high-contrast on the dark track, white/gray label + heading text crisp, arrows and center marker visible, purple CTA high-contrast; DOM confirmed `.dark` active via computed `oklch(0.828 0.189 84.429)` = amber-400) — f3280ff
+- [x] 2.10 Reduced-motion: bars do not animate width when OS reduce-motion is on (verified: `motion-reduce:transition-none` on the sole width-animated fill div at DriftAlerts.tsx:85 — the exact Tailwind `prefers-reduced-motion` mechanism; `transition-[width]` is the only animation, so reduce-motion disables it deterministically) — f3280ff
+- [x] 2.11 No regression to sibling cards; card still absent when no card breaches the threshold (verified: change confined to DriftAlerts.tsx per touched-file set — sibling cards untouched; gating `{driftAlerts && …}` lives in dashboard.astro, not touched this phase) — f3280ff
