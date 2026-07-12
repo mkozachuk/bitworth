@@ -2,11 +2,13 @@ import { EPSILON } from "@/lib/allocation";
 
 type Currency = "USD" | "EUR" | "PLN";
 
-/** One offending asset within the worst-drifting card. Signed drift in pp (positive = over target). */
+/** One offending asset within the worst-drifting card. Weights are on a 100 base (mirrors DriftAsset). */
 export interface DriftOffender {
   asset_id: string;
   name: string;
-  drift: number;
+  drift: number; // signed pp (positive = over target); realPct − normalizedTargetPct
+  realPct: number; // current weight, normalized to a 100 base
+  normalizedTargetPct: number; // target weight, normalized to a 100 base
 }
 
 export interface DriftAlertsProps {

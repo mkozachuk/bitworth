@@ -209,7 +209,13 @@ if (showDriftAlerts) {
     driftAlerts = {
       worstName: drift.worst.name,
       declaredSum: drift.worst.declaredSum,
-      offenders: drift.worst.offenders.map((o) => ({ asset_id: o.asset_id, name: o.name, drift: o.drift })),
+      offenders: drift.worst.offenders.map((o) => ({
+        asset_id: o.asset_id,
+        name: o.name,
+        drift: o.drift,
+        realPct: o.realPct,
+        normalizedTargetPct: o.normalizedTargetPct,
+      })),
       otherBreachingNames: drift.otherBreachingNames,
       threshold: drift.threshold,
       displayCurrency,
