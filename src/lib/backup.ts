@@ -53,6 +53,7 @@ export const ASSETS_COLUMNS = [
   "amount",
   "currency",
   "crypto_symbol",
+  "metal_symbol",
   "notes",
   "quantity",
   "show_on_chart",

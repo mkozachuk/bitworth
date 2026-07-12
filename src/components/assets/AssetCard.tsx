@@ -18,6 +18,7 @@ interface Props {
 export function AssetCard({ asset, onDelete, displayCurrency, rates, totalAssets }: Props) {
   const converted = convertAmount(asset.amount, asset.currency as Currency, displayCurrency, rates);
   const sharePct = asset.category.is_liability ? null : assetSharePct(converted, totalAssets);
+  const priceSymbol = asset.crypto_symbol ?? asset.metal_symbol;
 
   return (
     <li className="border-b border-zinc-200 transition-colors last:border-0 active:bg-zinc-50 dark:border-white/10 dark:active:bg-white/5">
@@ -34,16 +35,20 @@ export function AssetCard({ asset, onDelete, displayCurrency, rates, totalAssets
             {converted.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
             {displayCurrency}
           </span>
-          <CurrencyBadge currency={asset.currency as Currency} cryptoSymbol={asset.crypto_symbol} />
+          <CurrencyBadge
+            currency={asset.currency as Currency}
+            cryptoSymbol={asset.crypto_symbol}
+            metalSymbol={asset.metal_symbol}
+          />
         </div>
       </div>
-      {asset.category_id === "crypto" && asset.crypto_symbol ? (
+      {priceSymbol ? (
         <p className="mt-1 text-xs text-zinc-500 tabular-nums dark:text-white/40">
           ~
           {asset.quantity != null
             ? asset.quantity.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 4 })
             : asset.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
-          {asset.crypto_symbol}
+          {priceSymbol}
         </p>
       ) : (
         <p className="mt-1 text-xs text-zinc-500 tabular-nums dark:text-white/40">
