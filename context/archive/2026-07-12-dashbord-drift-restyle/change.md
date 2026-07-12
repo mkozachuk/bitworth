@@ -1,10 +1,10 @@
 ---
 change_id: dashbord-drift-restyle
 title: Restyle the dashboard Allocation Drift card into a friendlier, visual UX
-status: implemented
+status: archived
 created: 2026-07-12
 updated: 2026-07-12
-archived_at: null
+archived_at: 2026-07-12T18:08:30Z
 ---
 
 ## Notes
