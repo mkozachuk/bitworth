@@ -3,7 +3,7 @@ project: "BitWorth"
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-07-11
+updated: 2026-07-12
 prd_version: 1
 main_goal: market-feedback
 top_blocker: capacity
@@ -45,7 +45,7 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 | S-15 | asset-balancer             | set target % per asset for an investment set and compare declared vs real allocation as pie charts | F-01, S-01, S-02       | —                    | done    |
 | S-16 | monte-carlo-simulation     | run thousands of randomized market paths to see the probability of reaching their FIRE goal        | F-01, S-01, S-02, S-09 | —                    | done    |
 | S-17 | contributions-vs-growth    | see each period's net-worth change split into contributions vs market growth                       | F-01, S-01, S-02, S-05 | —                    | done    |
-| S-18 | allocation-drift-alerts    | get a dashboard alert when real allocation drifts past a threshold from a card's target            | F-01, S-01, S-02, S-15 | —                    | planned |
+| S-18 | allocation-drift-alerts    | get a dashboard alert when real allocation drifts past a threshold from a card's target            | F-01, S-01, S-02, S-15 | —                    | done |
 | S-19 | metal-price-fetch          | see live gold/silver spot prices (in display currency) when adding a precious-metals asset         | F-01, S-01, S-03       | —                    | planned |
 
 ## Streams
@@ -381,7 +381,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - **Scope of cards.** Evaluate all of the user's cards and show the most-drifted card(s). Degrade to nothing when there are no cards/targets or the selected-value denominator is near zero (reuse `computeAllocation`'s `realPct === null` guard). (Owner: planner)
   - **Data load.** `dashboard.astro` already loads assets + rates (for the FIRE card); extend it to also load `allocation_cards` + `allocation_targets`, reusing the balancer page's SSR load pattern, and pass them into a new gated `DriftAlerts` island. (Owner: planner)
 - **Risk:** low — read-and-present over the existing, tested allocation engine. Main risks: (a) declared-sum-≠-100 skewing the comparison — mitigant: normalize declared within the card; (b) empty / no-card / near-zero-denominator states must render nothing, not crash — mitigant: reuse `computeAllocation`'s null-`realPct` guard and `EPSILON`; (c) keep the math pure — extend `src/lib/allocation.ts` with a unit-tested `computeDrift(...)` helper reusing `computeAllocation`, `EPSILON`, and the currency-cast boundary.
-- **Status:** planned
+- **Status:** done
 
 ### S-19: Precious-metals price fetch on asset entry
 
@@ -482,3 +482,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **S-15: Asset balancer (target allocation)** — Archived 2026-07-11 → `context/archive/2026-06-24-asset-balancer/`. Lesson: —.
 - **S-16: Monte Carlo simulation** — Archived 2026-07-11 → `context/archive/2026-06-25-monte-carlo-simulation/`. Lesson: —.
 - **S-17: Contributions vs market growth** — Archived 2026-07-11 → `context/archive/2026-06-28-contributions-vs-growth/`. Lesson: —.
+- **S-18: Allocation-drift alerts** — Archived 2026-07-12 → `context/archive/2026-07-11-allocation-drift-alerts/`. Lesson: —.
