@@ -287,10 +287,10 @@ One additive column (`show_trajectory BOOLEAN NOT NULL DEFAULT TRUE`). Existing 
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `npm run typecheck`
-- [x] 2.2 Linting passes: `npm run lint`
-- [x] 2.3 Migration applies against local Supabase
-- [x] 2.4 Existing tests pass: `npm run test:run`
+- [x] 2.1 Type checking passes: `npm run typecheck` — bed4831
+- [x] 2.2 Linting passes: `npm run lint` — bed4831
+- [x] 2.3 Migration applies against local Supabase — bed4831
+- [x] 2.4 Existing tests pass: `npm run test:run` — bed4831
 
 #### Manual
 
@@ -301,10 +301,10 @@ One additive column (`show_trajectory BOOLEAN NOT NULL DEFAULT TRUE`). Existing 
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `npm run typecheck`
-- [ ] 3.2 Linting passes (react-compiler clean): `npm run lint`
-- [ ] 3.3 Existing + new tests pass: `npm run test:run`
-- [ ] 3.4 Production build succeeds: `npm run build`
+- [x] 3.1 Type checking passes: `npm run typecheck`
+- [x] 3.2 Linting passes (react-compiler clean): `npm run lint`
+- [x] 3.3 Existing + new tests pass: `npm run test:run`
+- [x] 3.4 Production build succeeds: `npm run build`
 
 #### Manual
 
