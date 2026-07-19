@@ -72,12 +72,13 @@ const trendSnapshotItems: SnapshotItemWithDate[] = ((snapshotsWithItems ?? []) a
 const { data: prefs } = await supabase
   .from("user_preferences")
   .select(
-    "show_fire_dashboard, show_drift_alerts, fire_current_age, fire_annual_income, fire_annual_expenses, fire_expected_return, fire_inflation_rate, fire_safe_withdrawal_rate, fire_starting_principal_override, fire_traditional_retirement_age, fire_barista_income",
+    "show_fire_dashboard, show_drift_alerts, show_trajectory, fire_current_age, fire_annual_income, fire_annual_expenses, fire_expected_return, fire_inflation_rate, fire_safe_withdrawal_rate, fire_starting_principal_override, fire_traditional_retirement_age, fire_barista_income",
   )
   .eq("user_id", user.id)
   .maybeSingle();
 
 const showFireDashboard: boolean = (prefs?.show_fire_dashboard ?? true) as boolean;
+const showTrajectory: boolean = (prefs?.show_trajectory ?? true) as boolean;
 const firePrefs = (prefs ?? {}) as Record<string, number | null>;
 
 interface FireCardProps {
@@ -256,6 +257,7 @@ if (showDriftAlerts) {
           <NetWorthChart
             snapshots={snapshots as Tables<"snapshots">[]}
             displayCurrency={displayCurrency}
+            showTrajectory={showTrajectory}
             onSaveSnapshot={() => {
               window.location.reload();
             }}

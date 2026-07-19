@@ -41,6 +41,7 @@ export const USER_PREFERENCES_COLUMNS = [
   "fire_traditional_retirement_age",
   "show_fire_dashboard",
   "show_drift_alerts",
+  "show_trajectory",
   "created_at",
   "updated_at",
 ] as const satisfies readonly (keyof UserPreferencesRow)[];

@@ -36,6 +36,7 @@ function makeInput(): BackupInput {
         fire_traditional_retirement_age: 65,
         show_fire_dashboard: true,
         show_drift_alerts: true,
+        show_trajectory: true,
         created_at: ISO,
         updated_at: ISO,
       },

@@ -13,7 +13,7 @@ type Theme = (typeof VALID_THEMES)[number];
 // Columns returned by both GET and PUT — kept in one constant so the read and
 // write projections never drift. Mirrors the user_preferences table.
 const PREFS_SELECT =
-  "display_currency, theme, show_fire_dashboard, show_drift_alerts, fire_current_age, fire_annual_income, fire_annual_expenses, " +
+  "display_currency, theme, show_fire_dashboard, show_drift_alerts, show_trajectory, fire_current_age, fire_annual_income, fire_annual_expenses, " +
   "fire_expected_return, fire_inflation_rate, fire_safe_withdrawal_rate, fire_starting_principal_override, " +
   "fire_traditional_retirement_age, fire_barista_income";
 
@@ -157,6 +157,7 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
     theme?: Theme;
     show_fire_dashboard?: boolean;
     show_drift_alerts?: boolean;
+    show_trajectory?: boolean;
   } & FireUpdates = {};
 
   if (raw.display_currency !== undefined) {
@@ -185,6 +186,13 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       return jsonError("VALIDATION_ERROR", "show_drift_alerts must be a boolean", 400);
     }
     updates.show_drift_alerts = raw.show_drift_alerts;
+  }
+
+  if (raw.show_trajectory !== undefined) {
+    if (typeof raw.show_trajectory !== "boolean") {
+      return jsonError("VALIDATION_ERROR", "show_trajectory must be a boolean", 400);
+    }
+    updates.show_trajectory = raw.show_trajectory;
   }
 
   const fireResult = parseFireUpdates(raw);

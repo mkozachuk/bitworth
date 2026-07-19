@@ -15,6 +15,7 @@ interface SnapshotPoint {
 interface Props {
   snapshots: SnapshotRow[];
   displayCurrency: Currency;
+  showTrajectory?: boolean;
   onSaveSnapshot?: () => void;
 }
 

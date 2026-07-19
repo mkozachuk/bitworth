@@ -275,22 +275,22 @@ One additive column (`show_trajectory BOOLEAN NOT NULL DEFAULT TRUE`). Existing 
 
 #### Automated
 
-- [x] 1.1 Unit tests pass: `npm run test:run`
-- [x] 1.2 Type checking passes: `npm run typecheck`
-- [x] 1.3 Linting passes: `npm run lint`
+- [x] 1.1 Unit tests pass: `npm run test:run` — 11fb745
+- [x] 1.2 Type checking passes: `npm run typecheck` — 11fb745
+- [x] 1.3 Linting passes: `npm run lint` — 11fb745
 
 #### Manual
 
-- [x] 1.4 Hand-computed 2-point linear projection matches `valueAt`/`etaToTarget` (verified: read trajectory.ts:53-181, hand oracle t=0→100/t=30→400 gives slope 10 intercept 100, valueAt(60)=700, etaToTarget(550,30)=45 — all match)
+- [x] 1.4 Hand-computed 2-point linear projection matches `valueAt`/`etaToTarget` (verified: read trajectory.ts:53-181, hand oracle t=0→100/t=30→400 gives slope 10 intercept 100, valueAt(60)=700, etaToTarget(550,30)=45 — all match) — 11fb745
 
 ### Phase 2: `show_trajectory` settings gate
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `npm run typecheck`
-- [ ] 2.2 Linting passes: `npm run lint`
-- [ ] 2.3 Migration applies against local Supabase
-- [ ] 2.4 Existing tests pass: `npm run test:run`
+- [x] 2.1 Type checking passes: `npm run typecheck`
+- [x] 2.2 Linting passes: `npm run lint`
+- [x] 2.3 Migration applies against local Supabase
+- [x] 2.4 Existing tests pass: `npm run test:run`
 
 #### Manual
 
