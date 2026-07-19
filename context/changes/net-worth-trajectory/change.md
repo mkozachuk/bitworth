@@ -1,7 +1,7 @@
 ---
 change_id: net-worth-trajectory
 title: Empirical net-worth trajectory — project future net worth and target ETA from real snapshot history
-status: new
+status: implementing
 created: 2026-07-19
 updated: 2026-07-19
 archived_at: null
