@@ -301,10 +301,10 @@ One additive column (`show_trajectory BOOLEAN NOT NULL DEFAULT TRUE`). Existing 
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `npm run typecheck`
-- [x] 3.2 Linting passes (react-compiler clean): `npm run lint`
-- [x] 3.3 Existing + new tests pass: `npm run test:run`
-- [x] 3.4 Production build succeeds: `npm run build`
+- [x] 3.1 Type checking passes: `npm run typecheck` — f8366fe
+- [x] 3.2 Linting passes (react-compiler clean): `npm run lint` — f8366fe
+- [x] 3.3 Existing + new tests pass: `npm run test:run` — f8366fe
+- [x] 3.4 Production build succeeds: `npm run build` — f8366fe
 
 #### Manual
 
