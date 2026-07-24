@@ -1,6 +1,12 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { ASSETS_COLUMNS, SNAPSHOTS_COLUMNS, SNAPSHOT_ITEMS_COLUMNS, USER_PREFERENCES_COLUMNS } from "@/lib/backup";
+import {
+  ASSETS_COLUMNS,
+  GOALS_COLUMNS,
+  SNAPSHOTS_COLUMNS,
+  SNAPSHOT_ITEMS_COLUMNS,
+  USER_PREFERENCES_COLUMNS,
+} from "@/lib/backup";
 
 // Parity guard between the two halves of the backup round-trip.
 //
@@ -24,6 +30,7 @@ const INTENTIONALLY_OMITTED: Record<string, readonly string[]> = {
   assets: ["id"],
   snapshots: [],
   snapshot_items: ["id"],
+  goals: ["id"],
 };
 
 function latestRestoreBackupMigration(): { name: string; sql: string } {
@@ -69,6 +76,7 @@ const TABLES = [
   ["assets", ASSETS_COLUMNS],
   ["snapshots", SNAPSHOTS_COLUMNS],
   ["snapshot_items", SNAPSHOT_ITEMS_COLUMNS],
+  ["goals", GOALS_COLUMNS],
 ] as const;
 
 describe(`restore_backup import parity (${migrationName})`, () => {

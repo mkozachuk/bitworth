@@ -675,38 +675,38 @@ Three migrations, all forward-only with commented rollback blocks: `202607241300
 
 #### Automated
 
-- [x] 5.1 Type checking passes: `npx tsc --noEmit`
-- [x] 5.2 Linting passes: `npm run lint`
-- [x] 5.3 Full suite passes: `npm run test:ci`
-- [x] 5.4 Production build succeeds: `npm run build`
+- [x] 5.1 Type checking passes: `npx tsc --noEmit` — 025a54a
+- [x] 5.2 Linting passes: `npm run lint` — 025a54a
+- [x] 5.3 Full suite passes: `npm run test:ci` — 025a54a
+- [x] 5.4 Production build succeeds: `npm run build` — 025a54a
 
 #### Manual
 
-- [x] 5.5 Empty state renders the placeholder with a working CTA (verified: Playwright as a goal-less user — eyebrow plus the purple "Create your first goal" CTA, which navigates to `/dashboard/goals`)
-- [x] 5.6 4+ goals render exactly 3 by descending progress with `+N more` (verified: seeded 4 goals; exactly 3 `progressbar`s render with `aria-valuenow` 200/50/50 in descending order, the 25% goal has no bar, and the "+1 more goal" link points at `/dashboard/goals`)
-- [x] 5.7 Over-100% goal shows uncapped label, clamped bar, Reached state (verified: target 50k against 100k net worth → `aria-valuenow="200"`, label reads "200%", inline `width: 100%` with `bg-emerald-500`, and a "Reached" status row instead of a date)
-- [x] 5.8 Net-worth goal shows a plausible ETA; target date flips the on-track badge (verified: on the seeded +1000/day trend the 200k target projected to November 1, 2026 — exactly 100 days out, matching the hand-computed crossing; no badge with no target date, "Behind" for 2026-08-01, "On track" for 2027-12-31)
-- [x] 5.9 Category goal shows a bar and no ETA row (verified: `Progress toward Emergency fund` bar at 50% of the savings subtotal, with no "Est. completion" row, no "N/A", and no trend copy anywhere in the block)
-- [x] 5.10 Currency switch shows insufficient-history copy, not "won't reach" (verified: switching display currency to EUR leaves zero comparable snapshots → "Not enough snapshot history in this currency to project a date." rendered and the "won't reach" sentence absent)
-- [x] 5.11 Settings toggle hides and restores the card (verified: `show_goals: false` → card and all progressbars gone after reload; `true` → restored)
-- [x] 5.12 Card matches `FireProgress` in shell, spacing, and dark mode (verified: shell carries the gated-card family string — `bg-white/80`, `backdrop-blur-xl`, `border-zinc-200`, `dark:bg-white/10` — and not the chart cards' `dark:bg-white/5`; confirmed visually on a dark-mode screenshot with the card sitting directly below FireProgress)
+- [x] 5.5 Empty state renders the placeholder with a working CTA (verified: Playwright as a goal-less user — eyebrow plus the purple "Create your first goal" CTA, which navigates to `/dashboard/goals`) — 025a54a
+- [x] 5.6 4+ goals render exactly 3 by descending progress with `+N more` (verified: seeded 4 goals; exactly 3 `progressbar`s render with `aria-valuenow` 200/50/50 in descending order, the 25% goal has no bar, and the "+1 more goal" link points at `/dashboard/goals`) — 025a54a
+- [x] 5.7 Over-100% goal shows uncapped label, clamped bar, Reached state (verified: target 50k against 100k net worth → `aria-valuenow="200"`, label reads "200%", inline `width: 100%` with `bg-emerald-500`, and a "Reached" status row instead of a date) — 025a54a
+- [x] 5.8 Net-worth goal shows a plausible ETA; target date flips the on-track badge (verified: on the seeded +1000/day trend the 200k target projected to November 1, 2026 — exactly 100 days out, matching the hand-computed crossing; no badge with no target date, "Behind" for 2026-08-01, "On track" for 2027-12-31) — 025a54a
+- [x] 5.9 Category goal shows a bar and no ETA row (verified: `Progress toward Emergency fund` bar at 50% of the savings subtotal, with no "Est. completion" row, no "N/A", and no trend copy anywhere in the block) — 025a54a
+- [x] 5.10 Currency switch shows insufficient-history copy, not "won't reach" (verified: switching display currency to EUR leaves zero comparable snapshots → "Not enough snapshot history in this currency to project a date." rendered and the "won't reach" sentence absent) — 025a54a
+- [x] 5.11 Settings toggle hides and restores the card (verified: `show_goals: false` → card and all progressbars gone after reload; `true` → restored) — 025a54a
+- [x] 5.12 Card matches `FireProgress` in shell, spacing, and dark mode (verified: shell carries the gated-card family string — `bg-white/80`, `backdrop-blur-xl`, `border-zinc-200`, `dark:bg-white/10` — and not the chart cards' `dark:bg-white/5`; confirmed visually on a dark-mode screenshot with the card sitting directly below FireProgress) — 025a54a
 
 ### Phase 6: Backup Round-Trip
 
 #### Automated
 
-- [ ] 6.1 Migration applies cleanly: `npx supabase db reset`
-- [ ] 6.2 Parity gate passes: `npx vitest run src/lib/backup-rpc-parity.test.ts`
-- [ ] 6.3 Backup module tests pass: `npx vitest run src/lib/backup.test.ts`
-- [ ] 6.4 Backup route tests pass: `npx vitest run src/pages/api/backup`
-- [ ] 6.5 Full suite passes: `npm run test:ci`
-- [ ] 6.6 Type checking passes: `npx tsc --noEmit`
-- [ ] 6.7 Linting passes: `npm run lint`
+- [x] 6.1 Migration applies cleanly: `npx supabase db reset`
+- [x] 6.2 Parity gate passes: `npx vitest run src/lib/backup-rpc-parity.test.ts`
+- [x] 6.3 Backup module tests pass: `npx vitest run src/lib/backup.test.ts`
+- [x] 6.4 Backup route tests pass: `npx vitest run src/pages/api/backup`
+- [x] 6.5 Full suite passes: `npm run test:ci`
+- [x] 6.6 Type checking passes: `npx tsc --noEmit`
+- [x] 6.7 Linting passes: `npm run lint`
 
 #### Manual
 
-- [ ] 6.8 Export carries `goals`, `show_goals: false`, and `schemaVersion: 2`
-- [ ] 6.9 `replace` import restores goals and the hidden card
-- [ ] 6.10 `merge` import keeps the toggle off (the thrice-shipped bug)
-- [ ] 6.11 Pre-change backup with no `goals` key imports successfully
-- [ ] 6.12 Unknown `category_id` fails with `UNKNOWN_CATEGORY` before any write
+- [x] 6.8 Export carries `goals`, `show_goals: false`, and `schemaVersion: 2` (verified: real `GET /api/backup/export` for a user with 2 goals and the toggle off — `schemaVersion: 2`, both goals in `data.goals`, `show_goals: false` in `user_preferences`)
+- [x] 6.9 `replace` import restores goals and the hidden card (verified: posted that envelope with `mode: "replace"` as a second account → 200; both goals present in Postgres with correct `kind`, `category_id` and `target_date`, and `show_goals` = `f`)
+- [x] 6.10 `merge` import keeps the toggle off (the thrice-shipped bug) (verified: deliberately flipped the target account's `show_goals` back to `true` first so `ON CONFLICT … DO UPDATE SET` had to overwrite it, then merge-imported → back to `f`. This is the exact line whose omission shipped the bug three times; it holds)
+- [x] 6.11 Pre-change backup with no `goals` key imports successfully (verified: stripped `goals` and `show_goals` and set `schemaVersion: 1` → 200, zero goals written, and `show_goals` re-defaulted to `t` via the RPC's `COALESCE`)
+- [x] 6.12 Unknown `category_id` fails with `UNKNOWN_CATEGORY` before any write (verified: → 400 `UNKNOWN_CATEGORY` with `context.unknownCategoryIds: ["no_such_category"]`, and the goals table stayed at 0 rows — rejected ahead of the RPC, not by the FK)
