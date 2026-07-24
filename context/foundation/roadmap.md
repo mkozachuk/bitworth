@@ -580,3 +580,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **S-17: Contributions vs market growth** — Archived 2026-07-11 → `context/archive/2026-06-28-contributions-vs-growth/`. Lesson: —.
 - **S-18: Allocation-drift alerts** — Archived 2026-07-12 → `context/archive/2026-07-11-allocation-drift-alerts/`. Lesson: —.
 - **S-19: Precious-metals price fetch on asset entry** — Archived 2026-07-12 → `context/archive/2026-07-12-metal-price-fetch/`. Lesson: —.
+- **S-20: Empirical net-worth trajectory** — Archived 2026-07-24 → `context/archive/2026-07-19-net-worth-trajectory/`. Note: built on a feature branch and merged to master on archive day; the eight manual checks were re-run as `e2e/trajectory-verify.spec.ts` rather than recalled. Lesson: a screenshot timed on DOM-readiness catches Recharts mid-animation and reads as a rendering defect — settle on pixels before judging anything visual.
