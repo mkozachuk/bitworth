@@ -640,36 +640,36 @@ Three migrations, all forward-only with commented rollback blocks: `202607241300
 
 #### Automated
 
-- [x] 3.1 New handler tests pass: `npx vitest run src/pages/api/goals`
-- [x] 3.2 Auth-contract walk covers the new routes
-- [x] 3.3 Full suite passes: `npm run test:ci`
-- [x] 3.4 Type checking passes: `npx tsc --noEmit`
-- [x] 3.5 Linting passes: `npm run lint`
+- [x] 3.1 New handler tests pass: `npx vitest run src/pages/api/goals` — 68f196f
+- [x] 3.2 Auth-contract walk covers the new routes — 68f196f
+- [x] 3.3 Full suite passes: `npm run test:ci` — 68f196f
+- [x] 3.4 Type checking passes: `npx tsc --noEmit` — 68f196f
+- [x] 3.5 Linting passes: `npm run lint` — 68f196f
 
 #### Manual
 
-- [x] 3.6 Incoherent `kind`/`category_id` POST returns 400, not 500 (verified: curl against dev server as a real signed-in user — `net_worth`+`category_id` → 400 `VALIDATION_ERROR` "category_id must be absent when kind is net_worth"; `category` without one → 400 with the mirrored message)
-- [x] 3.7 PATCH against a foreign goal id returns 404 (verified: two accounts; A PATCHing B's goal → 404 `NOT_FOUND`, A DELETEing it → 404, and a follow-up GET as B confirmed the row unchanged)
-- [x] 3.8 `target_amount: 0` returns 400 (verified: → 400 "target_amount must be greater than 0"; `100.123` → 400 "at most 2 decimal places", the `NUMERIC(18,2)` precision guard)
-- [x] 3.9 PUT `/api/user-preferences` with `show_goals` persists (verified: PUT `{"show_goals":false}` → 200 with the flag in the response body, confirmed `f` in Postgres for that user while the other account still read `t` from the column default; non-boolean → 400)
+- [x] 3.6 Incoherent `kind`/`category_id` POST returns 400, not 500 (verified: curl against dev server as a real signed-in user — `net_worth`+`category_id` → 400 `VALIDATION_ERROR` "category_id must be absent when kind is net_worth"; `category` without one → 400 with the mirrored message) — 68f196f
+- [x] 3.7 PATCH against a foreign goal id returns 404 (verified: two accounts; A PATCHing B's goal → 404 `NOT_FOUND`, A DELETEing it → 404, and a follow-up GET as B confirmed the row unchanged) — 68f196f
+- [x] 3.8 `target_amount: 0` returns 400 (verified: → 400 "target_amount must be greater than 0"; `100.123` → 400 "at most 2 decimal places", the `NUMERIC(18,2)` precision guard) — 68f196f
+- [x] 3.9 PUT `/api/user-preferences` with `show_goals` persists (verified: PUT `{"show_goals":false}` → 200 with the flag in the response body, confirmed `f` in Postgres for that user while the other account still read `t` from the column default; non-boolean → 400) — 68f196f
 
 ### Phase 4: Goals Page & Nav
 
 #### Automated
 
-- [ ] 4.1 Type checking passes: `npx tsc --noEmit`
-- [ ] 4.2 Linting passes: `npm run lint`
-- [ ] 4.3 Full suite passes: `npm run test:ci`
-- [ ] 4.4 Production build succeeds: `npm run build`
+- [x] 4.1 Type checking passes: `npx tsc --noEmit`
+- [x] 4.2 Linting passes: `npm run lint`
+- [x] 4.3 Full suite passes: `npm run test:ci`
+- [x] 4.4 Production build succeeds: `npm run build`
 
 #### Manual
 
-- [ ] 4.5 Goals reachable from desktop nav and mobile dropdown
-- [ ] 4.6 Both goal kinds create successfully; category select is conditional
-- [ ] 4.7 Edit updates the list without a page reload
-- [ ] 4.8 Delete confirms and removes the row
-- [ ] 4.9 Invalid `target_amount` surfaces the API error message
-- [ ] 4.10 Native date input round-trips through save and reload
+- [x] 4.5 Goals reachable from desktop nav and mobile dropdown (verified: Playwright against the dev server — desktop link visible at 1280px and navigates; at 390px the desktop item is CSS-hidden and the Radix dropdown's Goals menuitem navigates)
+- [x] 4.6 Both goal kinds create successfully; category select is conditional (verified: net_worth default renders zero Category selects; created a 1,000,000 EUR net-worth goal, then switching kind revealed the picker and a savings_account category goal created — 2 rows)
+- [x] 4.7 Edit updates the list without a page reload (verified: set a `window` marker before editing; the rename landed in the table and the marker survived, proving no document navigation)
+- [x] 4.8 Delete confirms and removes the row (verified: dismissing the `window.confirm` left the row intact; accepting removed it and the empty state returned)
+- [x] 4.9 Invalid `target_amount` surfaces the API error message (verified: `0` rendered "target_amount must be greater than 0" with nothing written; `100.123` rendered the distinct 2-decimal-places message)
+- [x] 4.10 Native date input round-trips through save and reload (verified: input is `type="date"`; `2027-12-31` persisted, survived a full page reload from Postgres, and repopulated the edit form)
 
 ### Phase 5: Settings Toggle & Dashboard Card
 
