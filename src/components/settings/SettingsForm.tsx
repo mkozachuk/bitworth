@@ -11,6 +11,7 @@ interface Props {
   initialShowFireDashboard: boolean;
   initialShowDriftAlerts: boolean;
   initialShowTrajectory: boolean;
+  initialShowGoals: boolean;
 }
 
 const CURRENCIES: { value: Currency; label: string }[] = [
@@ -31,12 +32,14 @@ export function SettingsForm({
   initialShowFireDashboard,
   initialShowDriftAlerts,
   initialShowTrajectory,
+  initialShowGoals,
 }: Props) {
   const [displayCurrency, setDisplayCurrency] = useState<Currency>(initialDisplayCurrency);
   const [theme, setTheme] = useState<Theme>(initialTheme);
   const [showFireDashboard, setShowFireDashboard] = useState<boolean>(initialShowFireDashboard);
   const [showDriftAlerts, setShowDriftAlerts] = useState<boolean>(initialShowDriftAlerts);
   const [showTrajectory, setShowTrajectory] = useState<boolean>(initialShowTrajectory);
+  const [showGoals, setShowGoals] = useState<boolean>(initialShowGoals);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -45,7 +48,8 @@ export function SettingsForm({
     theme !== initialTheme ||
     showFireDashboard !== initialShowFireDashboard ||
     showDriftAlerts !== initialShowDriftAlerts ||
-    showTrajectory !== initialShowTrajectory;
+    showTrajectory !== initialShowTrajectory ||
+    showGoals !== initialShowGoals;
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -59,12 +63,14 @@ export function SettingsForm({
       show_fire_dashboard?: boolean;
       show_drift_alerts?: boolean;
       show_trajectory?: boolean;
+      show_goals?: boolean;
     } = {};
     if (displayCurrency !== initialDisplayCurrency) updates.display_currency = displayCurrency;
     if (theme !== initialTheme) updates.theme = theme;
     if (showFireDashboard !== initialShowFireDashboard) updates.show_fire_dashboard = showFireDashboard;
     if (showDriftAlerts !== initialShowDriftAlerts) updates.show_drift_alerts = showDriftAlerts;
     if (showTrajectory !== initialShowTrajectory) updates.show_trajectory = showTrajectory;
+    if (showGoals !== initialShowGoals) updates.show_goals = showGoals;
 
     try {
       const res = await fetch("/api/user-preferences", {
@@ -211,6 +217,24 @@ export function SettingsForm({
         </label>
         <p className="mt-1 text-xs text-zinc-500 dark:text-white/40">
           Extends your net-worth chart with a projected trend line and an estimated date to reach a target.
+        </p>
+      </div>
+
+      <div>
+        <label htmlFor="show_goals" className="flex items-center gap-2 text-sm text-zinc-700 dark:text-blue-100/80">
+          <input
+            id="show_goals"
+            type="checkbox"
+            checked={showGoals}
+            onChange={(e) => {
+              setShowGoals(e.target.checked);
+            }}
+            className="size-4 accent-purple-600"
+          />
+          Show savings goals on dashboard
+        </label>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-white/40">
+          Adds a card with your top savings goals, each with a progress bar and an estimated completion date.
         </p>
       </div>
 

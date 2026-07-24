@@ -13,11 +13,18 @@ import { AssetTrendsChart, type SnapshotItemWithDate } from "@/components/AssetT
 import { FireProgress } from "@/components/fire/FireProgress";
 import { computeDrift, type AllocationAsset, type DriftCardInput } from "@/lib/allocation";
 import { DriftAlerts, type DriftAlertsProps } from "@/components/balancer/DriftAlerts";
+import { convertAmount } from "@/lib/net-worth";
+import { fitLinear, type Fit, type TrajectorySample } from "@/lib/trajectory";
+import { goalCurrentValue, goalEta, goalProgressPct, onTrackVerdict, type GoalAsset } from "@/lib/goals";
+import { GoalsProgress, type GoalProgressItem, type GoalsProgressProps } from "@/components/goals/GoalsProgress";
 import type { Tables } from "@/lib/database.types";
 
 type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
 type SnapshotItemWithCategory = Tables<"snapshot_items"> & { category: Tables<"asset_categories"> };
 type Currency = "USD" | "EUR" | "PLN";
+
+/** The trajectory sample axis is days; mirrors NetWorthChart.tsx:20. */
+const MS_PER_DAY = 86_400_000;
 
 const { user } = Astro.locals;
 
@@ -72,13 +79,14 @@ const trendSnapshotItems: SnapshotItemWithDate[] = ((snapshotsWithItems ?? []) a
 const { data: prefs } = await supabase
   .from("user_preferences")
   .select(
-    "show_fire_dashboard, show_drift_alerts, show_trajectory, fire_current_age, fire_annual_income, fire_annual_expenses, fire_expected_return, fire_inflation_rate, fire_safe_withdrawal_rate, fire_starting_principal_override, fire_traditional_retirement_age, fire_barista_income",
+    "show_fire_dashboard, show_drift_alerts, show_trajectory, show_goals, fire_current_age, fire_annual_income, fire_annual_expenses, fire_expected_return, fire_inflation_rate, fire_safe_withdrawal_rate, fire_starting_principal_override, fire_traditional_retirement_age, fire_barista_income",
   )
   .eq("user_id", user.id)
   .maybeSingle();
 
 const showFireDashboard: boolean = (prefs?.show_fire_dashboard ?? true) as boolean;
 const showTrajectory: boolean = (prefs?.show_trajectory ?? true) as boolean;
+const showGoals: boolean = (prefs?.show_goals ?? true) as boolean;
 const firePrefs = (prefs ?? {}) as Record<string, number | null>;
 
 interface FireCardProps {
@@ -153,6 +161,99 @@ if (showFireDashboard) {
   } else {
     fireCard = { configured: false, displayCurrency };
   }
+}
+
+// Savings-goals card. Gated by `show_goals` (default TRUE). All the math is
+// server-side (src/lib/goals.ts) so the island stays a function of props. Unlike
+// `driftAlerts`, `goalsCard` stays non-null when the user has no goals — that is
+// what renders the placeholder, because Goals is a persistent status widget and
+// not an alert.
+let goalsCard: GoalsProgressProps | null = null;
+if (showGoals) {
+  // Same projection as GOAL_SELECT in src/pages/api/goals/index.ts, minus the
+  // columns the card does not read; `user_id` is deliberately absent.
+  const { data: goalRows } = await supabase
+    .from("goals")
+    .select("id, name, kind, category_id, target_amount, target_currency, target_date")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: true });
+
+  // Chained selects resolve to `any` in frontmatter (same boundary as the prefs
+  // cast above), so narrow once here.
+  interface GoalCardRow {
+    id: string;
+    name: string;
+    kind: string;
+    category_id: string | null;
+    target_amount: number;
+    target_currency: string;
+    target_date: string | null;
+  }
+  const goalList = (goalRows ?? []) as GoalCardRow[];
+
+  const assetRows = (assets ?? []) as AssetWithCategory[];
+  const goalAssets: GoalAsset[] = assetRows.map((a) => ({
+    category_id: a.category_id,
+    amount: a.amount,
+    currency: a.currency,
+  }));
+
+  // The net-worth goals' numerator. Computed here rather than reusing the FIRE
+  // block's local so the two cards stay independently gated.
+  const goalsNetWorth = computeNetWorth(
+    assetRows.map((a) => ({
+      amount: a.amount,
+      currency: a.currency as Currency,
+      category: { is_liability: a.category.is_liability },
+    })),
+    displayCurrency,
+    rates,
+  );
+
+  // ONE fit for every goal, over the already-fetched snapshots. Filter to the
+  // comparable (same display currency) rows FIRST so the trend never spans a
+  // currency change — mirrors NetWorthChart.tsx:128-182. Fewer than 2 comparable
+  // rows is `insufficient_history`, which goalEta decides, not this block.
+  const comparable = ((snapshots ?? []) as Tables<"snapshots">[]).filter((s) => s.display_currency === displayCurrency);
+  const originMs = comparable.length > 0 ? new Date(comparable[0].created_at).getTime() : 0;
+  const samples: TrajectorySample[] = comparable.map((s) => ({
+    t: (new Date(s.created_at).getTime() - originMs) / MS_PER_DAY,
+    value: s.total_net_worth,
+  }));
+  const goalsFit: Fit | null = samples.length >= 2 ? fitLinear(samples) : null;
+  const goalsLastT = samples.length > 0 ? samples[samples.length - 1].t : 0;
+
+  const goalItems: GoalProgressItem[] = goalList.map((goal) => {
+    // The SAME converted target feeds the progress denominator and the ETA, so
+    // the two can never silently disagree.
+    const targetInDisplayCurrency = convertAmount(
+      goal.target_amount,
+      goal.target_currency as Currency,
+      displayCurrency,
+      rates,
+    );
+    const current = goalCurrentValue(goal, goalAssets, goalsNetWorth, displayCurrency, rates);
+    const percent = goalProgressPct(current, targetInDisplayCurrency);
+    const eta = goalEta(
+      { kind: goal.kind, targetInDisplayCurrency },
+      goalsFit,
+      goalsLastT,
+      originMs,
+      percent,
+      comparable.length,
+    );
+    return {
+      id: goal.id,
+      name: goal.name,
+      percent,
+      current,
+      target: targetInDisplayCurrency,
+      eta,
+      verdict: onTrackVerdict(eta, goal.target_date),
+    };
+  });
+
+  goalsCard = { goals: goalItems, displayCurrency };
 }
 
 // Allocation-drift card. Gated by `show_drift_alerts` (default TRUE). When on,
@@ -247,6 +348,7 @@ if (showDriftAlerts) {
             client:load
           />
           {fireCard && <FireProgress {...fireCard} client:load />}
+          {goalsCard && <GoalsProgress {...goalsCard} client:load />}
           {driftAlerts && <DriftAlerts {...driftAlerts} client:load />}
           <AssetsSummary
             assets={assets as AssetWithCategory[]}

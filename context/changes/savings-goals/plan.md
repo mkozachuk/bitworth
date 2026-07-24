@@ -657,39 +657,39 @@ Three migrations, all forward-only with commented rollback blocks: `202607241300
 
 #### Automated
 
-- [x] 4.1 Type checking passes: `npx tsc --noEmit`
-- [x] 4.2 Linting passes: `npm run lint`
-- [x] 4.3 Full suite passes: `npm run test:ci`
-- [x] 4.4 Production build succeeds: `npm run build`
+- [x] 4.1 Type checking passes: `npx tsc --noEmit` — aaff1d0
+- [x] 4.2 Linting passes: `npm run lint` — aaff1d0
+- [x] 4.3 Full suite passes: `npm run test:ci` — aaff1d0
+- [x] 4.4 Production build succeeds: `npm run build` — aaff1d0
 
 #### Manual
 
-- [x] 4.5 Goals reachable from desktop nav and mobile dropdown (verified: Playwright against the dev server — desktop link visible at 1280px and navigates; at 390px the desktop item is CSS-hidden and the Radix dropdown's Goals menuitem navigates)
-- [x] 4.6 Both goal kinds create successfully; category select is conditional (verified: net_worth default renders zero Category selects; created a 1,000,000 EUR net-worth goal, then switching kind revealed the picker and a savings_account category goal created — 2 rows)
-- [x] 4.7 Edit updates the list without a page reload (verified: set a `window` marker before editing; the rename landed in the table and the marker survived, proving no document navigation)
-- [x] 4.8 Delete confirms and removes the row (verified: dismissing the `window.confirm` left the row intact; accepting removed it and the empty state returned)
-- [x] 4.9 Invalid `target_amount` surfaces the API error message (verified: `0` rendered "target_amount must be greater than 0" with nothing written; `100.123` rendered the distinct 2-decimal-places message)
-- [x] 4.10 Native date input round-trips through save and reload (verified: input is `type="date"`; `2027-12-31` persisted, survived a full page reload from Postgres, and repopulated the edit form)
+- [x] 4.5 Goals reachable from desktop nav and mobile dropdown (verified: Playwright against the dev server — desktop link visible at 1280px and navigates; at 390px the desktop item is CSS-hidden and the Radix dropdown's Goals menuitem navigates) — aaff1d0
+- [x] 4.6 Both goal kinds create successfully; category select is conditional (verified: net_worth default renders zero Category selects; created a 1,000,000 EUR net-worth goal, then switching kind revealed the picker and a savings_account category goal created — 2 rows) — aaff1d0
+- [x] 4.7 Edit updates the list without a page reload (verified: set a `window` marker before editing; the rename landed in the table and the marker survived, proving no document navigation) — aaff1d0
+- [x] 4.8 Delete confirms and removes the row (verified: dismissing the `window.confirm` left the row intact; accepting removed it and the empty state returned) — aaff1d0
+- [x] 4.9 Invalid `target_amount` surfaces the API error message (verified: `0` rendered "target_amount must be greater than 0" with nothing written; `100.123` rendered the distinct 2-decimal-places message) — aaff1d0
+- [x] 4.10 Native date input round-trips through save and reload (verified: input is `type="date"`; `2027-12-31` persisted, survived a full page reload from Postgres, and repopulated the edit form) — aaff1d0
 
 ### Phase 5: Settings Toggle & Dashboard Card
 
 #### Automated
 
-- [ ] 5.1 Type checking passes: `npx tsc --noEmit`
-- [ ] 5.2 Linting passes: `npm run lint`
-- [ ] 5.3 Full suite passes: `npm run test:ci`
-- [ ] 5.4 Production build succeeds: `npm run build`
+- [x] 5.1 Type checking passes: `npx tsc --noEmit`
+- [x] 5.2 Linting passes: `npm run lint`
+- [x] 5.3 Full suite passes: `npm run test:ci`
+- [x] 5.4 Production build succeeds: `npm run build`
 
 #### Manual
 
-- [ ] 5.5 Empty state renders the placeholder with a working CTA
-- [ ] 5.6 4+ goals render exactly 3 by descending progress with `+N more`
-- [ ] 5.7 Over-100% goal shows uncapped label, clamped bar, Reached state
-- [ ] 5.8 Net-worth goal shows a plausible ETA; target date flips the on-track badge
-- [ ] 5.9 Category goal shows a bar and no ETA row
-- [ ] 5.10 Currency switch shows insufficient-history copy, not "won't reach"
-- [ ] 5.11 Settings toggle hides and restores the card
-- [ ] 5.12 Card matches `FireProgress` in shell, spacing, and dark mode
+- [x] 5.5 Empty state renders the placeholder with a working CTA (verified: Playwright as a goal-less user — eyebrow plus the purple "Create your first goal" CTA, which navigates to `/dashboard/goals`)
+- [x] 5.6 4+ goals render exactly 3 by descending progress with `+N more` (verified: seeded 4 goals; exactly 3 `progressbar`s render with `aria-valuenow` 200/50/50 in descending order, the 25% goal has no bar, and the "+1 more goal" link points at `/dashboard/goals`)
+- [x] 5.7 Over-100% goal shows uncapped label, clamped bar, Reached state (verified: target 50k against 100k net worth → `aria-valuenow="200"`, label reads "200%", inline `width: 100%` with `bg-emerald-500`, and a "Reached" status row instead of a date)
+- [x] 5.8 Net-worth goal shows a plausible ETA; target date flips the on-track badge (verified: on the seeded +1000/day trend the 200k target projected to November 1, 2026 — exactly 100 days out, matching the hand-computed crossing; no badge with no target date, "Behind" for 2026-08-01, "On track" for 2027-12-31)
+- [x] 5.9 Category goal shows a bar and no ETA row (verified: `Progress toward Emergency fund` bar at 50% of the savings subtotal, with no "Est. completion" row, no "N/A", and no trend copy anywhere in the block)
+- [x] 5.10 Currency switch shows insufficient-history copy, not "won't reach" (verified: switching display currency to EUR leaves zero comparable snapshots → "Not enough snapshot history in this currency to project a date." rendered and the "won't reach" sentence absent)
+- [x] 5.11 Settings toggle hides and restores the card (verified: `show_goals: false` → card and all progressbars gone after reload; `true` → restored)
+- [x] 5.12 Card matches `FireProgress` in shell, spacing, and dark mode (verified: shell carries the gated-card family string — `bg-white/80`, `backdrop-blur-xl`, `border-zinc-200`, `dark:bg-white/10` — and not the chart cards' `dark:bg-white/5`; confirmed visually on a dark-mode screenshot with the card sitting directly below FireProgress)
 
 ### Phase 6: Backup Round-Trip
 
