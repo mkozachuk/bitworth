@@ -294,8 +294,8 @@ One additive column (`show_trajectory BOOLEAN NOT NULL DEFAULT TRUE`). Existing 
 
 #### Manual
 
-- [ ] 2.5 Toggle persists across reload
-- [ ] 2.6 With toggle off, dashboard chart renders as before
+- [x] 2.5 Toggle persists across reload (verified by user in browser, 2026-07-24) — bed4831
+- [x] 2.6 With toggle off, dashboard chart renders as before (verified by user in browser, 2026-07-24) — bed4831
 
 ### Phase 3: Chart projection + readout UI
 
@@ -308,9 +308,9 @@ One additive column (`show_trajectory BOOLEAN NOT NULL DEFAULT TRUE`). Existing 
 
 #### Manual
 
-- [ ] 3.5 Dotted projected line joins solid history (no gap)
-- [ ] 3.6 Linear/CAGR toggle moves line + readout consistently
-- [ ] 3.7 Reachable vs unreachable target copy is correct
-- [ ] 3.8 Negative net worth disables CAGR, keeps linear
-- [ ] 3.9 <2 comparable snapshots suppresses projection with note
-- [ ] 3.10 Settings toggle off hides the projection
+- [x] 3.5 Dotted projected line joins solid history (no gap) (verified by user in browser, 2026-07-24) — f8366fe
+- [x] 3.6 Linear/CAGR toggle moves line + readout consistently (verified by user in browser, 2026-07-24) — f8366fe
+- [x] 3.7 Reachable vs unreachable target copy is correct (verified by user in browser, 2026-07-24) — f8366fe
+- [x] 3.8 Negative net worth disables CAGR, keeps linear (verified by user in browser, 2026-07-24) — f8366fe
+- [x] 3.9 <2 comparable snapshots suppresses projection with note (verified by user in browser, 2026-07-24) — f8366fe
+- [x] 3.10 Settings toggle off hides the projection (verified by user in browser, 2026-07-24) — f8366fe

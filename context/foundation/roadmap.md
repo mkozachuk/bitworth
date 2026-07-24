@@ -3,7 +3,7 @@ project: "BitWorth"
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-07-12
+updated: 2026-07-24
 prd_version: 1
 main_goal: market-feedback
 top_blocker: capacity
@@ -47,6 +47,11 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 | S-17 | contributions-vs-growth    | see each period's net-worth change split into contributions vs market growth                       | F-01, S-01, S-02, S-05 | —                    | done    |
 | S-18 | allocation-drift-alerts    | get a dashboard alert when real allocation drifts past a threshold from a card's target            | F-01, S-01, S-02, S-15 | —                    | done |
 | S-19 | metal-price-fetch          | see live gold/silver spot prices (in display currency) when adding a precious-metals asset         | F-01, S-01, S-03       | —                    | done    |
+| S-20 | net-worth-trajectory       | project future net worth from their real snapshot history and see when they'll hit a target        | F-01, S-02             | —                    | done |
+| S-21 | savings-goals              | define custom savings goals and see progress cards with an ETA derived from their real trend        | F-01, S-01, S-02, S-05, S-20 | —              | proposed |
+| S-22 | snapshot-reminder          | get an in-app nudge when it's been too long since their last snapshot                               | F-01, S-02, S-05       | —                    | proposed |
+| S-23 | category-mix-trends        | see how their allocation across categories shifted over time as a stacked-area chart                | F-01, S-02             | —                    | proposed |
+| S-24 | income-savings-rate        | record income and see their savings rate (contributions ÷ income) per snapshot interval             | F-01, S-02, S-05, S-17 | —                    | proposed |
 
 ## Streams
 
@@ -65,6 +70,9 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | I      | Data portability  | `F-01` → `S-02` → `S-05` → `S-13`                   | Full-account backup export/import; reuses the S-05 settings page as host and reads every user-owned table                                                                                                                                                                                                                                                                                                                      |
 | J      | Portfolio balance | `F-01` → `S-01` → `S-02` → `S-15` → `S-18`          | Target-allocation layer over existing assets: declared vs real % pie charts on a new "Balance" page + a per-asset share label on the assets list. Reuses `convertAmount`/`computeNetWorth` and the S-02 Recharts lib (first PieChart usage). S-18 reuses `computeAllocation` to flag drift between real and target allocation as a settings-gated dashboard card. Parallel with everything after S-02                          |
 | K      | Metals pricing    | `F-01` → `S-01` → `S-03` → `S-19`                   | Live spot-price branch for precious-metals assets, the sibling of the crypto pricing branch (Stream B). Mirrors S-03's `getPrice`/`crypto_price_cache`/`AssetForm` conditional but for gold/silver, and reuses `exchange-rates.ts` to convert the USD spot price into the user's display currency. Parallel with everything after S-03                                                                                         |
+| L      | Goals & forecast  | `F-01` → `S-02` → `S-20` → `S-21`                   | Empirical, data-driven layer over the real snapshot history: `S-20` fits a trend to actual snapshots and projects forward (a complement to the assumption-based FIRE projection in Stream F); `S-21` reuses that `etaToTarget` helper to date custom savings goals, surfaced as settings-gated dashboard cards mirroring the S-14/S-18 card+toggle pattern. Parallel with everything after S-20                                  |
+| H+     | Snapshot insights | `… → S-23`, `S-17 → S-24`                           | Extensions of Stream H reading the same snapshot history: `S-23` sums `snapshot_items` by category per snapshot into a stacked-area mix-over-time chart (reuses the S-11/S-12 read+matching); `S-24` adds an income series on top of S-17's `net_contribution` to compute a savings rate. Parallel with everything after their prerequisites                                                                                       |
+| —      | Dashboard nudge   | `F-01` → `S-02` → `S-22`                            | `S-22` is a standalone dashboard-UX nudge — a dismissible in-app banner when the manual snapshot is overdue (the manual-only successor to the dropped auto-save FR-016). No new read path; reuses `Banner.astro` + `snapshots.created_at`. Parallel with everything after S-02                                                                                                                                                    |
 
 ## Baseline
 
@@ -401,6 +409,89 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Low-to-moderate — a near-clone of the tested S-03 flow, so the main risks are the two S-03 already taught: (a) **provider reachability from Workers** — a provider that works in a browser but 403s from Cloudflare Workers ships broken; mitigant: verify from the deployment target before committing, and implement the cache/manual-entry fallback concurrently, not as a later patch (same as S-03); (b) **unit/currency correctness** — spot prices are per troy ounce in USD and must be converted through `getRates()` before display, and quantity units (oz vs grams) must be stated and consistent; mitigant: isolate the fetch/convert/cache logic in a pure, unit-tested `src/lib/metal-prices.ts` mirroring `crypto-prices.ts`, and reuse `exchange-rates.ts` rather than re-deriving conversion.
 - **Status:** done
 
+### S-20: Empirical net-worth trajectory
+
+- **Outcome:** user sees a data-driven projection of their future net worth built from their **actual saved snapshots** — a trend fitted to their real history, extended forward as a dotted continuation of the existing net-worth chart, plus a plain-language "at your current pace you'll reach €X by <date>" readout and, given a target, an estimated date they'll hit it. This is the empirical counterpart to the assumption-based FIRE projection (S-09): FIRE asks "given these inputs, when?"; the trajectory asks "given what actually happened, when?".
+- **Change ID:** `net-worth-trajectory`
+- **PRD refs:** — (post-MVP snapshot-insight extension; not a PRD functional requirement)
+- **Prerequisites:** `F-01`, `S-02` (snapshot history + `NetWorthChart` + the Recharts lib)
+- **Parallel with:** all slices after `S-02`; unblocks `S-21`
+- **Blockers:** —
+- **Unknowns:**
+  - Fit model: simple linear regression on net worth vs. time vs. a CAGR/exponential fit vs. offering both. (Owner: planner, by: during `/10x-plan`) Recommendation: compute both a linear and a compound-growth (CAGR) fit in a pure `src/lib/trajectory.ts` and let the UI toggle; default to linear (most legible, least likely to over-promise on a short history).
+  - Minimum history: a trend from 1 point is meaningless. (Owner: planner) Recommendation: require ≥2 snapshots; with <2 render a "not enough history yet — save more snapshots" state, never a flat/extrapolated line.
+  - Confidence framing: a single projected line reads as a promise. (Owner: planner) Recommendation: carry the same "estimate, not financial advice" disclaimer as S-09/S-16; optionally shade a naive uncertainty band from the fit residuals, but keep v1 to the point projection + disclaimer.
+  - Charting: reuse Recharts (the one-time S-02 decision) — extend `NetWorthChart` with a dotted projected segment (`strokeDasharray`, `connectNulls`), do **not** introduce a new lib.
+- **Risk:** Low-to-moderate — the danger is a misleading extrapolation (a short or volatile history projected confidently). Mitigants: isolate the fit + `projectForward` + `etaToTarget` in a pure, table-tested `src/lib/trajectory.ts` (mirroring the isolated style of `fire.ts`/`monte-carlo.ts`); guard the ≥2-snapshot floor; keep the projection visually distinct (dotted, muted) from the solid historical line so users don't read modelled data as recorded data.
+- **Status:** done
+
+### S-21: Custom savings goals
+
+- **Outcome:** user opens a new "Goals" area where they create named savings goals — either against **total net worth** ("reach €1M") or a **single category** ("Savings Account → €50k emergency fund") — each with a target amount, target currency, and optional target date. On the dashboard a settings-gated "Goals" card shows each goal's progress bar (current ÷ target) and, using the S-20 trajectory, an **estimated completion date** from their real trend; when they've entered no goals the card shows a placeholder linking to `/dashboard/goals`.
+- **Change ID:** `savings-goals`
+- **PRD refs:** — (post-MVP planning extension; not a PRD functional requirement)
+- **Prerequisites:** `F-01` (new table), `S-01` (assets/categories the category-goals reference), `S-02` (`computeNetWorth`/`convertAmount` + dashboard host), `S-05` (settings page for the toggle), `S-20` (`etaToTarget` from `src/lib/trajectory.ts` for the projected completion date)
+- **Parallel with:** all slices after `S-20`
+- **Blockers:** —
+- **Unknowns:**
+  - Goal denominator: total net worth vs a single category subtotal. (Owner: planner, by: during `/10x-plan`) Recommendation: support both from v1 via a `kind` enum (`net_worth` | `category`) + nullable `category_id`; keep the current-value math in a pure `src/lib/goals.ts` reusing `convertAmount`/`computeNetWorth`.
+  - Persistence: a dedicated `goals` table (`id, user_id, name, target_amount, target_currency, target_date?, kind, category_id?, created_at, updated_at`) with RLS `auth.uid()` and (for category goals) an FK to `asset_categories`. (Owner: planner) Recommendation: dedicated table — mirror the F-01 migration + `database.types.ts` Row/Insert/Update + RLS pattern; category FK `ON DELETE SET NULL` (categories are seeded/immutable, but keep it defensive).
+  - Currency: a goal's target currency may differ from the display currency. (Owner: planner) Recommendation: store the target in its own currency and convert both sides through `convertAmount` to the display currency for the progress %; state the mixed-rate caveat as elsewhere.
+  - ETA when off-track: a flat or declining trend yields no finite ETA. (Owner: planner) Recommendation: `etaToTarget` returns null when the trend never reaches the target; the card shows "on current trend, not reaching this" rather than a bogus date.
+  - Settings gating: add `show_goals BOOLEAN NOT NULL DEFAULT TRUE` to `user_preferences`, threaded schema → `database.types.ts` (Row/Insert/Update) → `PREFS_SELECT` + a validation branch in `api/user-preferences/index.ts` → a checkbox in `SettingsForm.tsx`, mirroring the S-14 `show_fire_dashboard` / S-18 `show_drift_alerts` precedent exactly. (Owner: planner)
+  - Nav + management surface: new "Goals" item in `Topbar`/`TopbarMenu` at `/dashboard/goals` (CRUD list), and a `GoalsProgress` island on the dashboard mirroring `FireProgress.tsx`. (Owner: planner) Recommendation: Lucide `Target` or `Flag` icon; place the card near `FireProgress`.
+- **Risk:** Low — read-and-present over existing net-worth math plus a small CRUD table. Main risks: (a) currency/denominator correctness across net-worth vs category goals — mitigant: isolate in a pure, unit-tested `src/lib/goals.ts` reusing `convertAmount`; (b) a deleted category orphaning a category goal — mitigant: FK `ON DELETE SET NULL` + a "category removed" goal state; (c) fragmenting the `user_preferences` write path — mitigant: the settings page stays the single UI for the `show_goals` flag, per the S-05 lesson.
+- **Status:** proposed
+
+### S-22: Snapshot cadence reminder
+
+- **Outcome:** when it has been longer than a configurable interval (default 30 days) since the user's most recent snapshot, the dashboard shows a dismissible banner — "It's been N days since your last snapshot. Save one to keep your trend current." — with a one-click path to the manual snapshot save. This is the manual-only successor to the deliberately-dropped auto-save (FR-016): rather than writing snapshots for the user, it nudges them to. Gated by a settings toggle (on by default); absent when the user has never snapshotted or has snapshotted recently.
+- **Change ID:** `snapshot-reminder`
+- **PRD refs:** — (relates to the dropped FR-016 auto-save; see §Parked. Post-MVP dashboard-UX nudge, not a PRD functional requirement)
+- **Prerequisites:** `F-01`, `S-02` (snapshots + `snapshots.created_at`, already loaded in `dashboard.astro`), `S-05` (settings page for the toggle + interval pref)
+- **Parallel with:** all slices after `S-02`
+- **Blockers:** —
+- **Unknowns:**
+  - Interval configurability: fixed 30-day constant vs a user preference. (Owner: planner, by: during `/10x-plan`) Recommendation: add `snapshot_reminder_days INT NOT NULL DEFAULT 30` alongside `show_snapshot_reminder BOOLEAN NOT NULL DEFAULT TRUE`, threaded like the S-14 toggle; a plain integer input in `SettingsForm.tsx`.
+  - Dismiss persistence: server-stored dismiss vs client-only (localStorage / session). (Owner: planner) Recommendation: client-side dismiss (localStorage keyed by the latest snapshot's timestamp) so dismissing hides it until the *next* overdue period — no schema needed for dismiss state; keep the reminder purely presentational.
+  - Scope guard: **in-app banner only — no email or push notifications.** Email/push needs scheduling + a delivery channel the app deliberately lacks (no background jobs, no mail infra); it is a materially larger, separate concern. (Owner: planner) Recommendation: explicitly defer email/push; note it here so it isn't silently assumed in scope.
+  - "Never snapshotted" state: no snapshots at all. (Owner: planner) Recommendation: treat zero snapshots as *not* overdue (the empty dashboard already prompts a first snapshot elsewhere); the reminder is for lapsed users, not new ones.
+- **Risk:** Low — a pure, presentational banner over an already-loaded timestamp. Main risks: (a) a nagging banner that can't be dismissed — mitigant: localStorage dismiss keyed to the latest snapshot; (b) date math off-by-one / timezone drift in "days since" — mitigant: a pure, table-tested `daysSince(latestCreatedAt, now)` helper; (c) scope creep into notification infra — mitigant: the explicit in-app-only scope guard above.
+- **Status:** proposed
+
+### S-23: Category mix over time
+
+- **Outcome:** user sees how the composition of their net worth across asset categories has shifted across their snapshot history — a stacked-area chart where each band is a category's value at each snapshot, with a toggle between **absolute** values (in display currency) and **100%-normalized share** (how the mix rebalanced regardless of total growth). Built from the per-category `snapshot_items` already captured at each snapshot.
+- **Change ID:** `category-mix-trends`
+- **PRD refs:** — (post-MVP snapshot-insight extension; not a PRD functional requirement)
+- **Prerequisites:** `F-01`, `S-02` (snapshot history + `snapshot_items` + the Recharts lib); reuses the S-11/S-12 snapshot-read patterns
+- **Parallel with:** `S-12`, `S-17`, and all slices after `S-02`
+- **Blockers:** —
+- **Unknowns:**
+  - Grouping key: per-category is the robust default (categories are stable FKs, unlike the `(name, category_id)` per-asset identity that S-11/S-12 had to work around). (Owner: planner) Recommendation: sum `snapshot_items.converted_amount` by `category_id` per snapshot; liabilities (negative categories) either shown as below-axis bands or excluded from the normalized view — pick one and state it (recommend: exclude liabilities from the 100%-share view since negative shares don't normalize cleanly; show them in the absolute view).
+  - Chart type: this is the first **stacked AreaChart** in the codebase (existing charts are `LineChart` + the S-15 `PieChart`). (Owner: planner) Recommendation: Recharts `AreaChart` with `stackId`; copy axis/tooltip/`ResponsiveContainer`/`var(--chart-*)` conventions from `NetWorthChart`/`ContributionsChart` — do **not** introduce a new charting lib.
+  - Placement: a new section on the dashboard trends area vs the assets page. (Owner: planner) Recommendation: dashboard trends section, near `NetWorthChart`/`AssetTrendsChart`.
+  - Empty/sparse history: 0–1 snapshots, or categories that appear/disappear over time. (Owner: planner) Recommendation: reuse the series-builder null-handling from S-12; render a "not enough history" state below 2 snapshots.
+- **Risk:** Low — read-and-present over `snapshot_items` with stable category FKs (more robust than the per-asset identity S-11/S-12 dealt with). Main risks: (a) liabilities skewing a normalized share view — mitigant: define and state the liability handling; (b) a category present in some snapshots but not others creating gaps — mitigant: a pure, unit-tested `src/lib/category-mix.ts` series builder that zero-fills missing categories per snapshot; (c) reinventing chart scaffolding — mitigant: copy the existing Recharts conventions.
+- **Status:** proposed
+
+### S-24: Income & savings-rate
+
+- **Outcome:** user can record their income for each snapshot interval and see their **savings rate** — the share of income they actually saved (`net_contribution ÷ income`) — as a metric and an overlay on the existing contributions-vs-growth view, so "I saved" gains a denominator: not just how much they added, but how much of what they earned they kept. Intervals without a recorded income render an honest "unknown rate" state.
+- **Change ID:** `income-savings-rate`
+- **PRD refs:** — (post-MVP snapshot-insight extension; the metric the S-17 scope guard explicitly deferred — "a savings-rate metric needs income tracking the app lacks")
+- **Prerequisites:** `F-01`, `S-02` (snapshot history + `convertAmount`), `S-05` (display currency), `S-17` (`snapshots.net_contribution` + `ContributionsChart`/`EditContributionDialog` — the contribution capture this builds on)
+- **Parallel with:** all slices after `S-17`
+- **Blockers:** —
+- **Unknowns:**
+  - Income capture model: a per-snapshot `income` figure (mirrors S-17's per-interval `net_contribution`) vs a standing monthly-income preference. (Owner: planner, by: during `/10x-plan`) Recommendation: **per-snapshot** — add a nullable `income NUMERIC(18,2)` column to `snapshots` (migration mirrors the S-17 `net_contribution` column-add), entered via an optional field on the snapshot-save flow and editable through the existing `EditContributionDialog` pattern. Keeps income on the same interval basis as the contribution it's divided by.
+  - Savings-rate definition & bounds: `net_contribution ÷ income`; income ≤ 0 or null → undefined. (Owner: planner) Recommendation: pure `src/lib/savings-rate.ts` returning null for missing/zero income; clamp display to a sane range and label a rate >100% (contributed more than income, e.g. from a windfall) rather than hiding it.
+  - Currency: store `income` in the snapshot's `display_currency` at entry time (same convention + caveat as S-17's `net_contribution`). (Owner: planner)
+  - Presentation: a headline savings-rate metric + a line overlaid on `ContributionsChart` vs a separate small chart. (Owner: planner) Recommendation: reuse `ContributionsChart` — add the savings-rate as a secondary-axis line or a per-bar label; isolate the per-interval math in the pure `src/lib/savings-rate.ts` reusing `convertAmount`.
+  - Missing data: old snapshots and any interval without income must render "unknown rate", never 0 or a divide-by-zero. (Owner: planner)
+- **Risk:** Low — a nullable column + a pure metric over the existing S-17 contribution data. Main risks: (a) divide-by-zero / null income — mitigant: a pure, table-tested `src/lib/savings-rate.ts` with an explicit null/"unknown" path; (b) currency mismatch between stored income and display currency — mitigant: reuse the S-17 stored-in-display-currency convention and `convertAmount`; (c) a savings rate presented as precise when the underlying contribution was estimated — mitigant: carry the same interval-honesty framing S-17 uses ("unknown split" → "unknown rate").
+- **Status:** proposed
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID                  | Suggested issue title                                            | Ready for `/10x-plan` | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
@@ -425,6 +516,11 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-17       | contributions-vs-growth    | Decompose net-worth change into contributions vs market growth   | yes                   | depends on S-02/S-05; growth can't be inferred from existing data → add a nullable `snapshots.net_contribution` column + an optional input on the snapshot-save flow; isolate per-interval math in `src/lib/contributions.ts`; "unknown split" state for intervals without data                                                                                                                                                                                                                                                                 |
 | S-18       | allocation-drift-alerts    | Dashboard alert when real allocation drifts from a card's target | yes                   | depends on S-15; reuses `computeAllocation` in `src/lib/allocation.ts` (extend with a pure `computeDrift`); new `show_drift_alerts` pref (default TRUE) mirroring S-14; normalize declared targets within each card before differencing                                                                                                                                                                                                                                                                                                         |
 | S-19       | metal-price-fetch          | Live gold/silver spot price on precious-metals asset entry       | yes                   | depends on S-01/S-03; mirrors the crypto flow — new pure `src/lib/metal-prices.ts` + `metal_price_cache` table/RPC (clone `crypto_price_cache`) + `GET /api/metal-price?symbol=XAU` + a `precious_metals` branch in `AssetForm.tsx`; new nullable `assets.metal_symbol` column, reuse `quantity` (oz); prices come per troy oz in USD → convert via `exchange-rates.ts`; **verify the metals API is reachable from Cloudflare Workers before committing (S-03 lesson: CoinGecko 403s from Workers)**                                            |
+| S-20       | net-worth-trajectory       | Empirical net-worth projection from real snapshot history        | yes                   | depends on S-02; pure, unit-tested `src/lib/trajectory.ts` (linear + CAGR fit, `projectForward`, `etaToTarget`) + a dotted projected extension on `NetWorthChart` (reuse Recharts, no new lib); ≥2-snapshot guard; "estimate, not advice" disclaimer; empirical complement to the assumption-based S-09 FIRE projection; unblocks S-21 |
+| S-21       | savings-goals              | Custom savings goals with progress cards + trend ETA             | yes                   | depends on F-01/S-01/S-02/S-05/S-20; new `goals` table (RLS, `kind` net_worth/category + nullable category FK) + `database.types.ts`; `/dashboard/goals` CRUD page + `GoalsProgress` dashboard island mirroring `FireProgress`; new `show_goals` pref (default TRUE) mirroring S-14/S-18; reuse S-20 `etaToTarget` + `convertAmount`; isolate math in `src/lib/goals.ts`; new "Goals" nav item |
+| S-22       | snapshot-reminder          | Dashboard nudge when the manual snapshot is overdue              | yes                   | depends on S-02/S-05; dismissible `Banner.astro` when days-since-last-snapshot > threshold; pure `daysSince` helper; new `show_snapshot_reminder` (default TRUE) + `snapshot_reminder_days` (default 30) prefs, threaded like S-14; localStorage dismiss; **in-app only — no email/push (deferred)**; the manual-only successor to the dropped auto-save FR-016 |
+| S-23       | category-mix-trends        | Stacked-area chart of category mix over snapshot history         | yes                   | depends on S-02; sums `snapshot_items.converted_amount` by `category_id` per snapshot; first Recharts **AreaChart** (stacked; reuse chart conventions, no new lib); absolute + 100%-share toggle; state liability handling in the normalized view; isolate series builder in `src/lib/category-mix.ts`; reuses S-11/S-12 read patterns |
+| S-24       | income-savings-rate        | Record income and see savings rate (contributions ÷ income)      | yes                   | depends on S-02/S-05/S-17; adds nullable `snapshots.income` column (mirrors S-17 `net_contribution` migration) entered on the snapshot-save/`EditContributionDialog` flow; pure `src/lib/savings-rate.ts` (null/"unknown rate" for missing income); overlay on `ContributionsChart`; the metric the S-17 scope guard deferred |
 
 ## Open Roadmap Questions
 
