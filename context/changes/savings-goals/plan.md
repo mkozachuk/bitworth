@@ -627,31 +627,31 @@ Three migrations, all forward-only with commented rollback blocks: `202607241300
 
 #### Automated
 
-- [x] 2.1 New tests pass: `npx vitest run src/lib/goals.test.ts`
-- [x] 2.2 Full suite passes: `npm run test:ci`
-- [x] 2.3 Type checking passes: `npx tsc --noEmit`
-- [x] 2.4 Linting passes: `npm run lint`
+- [x] 2.1 New tests pass: `npx vitest run src/lib/goals.test.ts` — d47bf40
+- [x] 2.2 Full suite passes: `npm run test:ci` — d47bf40
+- [x] 2.3 Type checking passes: `npx tsc --noEmit` — d47bf40
+- [x] 2.4 Linting passes: `npm run lint` — d47bf40
 
 #### Manual
 
-- [x] 2.5 Every oracle in `goals.test.ts` is hand-derivable without reading `goals.ts` (verified: read all 37 cases; re-derived the OLS fit (slope 1000/intercept 100_000 from the collinear samples), the 100-day crossing → 2026-04-11 calendar walk, the CAGR doubling, the declining-trend t=20 past-crossing, and every percent oracle by hand; independently confirmed the test's stated `convertAmount` semantics, `EPSILON = 1e-2`, and `etaToTarget` branch behaviour against the real sources. One comment mis-stated `33_333/333.33` as `100.0009` — it is exactly 100; corrected)
+- [x] 2.5 Every oracle in `goals.test.ts` is hand-derivable without reading `goals.ts` (verified: read all 37 cases; re-derived the OLS fit (slope 1000/intercept 100_000 from the collinear samples), the 100-day crossing → 2026-04-11 calendar walk, the CAGR doubling, the declining-trend t=20 past-crossing, and every percent oracle by hand; independently confirmed the test's stated `convertAmount` semantics, `EPSILON = 1e-2`, and `etaToTarget` branch behaviour against the real sources. One comment mis-stated `33_333/333.33` as `100.0009` — it is exactly 100; corrected) — d47bf40
 
 ### Phase 3: Goals CRUD API
 
 #### Automated
 
-- [ ] 3.1 New handler tests pass: `npx vitest run src/pages/api/goals`
-- [ ] 3.2 Auth-contract walk covers the new routes
-- [ ] 3.3 Full suite passes: `npm run test:ci`
-- [ ] 3.4 Type checking passes: `npx tsc --noEmit`
-- [ ] 3.5 Linting passes: `npm run lint`
+- [x] 3.1 New handler tests pass: `npx vitest run src/pages/api/goals`
+- [x] 3.2 Auth-contract walk covers the new routes
+- [x] 3.3 Full suite passes: `npm run test:ci`
+- [x] 3.4 Type checking passes: `npx tsc --noEmit`
+- [x] 3.5 Linting passes: `npm run lint`
 
 #### Manual
 
-- [ ] 3.6 Incoherent `kind`/`category_id` POST returns 400, not 500
-- [ ] 3.7 PATCH against a foreign goal id returns 404
-- [ ] 3.8 `target_amount: 0` returns 400
-- [ ] 3.9 PUT `/api/user-preferences` with `show_goals` persists
+- [x] 3.6 Incoherent `kind`/`category_id` POST returns 400, not 500 (verified: curl against dev server as a real signed-in user — `net_worth`+`category_id` → 400 `VALIDATION_ERROR` "category_id must be absent when kind is net_worth"; `category` without one → 400 with the mirrored message)
+- [x] 3.7 PATCH against a foreign goal id returns 404 (verified: two accounts; A PATCHing B's goal → 404 `NOT_FOUND`, A DELETEing it → 404, and a follow-up GET as B confirmed the row unchanged)
+- [x] 3.8 `target_amount: 0` returns 400 (verified: → 400 "target_amount must be greater than 0"; `100.123` → 400 "at most 2 decimal places", the `NUMERIC(18,2)` precision guard)
+- [x] 3.9 PUT `/api/user-preferences` with `show_goals` persists (verified: PUT `{"show_goals":false}` → 200 with the flag in the response body, confirmed `f` in Postgres for that user while the other account still read `t` from the column default; non-boolean → 400)
 
 ### Phase 4: Goals Page & Nav
 
