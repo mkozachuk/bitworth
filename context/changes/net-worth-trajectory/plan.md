@@ -294,8 +294,8 @@ One additive column (`show_trajectory BOOLEAN NOT NULL DEFAULT TRUE`). Existing 
 
 #### Manual
 
-- [x] 2.5 Toggle persists across reload (verified by user in browser, 2026-07-24) — bed4831
-- [x] 2.6 With toggle off, dashboard chart renders as before (verified by user in browser, 2026-07-24) — bed4831
+- [x] 2.5 Toggle persists across reload (verified 2026-07-24 by `e2e/trajectory-verify.spec.ts` against local Supabase: uncheck → PUT 200 → survives both the form's own reload and a fresh GET) — bed4831
+- [x] 2.6 With toggle off, dashboard chart renders as before (verified 2026-07-24 by `e2e/trajectory-verify.spec.ts`: "Net Worth Trend" still renders, no projection panel, no "not enough history" note) — bed4831
 
 ### Phase 3: Chart projection + readout UI
 
@@ -308,9 +308,20 @@ One additive column (`show_trajectory BOOLEAN NOT NULL DEFAULT TRUE`). Existing 
 
 #### Manual
 
-- [x] 3.5 Dotted projected line joins solid history (no gap) (verified by user in browser, 2026-07-24) — f8366fe
-- [x] 3.6 Linear/CAGR toggle moves line + readout consistently (verified by user in browser, 2026-07-24) — f8366fe
-- [x] 3.7 Reachable vs unreachable target copy is correct (verified by user in browser, 2026-07-24) — f8366fe
-- [x] 3.8 Negative net worth disables CAGR, keeps linear (verified by user in browser, 2026-07-24) — f8366fe
-- [x] 3.9 <2 comparable snapshots suppresses projection with note (verified by user in browser, 2026-07-24) — f8366fe
-- [x] 3.10 Settings toggle off hides the projection (verified by user in browser, 2026-07-24) — f8366fe
+- [x] 3.5 Dotted projected line joins solid history (no gap) (verified 2026-07-24: solid `netWorth` path ends at `189.2,156.667`, dotted `projected` path starts at `M189.2,156.667` — a shared vertex, confirmed on a settled render) — f8366fe
+- [x] 3.6 Linear/CAGR toggle moves line + readout consistently (verified 2026-07-24: `aria-pressed` flips, pace text changes, and the settled render goes straight-to-40k → convex-to-65k over the same horizon) — f8366fe
+- [x] 3.7 Reachable vs unreachable target copy is correct (verified 2026-07-24 by `e2e/trajectory-verify.spec.ts`: 100000 → "around <date>"; 100 → "On your current trend, you won't reach this.") — f8366fe
+- [x] 3.8 Negative net worth disables CAGR, keeps linear (verified 2026-07-24: CAGR button disabled + "needs positive history" note, linear still pressed and projecting from −5,000 through +1,000) — f8366fe
+- [x] 3.9 <2 comparable snapshots suppresses projection with note (verified 2026-07-24 by `e2e/trajectory-verify.spec.ts`: note visible, projection group absent) — f8366fe
+- [x] 3.10 Settings toggle off hides the projection (verified 2026-07-24 by `e2e/trajectory-verify.spec.ts`) — f8366fe
+
+> Verification note (2026-07-24): these were re-run rather than recalled. `e2e/trajectory-verify.spec.ts`
+> automates all eight against local Supabase and passed 18/18 across three repeats; it self-skips where the
+> local DB container is absent, so CI (which runs e2e against remote Supabase) is unaffected.
+> Two traps worth remembering, both test-side rather than product defects:
+> (a) `NetWorthChart` is a `client:load` island — if it hydrates *after* a `fill()`, React initialises its
+> value tracker to the text already in the DOM, so re-filling the same string never fires `onChange` and a
+> naive retry loop spins forever; blank the field between attempts.
+> (b) Recharts writes the final path `d` immediately and animates the *visible* length via `stroke-dasharray`,
+> so a screenshot taken on DOM-readiness shows a half-drawn line that reads convincingly as a gap between the
+> solid and dotted segments. Settle on pixels before judging anything visual here.
