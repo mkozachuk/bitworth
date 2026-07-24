@@ -352,6 +352,7 @@ export interface Database {
           fire_traditional_retirement_age: number;
           show_drift_alerts: boolean;
           show_fire_dashboard: boolean;
+          show_trajectory: boolean;
           theme: string;
           updated_at: string;
           user_id: string;
@@ -370,6 +371,7 @@ export interface Database {
           fire_traditional_retirement_age?: number;
           show_drift_alerts?: boolean;
           show_fire_dashboard?: boolean;
+          show_trajectory?: boolean;
           theme?: string;
           updated_at?: string;
           user_id: string;
@@ -388,6 +390,7 @@ export interface Database {
           fire_traditional_retirement_age?: number;
           show_drift_alerts?: boolean;
           show_fire_dashboard?: boolean;
+          show_trajectory?: boolean;
           theme?: string;
           updated_at?: string;
           user_id?: string;

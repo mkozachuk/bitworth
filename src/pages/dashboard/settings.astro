@@ -20,7 +20,7 @@ const supabase = createClient(Astro.request.headers, Astro.cookies);
 
 const { data: prefs } = await supabase
   .from("user_preferences")
-  .select("display_currency, theme, show_fire_dashboard, show_drift_alerts")
+  .select("display_currency, theme, show_fire_dashboard, show_drift_alerts, show_trajectory")
   .eq("user_id", user.id)
   .maybeSingle();
 
@@ -28,6 +28,7 @@ const rawCurrency = (prefs as { display_currency?: string } | null)?.display_cur
 const rawTheme = (prefs as { theme?: string } | null)?.theme;
 const rawShowFireDashboard = (prefs as { show_fire_dashboard?: boolean } | null)?.show_fire_dashboard;
 const rawShowDriftAlerts = (prefs as { show_drift_alerts?: boolean } | null)?.show_drift_alerts;
+const rawShowTrajectory = (prefs as { show_trajectory?: boolean } | null)?.show_trajectory;
 
 const initialDisplayCurrency: Currency = VALID_CURRENCIES.includes(rawCurrency as Currency)
   ? (rawCurrency as Currency)
@@ -35,6 +36,7 @@ const initialDisplayCurrency: Currency = VALID_CURRENCIES.includes(rawCurrency a
 const initialTheme: Theme = VALID_THEMES.includes(rawTheme as Theme) ? (rawTheme as Theme) : "system";
 const initialShowFireDashboard: boolean = rawShowFireDashboard ?? true;
 const initialShowDriftAlerts: boolean = rawShowDriftAlerts ?? true;
+const initialShowTrajectory: boolean = rawShowTrajectory ?? true;
 ---
 
 <Layout title="Settings">
@@ -53,6 +55,7 @@ const initialShowDriftAlerts: boolean = rawShowDriftAlerts ?? true;
         initialTheme={initialTheme}
         initialShowFireDashboard={initialShowFireDashboard}
         initialShowDriftAlerts={initialShowDriftAlerts}
+        initialShowTrajectory={initialShowTrajectory}
         client:load
       />
     </div>

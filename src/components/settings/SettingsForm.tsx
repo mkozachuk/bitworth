@@ -10,6 +10,7 @@ interface Props {
   initialTheme: Theme;
   initialShowFireDashboard: boolean;
   initialShowDriftAlerts: boolean;
+  initialShowTrajectory: boolean;
 }
 
 const CURRENCIES: { value: Currency; label: string }[] = [
@@ -29,11 +30,13 @@ export function SettingsForm({
   initialTheme,
   initialShowFireDashboard,
   initialShowDriftAlerts,
+  initialShowTrajectory,
 }: Props) {
   const [displayCurrency, setDisplayCurrency] = useState<Currency>(initialDisplayCurrency);
   const [theme, setTheme] = useState<Theme>(initialTheme);
   const [showFireDashboard, setShowFireDashboard] = useState<boolean>(initialShowFireDashboard);
   const [showDriftAlerts, setShowDriftAlerts] = useState<boolean>(initialShowDriftAlerts);
+  const [showTrajectory, setShowTrajectory] = useState<boolean>(initialShowTrajectory);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -41,7 +44,8 @@ export function SettingsForm({
     displayCurrency !== initialDisplayCurrency ||
     theme !== initialTheme ||
     showFireDashboard !== initialShowFireDashboard ||
-    showDriftAlerts !== initialShowDriftAlerts;
+    showDriftAlerts !== initialShowDriftAlerts ||
+    showTrajectory !== initialShowTrajectory;
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -54,11 +58,13 @@ export function SettingsForm({
       theme?: Theme;
       show_fire_dashboard?: boolean;
       show_drift_alerts?: boolean;
+      show_trajectory?: boolean;
     } = {};
     if (displayCurrency !== initialDisplayCurrency) updates.display_currency = displayCurrency;
     if (theme !== initialTheme) updates.theme = theme;
     if (showFireDashboard !== initialShowFireDashboard) updates.show_fire_dashboard = showFireDashboard;
     if (showDriftAlerts !== initialShowDriftAlerts) updates.show_drift_alerts = showDriftAlerts;
+    if (showTrajectory !== initialShowTrajectory) updates.show_trajectory = showTrajectory;
 
     try {
       const res = await fetch("/api/user-preferences", {
@@ -184,6 +190,27 @@ export function SettingsForm({
         </label>
         <p className="mt-1 text-xs text-zinc-500 dark:text-white/40">
           Adds a card highlighting balancer cards whose real allocation has drifted from target.
+        </p>
+      </div>
+
+      <div>
+        <label
+          htmlFor="show_trajectory"
+          className="flex items-center gap-2 text-sm text-zinc-700 dark:text-blue-100/80"
+        >
+          <input
+            id="show_trajectory"
+            type="checkbox"
+            checked={showTrajectory}
+            onChange={(e) => {
+              setShowTrajectory(e.target.checked);
+            }}
+            className="size-4 accent-purple-600"
+          />
+          Show net-worth projection on dashboard
+        </label>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-white/40">
+          Extends your net-worth chart with a projected trend line and an estimated date to reach a target.
         </p>
       </div>
 
