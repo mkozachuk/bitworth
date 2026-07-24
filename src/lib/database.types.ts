@@ -244,6 +244,53 @@ export interface Database {
         };
         Relationships: [];
       };
+      goals: {
+        Row: {
+          category_id: string | null;
+          created_at: string;
+          id: string;
+          kind: string;
+          name: string;
+          target_amount: number;
+          target_currency: string;
+          target_date: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          category_id?: string | null;
+          created_at?: string;
+          id?: string;
+          kind: string;
+          name: string;
+          target_amount: number;
+          target_currency: string;
+          target_date?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          category_id?: string | null;
+          created_at?: string;
+          id?: string;
+          kind?: string;
+          name?: string;
+          target_amount?: number;
+          target_currency?: string;
+          target_date?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "goals_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "asset_categories";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       snapshot_items: {
         Row: {
           category_id: string;
@@ -352,6 +399,7 @@ export interface Database {
           fire_traditional_retirement_age: number;
           show_drift_alerts: boolean;
           show_fire_dashboard: boolean;
+          show_goals: boolean;
           show_trajectory: boolean;
           theme: string;
           updated_at: string;
@@ -371,6 +419,7 @@ export interface Database {
           fire_traditional_retirement_age?: number;
           show_drift_alerts?: boolean;
           show_fire_dashboard?: boolean;
+          show_goals?: boolean;
           show_trajectory?: boolean;
           theme?: string;
           updated_at?: string;
@@ -390,6 +439,7 @@ export interface Database {
           fire_traditional_retirement_age?: number;
           show_drift_alerts?: boolean;
           show_fire_dashboard?: boolean;
+          show_goals?: boolean;
           show_trajectory?: boolean;
           theme?: string;
           updated_at?: string;
