@@ -1,7 +1,7 @@
 ---
 change_id: savings-goals
 title: Custom savings goals with progress cards and a trend-derived ETA
-status: new
+status: preparing
 created: 2026-07-24
 updated: 2026-07-24
 archived_at: null
