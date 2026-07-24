@@ -695,18 +695,18 @@ Three migrations, all forward-only with commented rollback blocks: `202607241300
 
 #### Automated
 
-- [x] 6.1 Migration applies cleanly: `npx supabase db reset`
-- [x] 6.2 Parity gate passes: `npx vitest run src/lib/backup-rpc-parity.test.ts`
-- [x] 6.3 Backup module tests pass: `npx vitest run src/lib/backup.test.ts`
-- [x] 6.4 Backup route tests pass: `npx vitest run src/pages/api/backup`
-- [x] 6.5 Full suite passes: `npm run test:ci`
-- [x] 6.6 Type checking passes: `npx tsc --noEmit`
-- [x] 6.7 Linting passes: `npm run lint`
+- [x] 6.1 Migration applies cleanly: `npx supabase db reset` — 358dd06
+- [x] 6.2 Parity gate passes: `npx vitest run src/lib/backup-rpc-parity.test.ts` — 358dd06
+- [x] 6.3 Backup module tests pass: `npx vitest run src/lib/backup.test.ts` — 358dd06
+- [x] 6.4 Backup route tests pass: `npx vitest run src/pages/api/backup` — 358dd06
+- [x] 6.5 Full suite passes: `npm run test:ci` — 358dd06
+- [x] 6.6 Type checking passes: `npx tsc --noEmit` — 358dd06
+- [x] 6.7 Linting passes: `npm run lint` — 358dd06
 
 #### Manual
 
-- [x] 6.8 Export carries `goals`, `show_goals: false`, and `schemaVersion: 2` (verified: real `GET /api/backup/export` for a user with 2 goals and the toggle off — `schemaVersion: 2`, both goals in `data.goals`, `show_goals: false` in `user_preferences`)
-- [x] 6.9 `replace` import restores goals and the hidden card (verified: posted that envelope with `mode: "replace"` as a second account → 200; both goals present in Postgres with correct `kind`, `category_id` and `target_date`, and `show_goals` = `f`)
-- [x] 6.10 `merge` import keeps the toggle off (the thrice-shipped bug) (verified: deliberately flipped the target account's `show_goals` back to `true` first so `ON CONFLICT … DO UPDATE SET` had to overwrite it, then merge-imported → back to `f`. This is the exact line whose omission shipped the bug three times; it holds)
-- [x] 6.11 Pre-change backup with no `goals` key imports successfully (verified: stripped `goals` and `show_goals` and set `schemaVersion: 1` → 200, zero goals written, and `show_goals` re-defaulted to `t` via the RPC's `COALESCE`)
-- [x] 6.12 Unknown `category_id` fails with `UNKNOWN_CATEGORY` before any write (verified: → 400 `UNKNOWN_CATEGORY` with `context.unknownCategoryIds: ["no_such_category"]`, and the goals table stayed at 0 rows — rejected ahead of the RPC, not by the FK)
+- [x] 6.8 Export carries `goals`, `show_goals: false`, and `schemaVersion: 2` (verified: real `GET /api/backup/export` for a user with 2 goals and the toggle off — `schemaVersion: 2`, both goals in `data.goals`, `show_goals: false` in `user_preferences`) — 358dd06
+- [x] 6.9 `replace` import restores goals and the hidden card (verified: posted that envelope with `mode: "replace"` as a second account → 200; both goals present in Postgres with correct `kind`, `category_id` and `target_date`, and `show_goals` = `f`) — 358dd06
+- [x] 6.10 `merge` import keeps the toggle off (the thrice-shipped bug) (verified: deliberately flipped the target account's `show_goals` back to `true` first so `ON CONFLICT … DO UPDATE SET` had to overwrite it, then merge-imported → back to `f`. This is the exact line whose omission shipped the bug three times; it holds) — 358dd06
+- [x] 6.11 Pre-change backup with no `goals` key imports successfully (verified: stripped `goals` and `show_goals` and set `schemaVersion: 1` → 200, zero goals written, and `show_goals` re-defaulted to `t` via the RPC's `COALESCE`) — 358dd06
+- [x] 6.12 Unknown `category_id` fails with `UNKNOWN_CATEGORY` before any write (verified: → 400 `UNKNOWN_CATEGORY` with `context.unknownCategoryIds: ["no_such_category"]`, and the goals table stayed at 0 rows — rejected ahead of the RPC, not by the FK) — 358dd06
