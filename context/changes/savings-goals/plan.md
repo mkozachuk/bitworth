@@ -612,29 +612,29 @@ Three migrations, all forward-only with commented rollback blocks: `202607241300
 
 #### Automated
 
-- [x] 1.1 Migrations apply cleanly: `npx supabase db reset`
-- [x] 1.2 Type checking passes: `npx astro sync && npx tsc --noEmit`
-- [x] 1.3 Linting passes: `npm run lint`
-- [x] 1.4 Existing test suite still green: `npm run test:ci`
+- [x] 1.1 Migrations apply cleanly: `npx supabase db reset` — fa9f0ed
+- [x] 1.2 Type checking passes: `npx astro sync && npx tsc --noEmit` — fa9f0ed
+- [x] 1.3 Linting passes: `npm run lint` — fa9f0ed
+- [x] 1.4 Existing test suite still green: `npm run test:ci` — fa9f0ed
 
 #### Manual
 
-- [x] 1.5 `kind`/`category_id` CHECK rejects an incoherent insert (verified: psql against local DB — `net_worth`+`category_id` and `category`+NULL both raise `goals_check`; coherent insert succeeds; `target_amount 0`, `GBP`, and `kind='retirement'` also correctly rejected)
-- [x] 1.6 RLS isolates `goals` rows between two users (verified: two `SET LOCAL request.jwt.claims` sessions — A sees only A's rows, B only B's; B reassigning `user_id` to A raises "new row violates row-level security policy" (WITH CHECK holds); B deleting A's row yields `DELETE 0`)
-- [x] 1.7 `updated_at` trigger fires on UPDATE (verified: UPDATE on a goal bumped `updated_at` 116.63s past an unchanged `created_at`)
+- [x] 1.5 `kind`/`category_id` CHECK rejects an incoherent insert (verified: psql against local DB — `net_worth`+`category_id` and `category`+NULL both raise `goals_check`; coherent insert succeeds; `target_amount 0`, `GBP`, and `kind='retirement'` also correctly rejected) — fa9f0ed
+- [x] 1.6 RLS isolates `goals` rows between two users (verified: two `SET LOCAL request.jwt.claims` sessions — A sees only A's rows, B only B's; B reassigning `user_id` to A raises "new row violates row-level security policy" (WITH CHECK holds); B deleting A's row yields `DELETE 0`) — fa9f0ed
+- [x] 1.7 `updated_at` trigger fires on UPDATE (verified: UPDATE on a goal bumped `updated_at` 116.63s past an unchanged `created_at`) — fa9f0ed
 
 ### Phase 2: Pure Goals Math
 
 #### Automated
 
-- [ ] 2.1 New tests pass: `npx vitest run src/lib/goals.test.ts`
-- [ ] 2.2 Full suite passes: `npm run test:ci`
-- [ ] 2.3 Type checking passes: `npx tsc --noEmit`
-- [ ] 2.4 Linting passes: `npm run lint`
+- [x] 2.1 New tests pass: `npx vitest run src/lib/goals.test.ts`
+- [x] 2.2 Full suite passes: `npm run test:ci`
+- [x] 2.3 Type checking passes: `npx tsc --noEmit`
+- [x] 2.4 Linting passes: `npm run lint`
 
 #### Manual
 
-- [ ] 2.5 Every oracle in `goals.test.ts` is hand-derivable without reading `goals.ts`
+- [x] 2.5 Every oracle in `goals.test.ts` is hand-derivable without reading `goals.ts` (verified: read all 37 cases; re-derived the OLS fit (slope 1000/intercept 100_000 from the collinear samples), the 100-day crossing → 2026-04-11 calendar walk, the CAGR doubling, the declining-trend t=20 past-crossing, and every percent oracle by hand; independently confirmed the test's stated `convertAmount` semantics, `EPSILON = 1e-2`, and `etaToTarget` branch behaviour against the real sources. One comment mis-stated `33_333/333.33` as `100.0009` — it is exactly 100; corrected)
 
 ### Phase 3: Goals CRUD API
 
