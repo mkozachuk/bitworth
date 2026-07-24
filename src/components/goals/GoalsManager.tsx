@@ -418,7 +418,8 @@ export function GoalsManager({ goals: initialGoals, categories, displayCurrency,
                             onClick={() => {
                               openEdit(goal);
                             }}
-                            className="flex items-center gap-1 text-sm text-purple-600 transition-colors hover:text-purple-800 dark:text-purple-300 dark:hover:text-purple-200"
+                            disabled={pending}
+                            className="flex items-center gap-1 text-sm text-purple-600 transition-colors hover:text-purple-800 disabled:cursor-not-allowed disabled:opacity-50 dark:text-purple-300 dark:hover:text-purple-200"
                           >
                             <Pencil className="size-3.5" />
                             Edit
@@ -429,7 +430,8 @@ export function GoalsManager({ goals: initialGoals, categories, displayCurrency,
                             onClick={() => {
                               void handleDelete(goal);
                             }}
-                            className="flex items-center gap-1 text-sm text-red-600 transition-colors hover:text-red-800 dark:text-red-300 dark:hover:text-red-200"
+                            disabled={pending}
+                            className="flex items-center gap-1 text-sm text-red-600 transition-colors hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-300 dark:hover:text-red-200"
                           >
                             <Trash2 className="size-3.5" />
                             Delete
@@ -467,8 +469,9 @@ export function GoalsManager({ goals: initialGoals, categories, displayCurrency,
                         onClick={() => {
                           openEdit(goal);
                         }}
+                        disabled={pending}
                         aria-label={`Edit ${goal.name}`}
-                        className="flex items-center gap-1 text-sm text-purple-600 transition-colors hover:text-purple-800 dark:text-purple-300 dark:hover:text-purple-200"
+                        className="flex items-center gap-1 text-sm text-purple-600 transition-colors hover:text-purple-800 disabled:cursor-not-allowed disabled:opacity-50 dark:text-purple-300 dark:hover:text-purple-200"
                       >
                         <Pencil className="size-3.5" />
                         Edit
@@ -478,8 +481,9 @@ export function GoalsManager({ goals: initialGoals, categories, displayCurrency,
                         onClick={() => {
                           void handleDelete(goal);
                         }}
+                        disabled={pending}
                         aria-label={`Delete ${goal.name}`}
-                        className="flex items-center gap-1 text-sm text-red-600 transition-colors hover:text-red-800 dark:text-red-300 dark:hover:text-red-200"
+                        className="flex items-center gap-1 text-sm text-red-600 transition-colors hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-300 dark:hover:text-red-200"
                       >
                         <Trash2 className="size-3.5" />
                         Delete

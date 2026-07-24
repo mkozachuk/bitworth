@@ -305,6 +305,17 @@ export function validateEnvelope(parsed: unknown, validCategoryIds: ReadonlySet<
     }
   }
 
+  // Semantic validation — `kind` ∈ enum, `target_currency` ∈ enum,
+  // `target_amount > 0`, and `kind`↔`category_id` coherence — is deliberately NOT
+  // repeated here. The goals table's DB CHECK constraints are the single source of
+  // truth, and `restore_backup` runs as one transaction, so a semantically-bad row
+  // rolls the whole import back cleanly with no partial write. This mirrors the
+  // assets/snapshots posture, which likewise leaves currency/amount to the DB on
+  // import. The tradeoff is that such a row surfaces as `500 RESTORE_FAILED` rather
+  // than a granular `400` — accepted here. `category_id` membership (below) is the
+  // one semantic check kept in this layer, because the FK's failure mode is a
+  // RESTRICT error that is harder to attribute than a CHECK.
+
   // Category-id membership — collect every offending id so the user sees the
   // full set, not just the first. First real use of `ErrorShape.context`.
   // A `net_worth` goal carries a null `category_id`; the `typeof` guard skips it.
