@@ -48,7 +48,7 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 | S-18 | allocation-drift-alerts    | get a dashboard alert when real allocation drifts past a threshold from a card's target            | F-01, S-01, S-02, S-15 | —                    | done |
 | S-19 | metal-price-fetch          | see live gold/silver spot prices (in display currency) when adding a precious-metals asset         | F-01, S-01, S-03       | —                    | done    |
 | S-20 | net-worth-trajectory       | project future net worth from their real snapshot history and see when they'll hit a target        | F-01, S-02             | —                    | done |
-| S-21 | savings-goals              | define custom savings goals and see progress cards with an ETA derived from their real trend        | F-01, S-01, S-02, S-05, S-20 | —              | proposed |
+| S-21 | savings-goals              | define custom savings goals and see progress cards with an ETA derived from their real trend        | F-01, S-01, S-02, S-05, S-20 | —              | done |
 | S-22 | snapshot-reminder          | get an in-app nudge when it's been too long since their last snapshot                               | F-01, S-02, S-05       | —                    | proposed |
 | S-23 | category-mix-trends        | see how their allocation across categories shifted over time as a stacked-area chart                | F-01, S-02             | —                    | proposed |
 | S-24 | income-savings-rate        | record income and see their savings rate (contributions ÷ income) per snapshot interval             | F-01, S-02, S-05, S-17 | —                    | proposed |
@@ -441,7 +441,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Settings gating: add `show_goals BOOLEAN NOT NULL DEFAULT TRUE` to `user_preferences`, threaded schema → `database.types.ts` (Row/Insert/Update) → `PREFS_SELECT` + a validation branch in `api/user-preferences/index.ts` → a checkbox in `SettingsForm.tsx`, mirroring the S-14 `show_fire_dashboard` / S-18 `show_drift_alerts` precedent exactly. (Owner: planner)
   - Nav + management surface: new "Goals" item in `Topbar`/`TopbarMenu` at `/dashboard/goals` (CRUD list), and a `GoalsProgress` island on the dashboard mirroring `FireProgress.tsx`. (Owner: planner) Recommendation: Lucide `Target` or `Flag` icon; place the card near `FireProgress`.
 - **Risk:** Low — read-and-present over existing net-worth math plus a small CRUD table. Main risks: (a) currency/denominator correctness across net-worth vs category goals — mitigant: isolate in a pure, unit-tested `src/lib/goals.ts` reusing `convertAmount`; (b) a deleted category orphaning a category goal — mitigant: FK `ON DELETE SET NULL` + a "category removed" goal state; (c) fragmenting the `user_preferences` write path — mitigant: the settings page stays the single UI for the `show_goals` flag, per the S-05 lesson.
-- **Status:** proposed
+- **Status:** done
 
 ### S-22: Snapshot cadence reminder
 
@@ -581,3 +581,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **S-18: Allocation-drift alerts** — Archived 2026-07-12 → `context/archive/2026-07-11-allocation-drift-alerts/`. Lesson: —.
 - **S-19: Precious-metals price fetch on asset entry** — Archived 2026-07-12 → `context/archive/2026-07-12-metal-price-fetch/`. Lesson: —.
 - **S-20: Empirical net-worth trajectory** — Archived 2026-07-24 → `context/archive/2026-07-19-net-worth-trajectory/`. Note: built on a feature branch and merged to master on archive day; the eight manual checks were re-run as `e2e/trajectory-verify.spec.ts` rather than recalled. Lesson: a screenshot timed on DOM-readiness catches Recharts mid-animation and reads as a rendering defect — settle on pixels before judging anything visual.
+- **S-21: Custom savings goals** — Archived 2026-07-24 → `context/archive/2026-07-24-savings-goals/`. Note: `goals` table (two kinds — net_worth / category — with a coherence CHECK and RLS USING+WITH CHECK); pure `src/lib/goals.ts` with a five-state `GoalEta` discriminant reusing S-20's `etaToTarget`; `/dashboard/goals` CRUD + settings-gated `GoalsProgress` card mirroring `FireProgress`; backup RPC/whitelist landed together in one phase, schemaVersion bumped to 2 with `goals` optional so v1 files stay importable. Impl-review APPROVED (0 critical/warning; 3 low observations all fixed). Lesson: —.
