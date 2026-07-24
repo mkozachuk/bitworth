@@ -8,6 +8,7 @@ import {
   ASSETS_COLUMNS,
   SNAPSHOTS_COLUMNS,
   SNAPSHOT_ITEMS_COLUMNS,
+  GOALS_COLUMNS,
   validateEnvelope,
 } from "@/lib/backup";
 
@@ -111,6 +112,34 @@ function makeInput(): BackupInput {
         created_at: ISO,
       },
     ],
+    goals: [
+      {
+        id: "goal-1",
+        user_id: "user-1",
+        name: "Reach 1M",
+        kind: "net_worth",
+        category_id: null,
+        target_amount: 1000000,
+        target_currency: "USD",
+        target_date: null,
+        created_at: ISO,
+        updated_at: ISO,
+      },
+      {
+        id: "goal-2",
+        user_id: "user-1",
+        name: "Emergency fund",
+        kind: "category",
+        category_id: "cat-cash",
+        target_amount: 50000,
+        target_currency: "EUR",
+        // A DATE column, not a timestamptz — deliberately not `T`-separated, to
+        // pin that `target_date` is NOT validated as an ISO-8601 timestamp.
+        target_date: "2027-12-31",
+        created_at: ISO,
+        updated_at: ISO,
+      },
+    ],
   };
 }
 
@@ -131,6 +160,10 @@ describe("serialize", () => {
     expect(asset).toHaveProperty("show_on_chart");
     expect(asset).toHaveProperty("created_at");
     expect(asset).toHaveProperty("updated_at");
+
+    const goal = env.data.goals[0] as Record<string, unknown>;
+    for (const col of GOALS_COLUMNS) expect(goal).toHaveProperty(col);
+    expect(env.data.goals).toHaveLength(2);
   });
 
   it("strips columns not on the whitelist", () => {
@@ -209,6 +242,81 @@ describe("validateEnvelope", () => {
     const broken = { ...env, data: { ...env.data, snapshots: undefined } };
     expect(validateEnvelope(broken, VALID_CATEGORIES).ok).toBe(false);
   });
+
+  it("accepts a schemaVersion 1 envelope with no `goals` key and normalises it to []", () => {
+    // The backwards-compatibility contract: every file exported before goals
+    // existed must still import. Built by hand rather than by deleting a key
+    // from a fresh envelope, so it is a genuine v1 shape.
+    const legacy = {
+      app: "bitworth",
+      schemaVersion: 1,
+      exportedAt: ISO,
+      data: {
+        user_preferences: [],
+        assets: [],
+        snapshots: [],
+        snapshot_items: [],
+      },
+    };
+    const result = validateEnvelope(legacy, VALID_CATEGORIES);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.goals).toEqual([]);
+
+    // …and it survives the rest of the pipeline, not just validation.
+    expect(prepareForImport(result.data, () => "x").goals).toEqual([]);
+  });
+
+  it("rejects a `goals` key that is present but not an array", () => {
+    const env = serialize(makeInput(), ISO);
+    const broken = { ...env, data: { ...env.data, goals: "nope" } };
+    const result = validateEnvelope(broken, VALID_CATEGORIES);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe("INVALID_ENVELOPE");
+      expect(result.context).toMatchObject({ table: "goals" });
+    }
+  });
+
+  it("rejects a goal missing a required NOT-NULL field", () => {
+    const env = serialize(makeInput(), ISO);
+    delete (env.data.goals[0] as Record<string, unknown>).target_currency;
+    const result = validateEnvelope(env, VALID_CATEGORIES);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe("INVALID_ROW");
+      expect(result.context).toMatchObject({ table: "goals", field: "target_currency" });
+    }
+  });
+
+  it("accepts a goal's non-timestamp `target_date` but rejects a bad `created_at`", () => {
+    // `target_date` is a DATE ("2027-12-31"): no `T` separator, so validating it
+    // as an ISO-8601 timestamp would reject every dated goal.
+    expect(validateEnvelope(serialize(makeInput(), ISO), VALID_CATEGORIES).ok).toBe(true);
+
+    const env = serialize(makeInput(), ISO);
+    (env.data.goals[0] as Record<string, unknown>).created_at = "2027-12-31";
+    const result = validateEnvelope(env, VALID_CATEGORIES);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.code).toBe("INVALID_ROW");
+  });
+
+  it("rejects an unknown category id on a goal before any write", () => {
+    const env = serialize(makeInput(), ISO);
+    (env.data.goals[1] as Record<string, unknown>).category_id = "cat-vanished";
+    const result = validateEnvelope(env, VALID_CATEGORIES);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe("UNKNOWN_CATEGORY");
+      expect((result.context as { unknownCategoryIds: string[] }).unknownCategoryIds).toContain("cat-vanished");
+    }
+  });
+
+  it("accepts a net-worth goal's null category_id", () => {
+    const env = serialize(makeInput(), ISO);
+    expect((env.data.goals[0] as Record<string, unknown>).category_id).toBeNull();
+    expect(validateEnvelope(env, VALID_CATEGORIES).ok).toBe(true);
+  });
 });
 
 describe("prepareForImport", () => {
@@ -240,6 +348,14 @@ describe("prepareForImport", () => {
     expect(prepared.snapshot_items[0]).not.toHaveProperty("id");
     expect(prepared.snapshot_items[0].snapshot_id).toBe("new-1");
     expect(prepared.snapshot_items[1].snapshot_id).toBe("new-2");
+
+    // goals drop both id and user_id — the RPC stamps ownership and lets the
+    // primary key default — but keep every other field.
+    expect(prepared.goals[0]).not.toHaveProperty("id");
+    expect(prepared.goals[0]).not.toHaveProperty("user_id");
+    expect(prepared.goals[0]).toHaveProperty("target_amount", 1000000);
+    expect(prepared.goals[1]).toHaveProperty("category_id", "cat-cash");
+    expect(prepared.goals[1]).toHaveProperty("target_date", "2027-12-31");
   });
 
   it("emits only whitelisted columns (minus dropped id/user_id)", () => {
@@ -266,5 +382,11 @@ describe("prepareForImport", () => {
       .slice()
       .sort();
     expect(itemKeys).toEqual(expectedItemKeys);
+
+    const goalKeys = Object.keys(prepared.goals[0]).sort();
+    const expectedGoalKeys = GOALS_COLUMNS.filter((c) => c !== "id" && c !== "user_id")
+      .slice()
+      .sort();
+    expect(goalKeys).toEqual(expectedGoalKeys);
   });
 });
