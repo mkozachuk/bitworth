@@ -93,7 +93,7 @@ test("capture buy plan card", async ({ page, browser }) => {
   await page.screenshot({ path: join(SHOTS_DIR, "balancer-full-dark.png"), fullPage: true });
 
   // Focused shot of just the buy plan card.
-  const card = page.locator("div.rounded-2xl").filter({ has: page.getByRole("heading", { name: /buy plan/i }) });
+  const card = page.locator("div.rounded-md").filter({ has: page.getByRole("heading", { name: /buy plan/i }) });
   await card.screenshot({ path: join(SHOTS_DIR, "buy-plan-card-dark.png") });
 
   // Light theme focused card.

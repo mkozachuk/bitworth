@@ -97,7 +97,7 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
       <ServerError message={serverError} />
 
       <div>
-        <label htmlFor="name" className="mb-1 block text-sm text-zinc-700 dark:text-blue-100/80">
+        <label htmlFor="name" className="text-foreground/70 mb-1 block text-sm">
           Name
         </label>
         <input
@@ -110,20 +110,17 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
             clearError("name");
           }}
           placeholder="e.g. Savings account"
-          className="w-full rounded-lg border bg-white px-3 py-2 text-zinc-900 placeholder-zinc-500 transition-colors focus:ring-2 focus:outline-none dark:bg-white/10 dark:text-white dark:placeholder-white/40"
-          style={
-            errors.name
-              ? { borderColor: "rgb(148 163 184 / 0.6)", boxShadow: "0 0 0 2px rgba(248,113,113,0.4)" }
-              : { borderColor: "rgb(212 212 216)", boxShadow: "0 0 0 2px rgba(192,132,252,0.4)" }
-          }
+          className={`bg-card text-foreground placeholder:text-muted-foreground focus:border-primary w-full rounded-sm border px-3 py-2 transition-colors focus:outline-none ${
+            errors.name ? "border-destructive" : "border-input"
+          }`}
         />
-        {errors.name && <p className="mt-1 text-xs text-red-600 dark:text-red-300">{errors.name}</p>}
+        {errors.name && <p className="text-destructive mt-1 text-xs">{errors.name}</p>}
       </div>
 
       {!isPriced && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="amount" className="mb-1 block text-sm text-zinc-700 dark:text-blue-100/80">
+            <label htmlFor="amount" className="text-foreground/70 mb-1 block text-sm">
               Amount
             </label>
             <input
@@ -138,18 +135,15 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
                 clearError("amount");
               }}
               placeholder="0.00"
-              className="w-full rounded-lg border bg-white px-3 py-2 text-zinc-900 placeholder-zinc-500 transition-colors focus:ring-2 focus:outline-none dark:bg-white/10 dark:text-white dark:placeholder-white/40"
-              style={
-                errors.amount
-                  ? { borderColor: "rgb(148 163 184 / 0.6)", boxShadow: "0 0 0 2px rgba(248,113,113,0.4)" }
-                  : { borderColor: "rgb(212 212 216)", boxShadow: "0 0 0 2px rgba(192,132,252,0.4)" }
-              }
+              className={`bg-card text-foreground placeholder:text-muted-foreground focus:border-primary tnum w-full rounded-sm border px-3 py-2 transition-colors focus:outline-none ${
+                errors.amount ? "border-destructive" : "border-input"
+              }`}
             />
-            {errors.amount && <p className="mt-1 text-xs text-red-600 dark:text-red-300">{errors.amount}</p>}
+            {errors.amount && <p className="text-destructive mt-1 text-xs">{errors.amount}</p>}
           </div>
 
           <div>
-            <label htmlFor="currency" className="mb-1 block text-sm text-zinc-700 dark:text-blue-100/80">
+            <label htmlFor="currency" className="text-foreground/70 mb-1 block text-sm">
               Currency
             </label>
             <div className="relative">
@@ -161,22 +155,19 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
                   setCurrency(e.target.value as "USD" | "EUR" | "PLN");
                   clearError("currency");
                 }}
-                className="w-full appearance-none rounded-lg border bg-white px-3 py-2 pr-8 text-zinc-900 transition-colors focus:ring-2 focus:outline-none dark:bg-white/10 dark:text-white"
-                style={
-                  errors.currency
-                    ? { borderColor: "rgb(148 163 184 / 0.6)", boxShadow: "0 0 0 2px rgba(248,113,113,0.4)" }
-                    : { borderColor: "rgb(212 212 216)", boxShadow: "0 0 0 2px rgba(192,132,252,0.4)" }
-                }
+                className={`bg-card text-foreground focus:border-primary w-full appearance-none rounded-sm border px-3 py-2 pr-8 transition-colors focus:outline-none ${
+                  errors.currency ? "border-destructive" : "border-input"
+                }`}
               >
                 <option value="USD">USD — US Dollar</option>
                 <option value="EUR">EUR — Euro</option>
                 <option value="PLN">PLN — Polish Zloty</option>
               </select>
-              <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs text-zinc-500 dark:text-white/40">
+              <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs">
                 ▼
               </span>
             </div>
-            {errors.currency && <p className="mt-1 text-xs text-red-600 dark:text-red-300">{errors.currency}</p>}
+            {errors.currency && <p className="text-destructive mt-1 text-xs">{errors.currency}</p>}
           </div>
         </div>
       )}
@@ -195,7 +186,7 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
           symbolFieldName="crypto_symbol"
           quantityLabel={
             <>
-              Quantity <span className="text-zinc-500 dark:text-white/40">(e.g., 0.5 BTC)</span>
+              Quantity <span className="text-muted-foreground">(e.g., 0.5 BTC)</span>
             </>
           }
           priceEndpoint="/api/crypto-price"
@@ -210,7 +201,7 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
           symbolFieldName="metal_symbol"
           quantityLabel={
             <>
-              Quantity <span className="text-zinc-500 dark:text-white/40">(troy ounces)</span>
+              Quantity <span className="text-muted-foreground">(troy ounces)</span>
             </>
           }
           priceEndpoint="/api/metal-price"
@@ -221,8 +212,8 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
       )}
 
       <div>
-        <label htmlFor="notes" className="mb-1 block text-sm text-zinc-700 dark:text-blue-100/80">
-          Notes <span className="text-zinc-500 dark:text-white/40">(optional)</span>
+        <label htmlFor="notes" className="text-foreground/70 mb-1 block text-sm">
+          Notes <span className="text-muted-foreground">(optional)</span>
         </label>
         <textarea
           id="notes"
@@ -233,12 +224,12 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
           }}
           placeholder="Any additional notes..."
           rows={3}
-          className="w-full resize-none rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 placeholder-zinc-500 transition-colors focus:ring-2 focus:ring-purple-500 focus:outline-none dark:border-white/20 dark:bg-white/10 dark:text-white dark:placeholder-white/40"
+          className="border-input bg-card text-foreground placeholder:text-muted-foreground focus:border-primary w-full resize-none rounded-sm border px-3 py-2 transition-colors focus:outline-none"
         />
       </div>
 
       <div>
-        <label htmlFor="show_on_chart" className="flex items-center gap-2 text-sm text-zinc-700 dark:text-blue-100/80">
+        <label htmlFor="show_on_chart" className="text-foreground/70 flex items-center gap-2 text-sm">
           <input
             id="show_on_chart"
             type="checkbox"
@@ -246,7 +237,7 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
             onChange={(e) => {
               setShowOnChart(e.target.checked);
             }}
-            className="size-4 accent-purple-600"
+            className="accent-primary size-4"
           />
           Show on chart
         </label>
@@ -259,11 +250,11 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
         <Button
           type="submit"
           disabled={pending}
-          className="flex-1 rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-500 disabled:opacity-50"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 flex-1 rounded-sm px-4 py-2 font-medium transition-colors disabled:opacity-50"
         >
           {pending ? (
             <span className="flex items-center gap-2">
-              <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              <span className="border-primary-foreground/30 border-t-primary-foreground size-4 animate-spin rounded-full border-2" />
               {mode === "create" ? "Creating..." : "Saving..."}
             </span>
           ) : (
@@ -277,7 +268,7 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:border-white/20 dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
+            className="border-primary text-primary hover:bg-primary/8 rounded-sm border-[1.5px] px-4 py-2 text-sm transition-colors"
           >
             Cancel
           </button>

@@ -21,13 +21,15 @@ function DeltaIndicator({ label, value, percentage }: { label: string; value: nu
   const isPositive = value >= 0;
   const absValue = Math.abs(value);
   const absPct = Math.abs(percentage);
-  const colorClass = isPositive ? "text-green-600 dark:text-green-300" : "text-red-600 dark:text-red-300";
-  const sign = isPositive ? "+" : "-";
+  const colorClass = isPositive ? "text-gain" : "text-loss";
+  const sign = isPositive ? "+" : "−";
+  const arrow = isPositive ? "▲" : "▼";
   return (
     <div>
-      <p className="text-xs tracking-wider text-zinc-500 uppercase dark:text-white/50">{label}</p>
-      <p className={`mt-1 text-sm font-semibold ${colorClass}`}>
-        {sign}${absValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({sign}
+      <p className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">{label}</p>
+      <p className={`tnum mt-1 text-sm font-bold ${colorClass}`}>
+        {arrow} {sign}
+        {absValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({sign}
         {absPct.toFixed(1)}%)
       </p>
     </div>
@@ -45,6 +47,7 @@ function SaveButton({
 }) {
   const [state, setState] = useState<ButtonState>("idle");
   const [contribution, setContribution] = useState("");
+  const [stampDate, setStampDate] = useState<{ month: string; year: string } | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const openDialog = useCallback(() => {
@@ -90,8 +93,19 @@ function SaveButton({
         const json = (await res.json()) as { error?: { message?: string } };
         throw new Error(json.error?.message ?? `HTTP ${res.status}`);
       }
-      onSuccess();
-      window.location.reload();
+      // The stamp landing: seal the month visibly, then refresh. The delay is
+      // the animation's moment — long enough to read, short enough to not stall.
+      const now = new Date();
+      setStampDate({
+        month: now.toLocaleDateString("en-US", { month: "short" }),
+        year: String(now.getFullYear()),
+      });
+      closeDialog();
+      setState("saved");
+      setTimeout(() => {
+        onSuccess();
+        window.location.reload();
+      }, 1200);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       setState("error");
@@ -100,23 +114,27 @@ function SaveButton({
         setState("idle");
       }, 3000);
     }
-  }, [state, contribution, onSuccess, onError]);
+  }, [state, contribution, closeDialog, onSuccess, onError]);
 
-  const triggerLabel = state === "error" ? "Retry" : "Save Snapshot";
+  const triggerLabel = state === "error" ? "Retry snapshot" : "Save snapshot — stamp the month";
   const triggerClass =
     state === "error"
-      ? "w-full rounded-lg border border-red-500/50 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 dark:bg-red-500/20 dark:text-red-300 dark:hover:bg-red-500/30"
-      : "w-full rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-500";
+      ? "w-full rounded-sm border-[1.5px] border-destructive px-4 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive hover:text-background"
+      : "w-full rounded-sm bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90";
 
   return (
     <>
       {state === "saved" ? (
-        <button
-          disabled
-          className="w-full rounded-lg border border-green-500/50 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 transition-colors dark:bg-green-500/20 dark:text-green-300"
-        >
-          Saved!
-        </button>
+        <div className="flex items-center justify-center gap-3 py-1" role="status">
+          <span
+            className="stamp-land border-seal text-seal flex h-14 w-14 flex-none flex-col items-center justify-center rounded-full border-2 leading-none font-bold uppercase"
+            aria-hidden="true"
+          >
+            <span className="text-xs tracking-widest">{stampDate?.month}</span>
+            <span className="tnum mt-0.5 text-xs">{stampDate?.year}</span>
+          </span>
+          <span className="text-gain text-sm font-bold">Month stamped — refreshing…</span>
+        </div>
       ) : (
         <button onClick={openDialog} className={triggerClass}>
           {triggerLabel}
@@ -129,10 +147,10 @@ function SaveButton({
         onClick={(e) => {
           if (e.target === dialogRef.current) closeDialog();
         }}
-        className="w-[min(92vw,28rem)] rounded-2xl border border-zinc-200 bg-white/95 p-0 text-zinc-800 shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-sm dark:border-white/10 dark:bg-zinc-900/95 dark:text-zinc-100"
+        className="bg-card text-card-foreground shadow-paper border-border w-[min(92vw,28rem)] rounded-md border p-0 backdrop:bg-[#3b2f2a]/50"
       >
-        <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-3 dark:border-white/10">
-          <h2 className="text-base font-semibold">Save Snapshot</h2>
+        <div className="border-border flex items-center justify-between border-b px-5 py-3">
+          <h2 className="font-display text-base font-bold">Save snapshot</h2>
         </div>
         <div className="px-5 py-5">
           <ContributionField
@@ -143,12 +161,12 @@ function SaveButton({
             disabled={state === "loading"}
           />
         </div>
-        <div className="flex justify-end gap-2 border-t border-zinc-200 px-5 py-3 dark:border-white/10">
+        <div className="border-border flex justify-end gap-2 border-t px-5 py-3">
           <button
             type="button"
             onClick={closeDialog}
             disabled={state === "loading"}
-            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-white/15 dark:text-white/80 dark:hover:bg-white/10"
+            className="border-primary text-primary hover:bg-primary/8 rounded-sm border-[1.5px] px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
@@ -156,7 +174,7 @@ function SaveButton({
             type="button"
             onClick={handleConfirm}
             disabled={state === "loading"}
-            className="flex items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:bg-purple-600/50"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-primary/50 flex items-center justify-center gap-2 rounded-sm px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed"
           >
             {state === "loading" ? (
               <>
@@ -253,27 +271,40 @@ export function NetWorthDisplay({ assets, displayCurrency, rates, snapshots = []
   })();
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white/80 p-6 dark:border-white/10 dark:bg-white/5">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-medium tracking-wider text-zinc-600 uppercase dark:text-white/60">Net Worth</h2>
+    <div className="bg-card border-primary/60 rounded-md border-[1.5px] p-6">
+      {/* The wrapper band: a kraft strap across the lid, bearing the seal. */}
+      <div className="bg-kraft/50 border-border -mx-6 -mt-6 mb-4 flex items-center justify-between gap-3 rounded-t-[4px] border-b px-6 py-2.5">
+        <h2 className="text-foreground/70 flex items-center gap-2 font-sans text-xs font-bold tracking-[0.12em] uppercase">
+          <svg viewBox="0 0 48 48" className="text-seal h-4.5 w-4.5 flex-none" fill="none" aria-hidden="true">
+            <circle cx="24" cy="24" r="21.5" stroke="currentColor" strokeWidth="3.5" />
+            <path
+              d="M9 32 L16 24 L21 28 L29 17 L33 21 L39 13"
+              stroke="currentColor"
+              strokeWidth="4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          Net worth
+        </h2>
         <CurrencyBadge currency={displayCurrency} />
       </div>
 
-      {ratesError && <p className="mb-2 text-xs text-yellow-600 dark:text-yellow-300/80">{ratesError}</p>}
+      {ratesError && <p className="text-loss mb-2 text-xs font-medium">{ratesError}</p>}
 
       <p
-        className={`mb-4 text-4xl font-bold ${
-          currentNetWorth < 0 ? "text-red-600 dark:text-red-300" : "text-zinc-900 dark:text-white"
+        className={`font-display tnum mb-4 text-4xl font-extrabold sm:text-5xl ${
+          currentNetWorth < 0 ? "text-loss" : "text-foreground"
         }`}
       >
         {currentNetWorth.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
         {displayCurrency}
       </p>
 
-      <div className="mb-4 grid grid-cols-1 gap-4 border-t border-zinc-200 pt-4 sm:grid-cols-2 dark:border-white/10">
+      <div className="border-border mb-4 grid grid-cols-1 gap-4 border-t pt-4 sm:grid-cols-2">
         <div>
-          <p className="text-xs tracking-wider text-zinc-500 uppercase dark:text-white/50">Assets</p>
-          <p className="mt-1 text-lg font-semibold text-green-600 dark:text-green-300">
+          <p className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">Assets</p>
+          <p className="text-gain tnum mt-1 text-lg font-bold">
             +
             {assets
               .filter((a) => !a.category.is_liability)
@@ -283,9 +314,9 @@ export function NetWorthDisplay({ assets, displayCurrency, rates, snapshots = []
           </p>
         </div>
         <div>
-          <p className="text-xs tracking-wider text-zinc-500 uppercase dark:text-white/50">Liabilities</p>
-          <p className="mt-1 text-lg font-semibold text-red-600 dark:text-red-300">
-            -
+          <p className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">Liabilities</p>
+          <p className="text-loss tnum mt-1 text-lg font-bold">
+            −
             {assets
               .filter((a) => a.category.is_liability)
               .reduce((sum, a) => sum + convertAmount(a.amount, a.currency as Currency, displayCurrency, rates), 0)
@@ -296,27 +327,27 @@ export function NetWorthDisplay({ assets, displayCurrency, rates, snapshots = []
       </div>
 
       {snapshots.length > 0 && (
-        <div className="mb-4 grid grid-cols-1 gap-4 border-t border-zinc-200 pt-4 sm:grid-cols-2 dark:border-white/10">
+        <div className="border-border mb-4 grid grid-cols-1 gap-4 border-t pt-4 sm:grid-cols-2">
           {deltaLastMonth ? (
             <DeltaIndicator label="vs Last Month" value={deltaLastMonth.value} percentage={deltaLastMonth.pct} />
           ) : (
             <div>
-              <p className="text-xs tracking-wider text-zinc-500 uppercase dark:text-white/50">vs Last Month</p>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-white/40">No baseline</p>
+              <p className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">vs Last Month</p>
+              <p className="text-muted-foreground mt-1 text-sm">No baseline yet</p>
             </div>
           )}
           {deltaJan ? (
             <DeltaIndicator label="vs Jan 1st" value={deltaJan.value} percentage={deltaJan.pct} />
           ) : (
             <div>
-              <p className="text-xs tracking-wider text-zinc-500 uppercase dark:text-white/50">vs Jan 1st</p>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-white/40">No baseline</p>
+              <p className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">vs Jan 1st</p>
+              <p className="text-muted-foreground mt-1 text-sm">No baseline yet</p>
             </div>
           )}
         </div>
       )}
 
-      {snapshotError && <p className="mb-2 text-xs text-red-600 dark:text-red-300">{snapshotError}</p>}
+      {snapshotError && <p className="text-loss mb-2 text-xs font-medium">{snapshotError}</p>}
 
       <SaveButton
         displayCurrency={displayCurrency}

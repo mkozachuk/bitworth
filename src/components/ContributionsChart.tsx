@@ -72,30 +72,27 @@ function CustomTooltip({
     ? date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
     : label;
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white/95 p-3 text-zinc-900 backdrop-blur dark:border-white/10 dark:bg-white/10 dark:text-white">
-      <p className="mb-1 text-xs text-zinc-600 dark:text-white/60">{formattedDate}</p>
+    <div className="bg-card text-card-foreground border-border shadow-paper rounded-md border p-3">
+      <p className="text-muted-foreground mb-1 text-xs">{formattedDate}</p>
       {row.isUnknown ? (
-        <p className="max-w-[14rem] text-xs text-zinc-600 dark:text-white/60">
+        <p className="text-foreground/70 max-w-[14rem] text-xs">
           Contribution not recorded for this interval, so the split is unknown. Total change:{" "}
-          <span className="font-semibold text-zinc-900 dark:text-white">
-            {formatAmount(row.totalChange, displayCurrency)}
-          </span>
-          .
+          <span className="tnum text-foreground font-bold">{formatAmount(row.totalChange, displayCurrency)}</span>.
         </p>
       ) : (
         <div className="space-y-1 text-sm">
           <p className="flex items-center gap-2">
-            <span className="inline-block size-2 shrink-0 rounded-full" style={{ backgroundColor: "var(--chart-2)" }} />
-            <span className="text-zinc-600 dark:text-white/60">Contribution</span>
+            <span className="inline-block size-2 shrink-0 rounded-full" style={{ backgroundColor: "var(--chart-3)" }} />
+            <span className="text-foreground/70">Contribution</span>
             <span className="ml-auto font-semibold">{formatAmount(row.contribution ?? 0, displayCurrency)}</span>
           </p>
           <p className="flex items-center gap-2">
             <span className="inline-block size-2 shrink-0 rounded-full" style={{ backgroundColor: "var(--chart-1)" }} />
-            <span className="text-zinc-600 dark:text-white/60">Growth</span>
+            <span className="text-foreground/70">Growth</span>
             <span className="ml-auto font-semibold">{formatAmount(row.growth ?? 0, displayCurrency)}</span>
           </p>
-          <p className="flex items-center gap-2 border-t border-zinc-200 pt-1 dark:border-white/10">
-            <span className="text-zinc-600 dark:text-white/60">Total change</span>
+          <p className="border-border flex items-center gap-2 border-t pt-1">
+            <span className="text-foreground/70">Total change</span>
             <span className="ml-auto font-semibold">{formatAmount(row.totalChange, displayCurrency)}</span>
           </p>
         </div>
@@ -165,24 +162,22 @@ export function ContributionsChart({ snapshots, displayCurrency, rates }: Props)
   const selectedRow = selected !== null ? chartData[selected] : null;
 
   return (
-    <div className="mt-6 rounded-2xl border border-zinc-200 bg-white/80 p-6 dark:border-white/10 dark:bg-white/5">
+    <div className="bg-card border-border mt-6 rounded-md border p-6">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-medium tracking-wider text-zinc-600 uppercase dark:text-white/60">
-          Contributions vs Growth
-        </h2>
-        <span className="text-xs text-zinc-500 dark:text-white/40">{displayCurrency}</span>
+        <h2 className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">Contributions vs Growth</h2>
+        <span className="text-muted-foreground text-xs font-bold">{displayCurrency}</span>
       </div>
 
       {isMixed && changeDateFormatted && (
-        <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+        <div className="bg-kraft/40 border-kraft text-foreground/80 mb-4 rounded-sm border px-3 py-2 text-xs">
           Your chart mixes {sortedCurrencies.join(" and ")} snapshots from before/after your currency change on{" "}
           {changeDateFormatted}.
         </div>
       )}
 
       {chartData.length === 0 ? (
-        <div className="rounded-xl border border-zinc-200 bg-white/60 p-8 text-center dark:border-white/10 dark:bg-white/5">
-          <p className="text-sm text-zinc-600 dark:text-white/60">
+        <div className="border-kraft rounded-md border-2 border-dashed p-8 text-center">
+          <p className="text-foreground/70 text-sm">
             Save at least two snapshots to see how much of your change came from contributions vs growth.
           </p>
         </div>
@@ -212,7 +207,7 @@ export function ContributionsChart({ snapshots, displayCurrency, rates }: Props)
                 dataKey="contribution"
                 name="Contribution"
                 stackId="split"
-                fill="var(--chart-2)"
+                fill="var(--chart-3)"
                 cursor="pointer"
                 onClick={(_data, index) => {
                   setSelected(index);
@@ -243,20 +238,20 @@ export function ContributionsChart({ snapshots, displayCurrency, rates }: Props)
           <ul className="mt-4 space-y-1">
             {chartData.map((row, i) => (
               <li key={row.date} className="flex items-center justify-between gap-2 text-xs">
-                <span className="text-zinc-600 dark:text-white/60">
+                <span className="text-foreground/70">
                   {new Date(row.currDate).toLocaleDateString("en-US", {
                     month: "short",
                     day: "numeric",
                     year: "numeric",
                   })}
-                  {row.isUnknown && <span className="ml-2 text-zinc-400 dark:text-white/30">unknown split</span>}
+                  {row.isUnknown && <span className="text-muted-foreground ml-2">unknown split</span>}
                 </span>
                 <button
                   type="button"
                   onClick={() => {
                     setSelected(i);
                   }}
-                  className="flex items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900 dark:border-white/10 dark:text-white/60 dark:hover:border-white/20 dark:hover:text-white"
+                  className="border-primary text-primary hover:bg-primary/8 flex items-center gap-1 rounded-sm border-[1.5px] px-2 py-1 transition-colors"
                   aria-label={`Edit contribution for ${new Date(row.currDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`}
                 >
                   <Pencil className="size-3" />

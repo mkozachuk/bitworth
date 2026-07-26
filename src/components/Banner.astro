@@ -25,18 +25,18 @@ const { variant = "info" } = Astro.props;
     font-weight: 600;
   }
   .banner--info {
-    background: #dbeafe;
-    color: #1e3a8a;
-    border-color: #3b82f6;
+    background: var(--secondary);
+    color: var(--accent-foreground);
+    border-color: var(--primary);
   }
   .banner--warning {
-    background: #fef3c7;
-    color: #78350f;
-    border-color: #f59e0b;
+    background: color-mix(in srgb, var(--kraft) 40%, transparent);
+    color: var(--foreground);
+    border-color: var(--kraft);
   }
   .banner--error {
-    background: #fee2e2;
-    color: #7f1d1d;
-    border-color: #dc2626;
+    background: var(--card);
+    color: var(--destructive);
+    border-color: var(--destructive);
   }
 </style>

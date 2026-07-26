@@ -1,273 +1,663 @@
 ---
+/*
+  Landing — "The Contents Map" (Persuade).
+  FIRST VIEWPORT: kiosk header; Mincho hook + indigo Sign Up plate left; right,
+  the box lid whose ridgeline art IS a labeled sample net-worth chart.
+  Downstream: contents-map diagram, assets|liabilities streams folding into one
+  number, kraft privacy band, seal close. All figures are labeled sample data.
+*/
 import Topbar from "@/components/Topbar.astro";
+import BrandSeal from "@/components/BrandSeal.astro";
+
+const { user } = Astro.locals;
+
+const features = [
+  {
+    n: 1,
+    title: "Multi-currency by design",
+    body: "Hold PLN, USD, and EUR side by side. Everything converts to one display currency at live rates.",
+  },
+  {
+    n: 2,
+    title: "Private by default",
+    body: "No bank connections, no third-party syncing. You enter the numbers; row-level isolation keeps them yours.",
+  },
+  {
+    n: 3,
+    title: "One-click snapshots",
+    body: "Stamp the month once. BitWorth keeps the history your spreadsheet made you copy-paste.",
+  },
+  {
+    n: 4,
+    title: "Trends you can read",
+    body: "A net-worth line over every snapshot, top movers, and per-asset trends — honest gaps included.",
+  },
+  {
+    n: 5,
+    title: "FIRE planning",
+    body: "Your FIRE number, years to FI, and Monte Carlo odds — projected in today's money.",
+  },
+  {
+    n: 6,
+    title: "Asset balancer",
+    body: "Declared vs real allocation side by side, and a buy-only plan for deploying new cash.",
+  },
+];
 ---
 
-<div class="bg-cosmic-light dark:bg-cosmic relative min-h-screen w-full overflow-hidden">
-  <!-- Cosmic orbs -->
-  <div
-    class="pointer-events-none absolute top-1/4 -left-24 h-[350px] w-[350px] rounded-full bg-purple-500/20 blur-[120px]"
-  >
-  </div>
-  <div
-    class="pointer-events-none absolute top-2/3 -right-16 h-[250px] w-[250px] rounded-full bg-blue-500/15 blur-[100px]"
-  >
-  </div>
-  <div
-    class="pointer-events-none absolute top-0 left-1/2 h-[300px] w-[300px] -translate-x-1/2 rounded-full bg-indigo-400/10 blur-[140px]"
-  >
-  </div>
+<div class="min-h-screen">
+  <Topbar />
 
-  <!-- Star field -->
-  <div
-    class="pointer-events-none absolute inset-0"
-    style="background-image: radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px), radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px), radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px); background-size: 200px 200px, 150px 150px, 100px 100px; background-position: 0 0, 40px 60px, 80px 30px;"
-  >
-  </div>
-
-  <div class="relative z-10 p-4 sm:p-8">
-    <Topbar />
-
-    <!-- Hero section -->
-    <div class="mx-auto flex max-w-4xl flex-col items-center justify-center px-4 py-24 text-center sm:py-32 lg:py-40">
-      <h1
-        class="mb-6 bg-gradient-to-r from-blue-700 via-purple-700 to-pink-700 bg-clip-text text-5xl leading-tight font-bold text-transparent sm:text-6xl lg:text-7xl dark:from-blue-200 dark:via-purple-200 dark:to-pink-200"
-      >
-        Your net worth, without the spreadsheet
-      </h1>
-      <p class="mb-10 max-w-2xl text-lg text-zinc-700 sm:text-xl dark:text-blue-100/70">
-        Track everything you own — across currencies — in one private number. No bank connections, no formulas, no
-        copy-paste ritual.
-      </p>
-      <div class="flex flex-col gap-4 sm:flex-row">
-        <a
-          href="/auth/signup"
-          class="inline-flex items-center justify-center rounded-lg bg-purple-600 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-purple-500"
+  <main class="mx-auto max-w-6xl px-4 sm:px-6">
+    <!-- ====== HERO: the box lid ====== -->
+    <section class="grid items-center gap-10 py-10 sm:py-14 lg:grid-cols-[1fr_1.1fr] lg:gap-14 lg:py-20">
+      <div>
+        <p class="kicker mb-4">Privacy-first net worth tracker</p>
+        <h1
+          class="font-display text-foreground text-4xl leading-[1.12] font-extrabold tracking-wide sm:text-5xl lg:text-6xl"
         >
-          Sign Up
-        </a>
-        <a
-          href="/auth/signin"
-          class="inline-flex items-center justify-center rounded-lg border border-zinc-300 px-6 py-3 text-base font-medium text-zinc-900 transition-colors hover:bg-zinc-100 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
-        >
-          Sign In
-        </a>
-      </div>
-    </div>
-
-    <!-- Dashboard preview -->
-    <div class="mx-auto max-w-4xl px-4 pb-24">
-      <div
-        class="rounded-xl border border-zinc-200 bg-white/80 p-6 backdrop-blur-xl sm:p-8 dark:border-white/10 dark:bg-white/5"
-      >
-        <div class="mb-6 flex items-center justify-between">
-          <span
-            class="rounded-full border border-zinc-200 bg-zinc-100/60 px-3 py-1 text-xs font-medium tracking-wide text-zinc-500 uppercase dark:border-white/10 dark:bg-white/5 dark:text-blue-100/50"
-          >
-            Preview
-          </span>
-          <span class="text-xs text-zinc-500 dark:text-blue-100/50">Sample data</span>
+          Your net worth, without the spreadsheet
+        </h1>
+        <p class="text-foreground/80 mt-5 max-w-xl text-lg leading-relaxed">
+          Track everything you own — across currencies — in one private number. No bank connections, no formulas, no
+          copy-paste ritual.
+        </p>
+        <div class="mt-8 flex flex-wrap items-center gap-4">
+          {
+            user ? (
+              <a
+                href="/dashboard"
+                class="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm px-7 py-3 text-base font-medium transition-colors"
+              >
+                Open your dashboard
+              </a>
+            ) : (
+              <>
+                <a
+                  href="/auth/signup"
+                  class="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm px-7 py-3 text-base font-medium transition-colors"
+                >
+                  Sign up — it's free
+                </a>
+                <a
+                  href="/auth/signin"
+                  class="border-primary text-primary hover:bg-primary/8 dark:text-foreground dark:border-foreground rounded-sm border-[1.5px] px-7 py-3 text-base font-medium transition-colors"
+                >
+                  Sign in
+                </a>
+              </>
+            )
+          }
         </div>
 
-        <div class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p class="mb-1 text-sm text-zinc-500 dark:text-blue-100/50">Total net worth · EUR</p>
-            <p class="text-4xl font-bold text-zinc-900 sm:text-5xl dark:text-white">€248,310</p>
-            <div class="mt-3 flex flex-wrap gap-2">
-              <span
-                class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <polyline points="6 15 12 9 18 15"></polyline>
-                </svg>
-                +2.4% vs last month
-              </span>
-              <span
-                class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <polyline points="6 15 12 9 18 15"></polyline>
-                </svg>
-                +11.8% vs Jan 1
-              </span>
-            </div>
-          </div>
-
-          <!-- Mini trend chart -->
-          <svg
-            viewBox="0 0 320 96"
-            class="h-24 w-full max-w-sm text-purple-600 dark:text-purple-300"
-            preserveAspectRatio="none"
-            role="img"
-            aria-label="Sample net-worth trend, rising over time"
-          >
-            <defs>
-              <linearGradient id="preview-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="currentColor" stop-opacity="0.35"></stop>
-                <stop offset="100%" stop-color="currentColor" stop-opacity="0"></stop>
-              </linearGradient>
-            </defs>
-            <path
-              d="M0 78 L40 70 L80 74 L120 56 L160 60 L200 40 L240 44 L280 24 L320 16 L320 96 L0 96 Z"
-              fill="url(#preview-fill)"></path>
-            <path
-              d="M0 78 L40 70 L80 74 L120 56 L160 60 L200 40 L240 44 L280 24 L320 16"
+        <ul class="mt-10 grid max-w-xl grid-cols-1 gap-5 sm:grid-cols-3">
+          <li class="flex items-start gap-2.5">
+            <svg
+              viewBox="0 0 24 24"
+              class="text-primary dark:text-foreground mt-0.5 h-5 w-5 flex-none"
               fill="none"
               stroke="currentColor"
-              stroke-width="2.5"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="3.5" y="6" width="17" height="14" rx="1.5"></rect>
+              <path d="M3.5 11h17M12 11v9M3.5 6l2-3h13l2 3"></path>
+            </svg>
+            <p class="text-foreground/75 text-sm leading-snug">
+              <strong class="text-foreground font-medium">Contents mapped.</strong> Every asset, right where it should be.
+            </p>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg
+              viewBox="0 0 24 24"
+              class="text-primary dark:text-foreground mt-0.5 h-5 w-5 flex-none"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 21s-7.5-4-7.5-9.5V5L12 2.5 19.5 5v6.5C19.5 17 12 21 12 21Z"></path>
+              <rect x="9" y="10" width="6" height="5" rx="1"></rect>
+              <path d="M10.5 10V8.5a1.5 1.5 0 0 1 3 0V10"></path>
+            </svg>
+            <p class="text-foreground/75 text-sm leading-snug">
+              <strong class="text-foreground font-medium">Private by default.</strong> Manual entry; your rows are yours.
+            </p>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg
+              viewBox="0 0 24 24"
+              class="text-primary dark:text-foreground mt-0.5 h-5 w-5 flex-none"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="8.5"></circle>
+              <path d="M8.5 12.5l2.5 2.5 4.5-5.5"></path>
+            </svg>
+            <p class="text-foreground/75 text-sm leading-snug">
+              <strong class="text-foreground font-medium">Made for the ritual.</strong> One honest snapshot a month.
+            </p>
+          </li>
+        </ul>
+      </div>
+
+      <!-- The lid: sample trend as a woodblock ridgeline -->
+      <figure
+        class="bg-card border-primary/70 rounded-md border-2 p-1.5"
+        aria-label="Sample dashboard preview: total net worth and its trend drawn as a mountain ridgeline"
+      >
+        <div class="border-primary/40 rounded-[4px] border p-5 sm:p-6">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">Total net worth · EUR</p>
+              <p class="font-display tnum text-foreground mt-1 text-4xl font-extrabold sm:text-5xl">€248,310</p>
+              <div class="mt-3 flex flex-wrap gap-2">
+                <span
+                  class="tnum text-gain border-gain inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 text-xs font-bold"
+                >
+                  ▲ +2.4% vs last month
+                </span>
+                <span
+                  class="tnum text-gain border-gain inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 text-xs font-bold"
+                >
+                  ▲ +11.8% vs Jan 1
+                </span>
+              </div>
+            </div>
+            <span
+              class="bg-kraft/60 text-foreground/80 border-foreground/15 rounded-sm border px-2 py-1 text-[0.75rem] font-bold tracking-[0.12em] uppercase"
+            >
+              Sample data
+            </span>
+          </div>
+
+          <svg
+            viewBox="0 0 640 300"
+            class="mt-4 w-full"
+            role="img"
+            aria-label="Line chart drawn as a mountain landscape: sample net worth rising from January to June"
+          >
+            <defs>
+              <pattern id="lid-hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                <line x1="0" y1="0" x2="0" y2="7" stroke="var(--primary)" stroke-width="1.1" opacity="0.16"></line>
+              </pattern>
+              <pattern
+                id="lid-hatch-far"
+                width="9"
+                height="9"
+                patternUnits="userSpaceOnUse"
+                patternTransform="rotate(-45)"
+              >
+                <line x1="0" y1="0" x2="0" y2="9" stroke="var(--primary)" stroke-width="1" opacity="0.10"></line>
+              </pattern>
+            </defs>
+
+            <!-- sun seal -->
+            <circle cx="524" cy="64" r="24" fill="var(--seal)" opacity="0.85"></circle>
+            <circle
+              cx="524"
+              cy="64"
+              r="30"
+              fill="none"
+              stroke="var(--seal)"
+              stroke-width="1.5"
+              stroke-dasharray="2 6"
+              opacity="0.6"></circle>
+
+            <!-- birds -->
+            <path
+              d="M420 52 q6 -6 12 0 M438 64 q5 -5 10 0"
+              fill="none"
+              stroke="var(--primary)"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              opacity="0.55"></path>
+
+            <!-- distant range -->
+            <path
+              d="M40 232 L130 176 L200 208 L290 150 L370 190 L460 132 L540 170 L600 140 L600 250 L40 250 Z"
+              fill="url(#lid-hatch-far)"
+              stroke="var(--primary)"
+              stroke-width="1.4"
+              stroke-opacity="0.35"
+              stroke-linejoin="round"></path>
+
+            <!-- start reference: dotted vermilion at January's height -->
+            <line
+              x1="52"
+              y1="216"
+              x2="600"
+              y2="216"
+              stroke="var(--seal)"
+              stroke-width="1.6"
+              stroke-dasharray="1.5 7"
+              stroke-linecap="round"
+              opacity="0.7"></line>
+            <text x="600" y="208" text-anchor="end" class="lid-note" fill="var(--seal)">start</text>
+
+            <!-- the data ridge: Jan..Jun -->
+            <path
+              d="M52 216 L162 190 L272 202 L382 148 L492 162 L600 104 L600 250 L52 250 Z"
+              fill="url(#lid-hatch)"
+              stroke="none"></path>
+            <path
+              class="ridge-draw"
+              d="M52 216 L162 190 L272 202 L382 148 L492 162 L600 104"
+              fill="none"
+              stroke="var(--primary)"
+              stroke-width="3"
               stroke-linecap="round"
               stroke-linejoin="round"></path>
+
+            <!-- pines on the ridge -->
+            <g stroke="var(--primary)" stroke-width="1.7" stroke-linecap="round" opacity="0.8">
+              <path d="M162 188 v-14 M155 182 l7 -9 7 9 M156.5 175 l5.5 -7 5.5 7"></path>
+              <path d="M382 146 v-12 M376 141 l6 -8 6 8 M377.5 135 l4.5 -6 4.5 6"></path>
+            </g>
+
+            <!-- summit marker -->
+            <circle cx="600" cy="104" r="4.5" fill="var(--card)" stroke="var(--primary)" stroke-width="2.5"></circle>
+
+            <!-- baseline + months -->
+            <line x1="52" y1="250" x2="600" y2="250" stroke="var(--foreground)" stroke-width="1.6" opacity="0.75"
+            ></line>
+            <g class="lid-note" fill="var(--foreground)" opacity="0.65">
+              <text x="52" y="272">JAN</text>
+              <text x="162" y="272" text-anchor="middle">FEB</text>
+              <text x="272" y="272" text-anchor="middle">MAR</text>
+              <text x="382" y="272" text-anchor="middle">APR</text>
+              <text x="492" y="272" text-anchor="middle">MAY</text>
+              <text x="600" y="272" text-anchor="end">JUN</text>
+            </g>
           </svg>
+
+          <figcaption
+            class="text-foreground/60 mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs"
+          >
+            <span>The mountain is the money: every summit is a saved snapshot.</span>
+            <span class="tnum flex-none">6 snapshots</span>
+          </figcaption>
+        </div>
+      </figure>
+    </section>
+
+    <!-- ====== CONTENTS MAP ====== -->
+    <section class="py-14 sm:py-20" aria-labelledby="contents-heading">
+      <div class="mb-3 flex items-center gap-4">
+        <p class="kicker">What's in the box</p>
+        <div class="rule-dotted min-w-0 flex-1"></div>
+      </div>
+      <h2
+        id="contents-heading"
+        class="font-display text-foreground max-w-2xl text-3xl leading-tight font-bold sm:text-4xl"
+      >
+        Everything you own, mapped honestly.
+      </h2>
+      <p class="text-foreground/75 mt-4 max-w-2xl leading-relaxed">
+        Like a good wrapper, the diagram is true: thirteen asset categories, each compartment exactly where the map says
+        it is — and an empty compartment stays visible instead of pretending.
+      </p>
+
+      <div class="mt-10 grid items-start gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-14">
+        <!-- the box, seen from above -->
+        <svg
+          viewBox="0 0 480 372"
+          class="w-full"
+          role="img"
+          aria-label="Top view of a compartment box; numbered compartments match the feature list beside it"
+        >
+          <defs>
+            <pattern id="box-hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <line x1="0" y1="0" x2="0" y2="7" stroke="var(--primary)" stroke-width="1" opacity="0.12"></line>
+            </pattern>
+          </defs>
+          <!-- outer box -->
+          <rect
+            x="6"
+            y="6"
+            width="468"
+            height="360"
+            rx="10"
+            fill="var(--card)"
+            stroke="var(--primary)"
+            stroke-width="2.5"></rect>
+          <rect
+            x="16"
+            y="16"
+            width="448"
+            height="340"
+            rx="6"
+            fill="none"
+            stroke="var(--primary)"
+            stroke-width="1.2"
+            opacity="0.5"></rect>
+
+          <!-- dividers -->
+          <g stroke="var(--primary)" stroke-width="1.8" opacity="0.85">
+            <line x1="248" y1="16" x2="248" y2="238"></line>
+            <line x1="16" y1="238" x2="464" y2="238"></line>
+            <line x1="248" y1="128" x2="464" y2="128"></line>
+            <line x1="168" y1="238" x2="168" y2="356"></line>
+            <line x1="318" y1="238" x2="318" y2="356"></line>
+          </g>
+
+          <!-- 1: currencies (big top-left) — coin stacks -->
+          <g>
+            <g stroke="var(--primary)" stroke-width="1.8" fill="url(#box-hatch)" stroke-linecap="round">
+              <ellipse cx="88" cy="180" rx="30" ry="10"></ellipse>
+              <path d="M58 180 v-16 a30 10 0 0 1 60 0 v16" fill="none"></path>
+              <ellipse cx="88" cy="164" rx="30" ry="10"></ellipse>
+              <ellipse cx="168" cy="188" rx="26" ry="9"></ellipse>
+              <path d="M142 188 v-30 a26 9 0 0 1 52 0 v30" fill="none"></path>
+              <ellipse cx="168" cy="158" rx="26" ry="9"></ellipse>
+              <ellipse cx="168" cy="172" rx="26" ry="9" fill="none" opacity="0.6"></ellipse>
+            </g>
+            <g class="map-glyph" fill="var(--primary)">
+              <text x="88" y="120" text-anchor="middle">zł</text>
+              <text x="132" y="94" text-anchor="middle">$</text>
+              <text x="176" y="116" text-anchor="middle">€</text>
+            </g>
+            <circle cx="38" cy="38" r="11" fill="var(--seal)"></circle>
+            <text x="38" y="42.5" text-anchor="middle" class="map-num" fill="var(--background)">1</text>
+          </g>
+
+          <!-- 2: privacy shield (top-right upper) -->
+          <g>
+            <path
+              d="M356 44 l24 8 v26 c0 16 -14 26 -24 30 c-10 -4 -24 -14 -24 -30 v-26 Z"
+              fill="url(#box-hatch)"
+              stroke="var(--primary)"
+              stroke-width="1.8"
+              stroke-linejoin="round"></path>
+            <rect
+              x="347"
+              y="68"
+              width="18"
+              height="15"
+              rx="2.5"
+              fill="var(--card)"
+              stroke="var(--primary)"
+              stroke-width="1.6"></rect>
+            <path d="M351.5 68 v-5 a4.5 4.5 0 0 1 9 0 v5" fill="none" stroke="var(--primary)" stroke-width="1.6"></path>
+            <circle cx="272" cy="42" r="11" fill="var(--seal)"></circle>
+            <text x="272" y="46.5" text-anchor="middle" class="map-num" fill="var(--background)">2</text>
+          </g>
+
+          <!-- 3: snapshot seal (mid-right) -->
+          <g>
+            <circle
+              cx="356"
+              cy="183"
+              r="26"
+              fill="none"
+              stroke="var(--seal)"
+              stroke-width="2.2"
+              stroke-dasharray="40 3 3 3"
+              opacity="0.9"></circle>
+            <g class="map-note" fill="var(--seal)">
+              <text x="356" y="179" text-anchor="middle">JUL</text>
+              <text x="356" y="196" text-anchor="middle">2026</text>
+            </g>
+            <circle cx="272" cy="152" r="11" fill="var(--seal)"></circle>
+            <text x="272" y="156.5" text-anchor="middle" class="map-num" fill="var(--background)">3</text>
+          </g>
+
+          <!-- 4: trends (bottom-left) -->
+          <g>
+            <path
+              d="M36 332 L64 306 L86 318 L122 288"
+              fill="none"
+              stroke="var(--primary)"
+              stroke-width="2.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"></path>
+            <circle cx="122" cy="288" r="3.5" fill="var(--card)" stroke="var(--primary)" stroke-width="2"></circle>
+            <circle cx="42" cy="264" r="11" fill="var(--seal)"></circle>
+            <text x="42" y="268.5" text-anchor="middle" class="map-num" fill="var(--background)">4</text>
+          </g>
+
+          <!-- 5: FIRE (bottom-middle) -->
+          <g>
+            <path
+              d="M243 340 c-14 -8 -18 -22 -10 -34 c2 8 6 11 10 12 c-4 -12 2 -22 12 -28 c-2 10 4 14 8 20 c5 7 5 20 -6 28 c-5 3 -10 4 -14 2 Z"
+              fill="url(#box-hatch)"
+              stroke="var(--primary)"
+              stroke-width="1.8"
+              stroke-linejoin="round"></path>
+            <circle cx="194" cy="264" r="11" fill="var(--seal)"></circle>
+            <text x="194" y="268.5" text-anchor="middle" class="map-num" fill="var(--background)">5</text>
+          </g>
+
+          <!-- 6: balancer (bottom-right) — donut -->
+          <g>
+            <circle cx="392" cy="308" r="26" fill="none" stroke="var(--primary)" stroke-width="10" opacity="0.28"
+            ></circle>
+            <path d="M392 282 a26 26 0 0 1 24 36" fill="none" stroke="var(--primary)" stroke-width="10"></path>
+            <path d="M416 318 a26 26 0 0 1 -30 15" fill="none" stroke="var(--seal)" stroke-width="10" opacity="0.85"
+            ></path>
+            <circle cx="344" cy="264" r="11" fill="var(--seal)"></circle>
+            <text x="344" y="268.5" text-anchor="middle" class="map-num" fill="var(--background)">6</text>
+          </g>
+        </svg>
+
+        <ol class="space-y-6">
+          {
+            features.map((f) => (
+              <li class="flex items-start gap-3.5">
+                <span class="number-chip mt-1" aria-hidden="true">
+                  {f.n}
+                </span>
+                <div>
+                  <h3 class="font-display text-foreground text-lg font-bold">{f.title}</h3>
+                  <p class="text-foreground/75 mt-1 text-sm leading-relaxed">{f.body}</p>
+                </div>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+    </section>
+
+    <!-- ====== ONE HONEST NUMBER: two streams fold into one ====== -->
+    <section class="py-14 sm:py-20" aria-labelledby="number-heading">
+      <div class="mb-3 flex items-center gap-4">
+        <p class="kicker">One honest number</p>
+        <div class="rule-dotted min-w-0 flex-1"></div>
+      </div>
+      <h2
+        id="number-heading"
+        class="font-display text-foreground max-w-2xl text-3xl leading-tight font-bold sm:text-4xl"
+      >
+        Assets minus liabilities. Nothing else.
+      </h2>
+      <p class="text-foreground/75 mt-4 max-w-2xl leading-relaxed">
+        Two lists meet at a seam: what you own and what you owe, each in its own currency. BitWorth converts both at
+        live rates and folds them into a single figure. <span class="text-foreground/60">(Sample data below.)</span>
+      </p>
+
+      <div class="mx-auto mt-10 max-w-3xl">
+        <div class="grid grid-cols-1 gap-8 sm:grid-cols-[1fr_auto_1fr] sm:gap-6">
+          <div>
+            <h3 class="text-foreground/60 mb-3 text-xs font-bold tracking-[0.12em] uppercase">What you own</h3>
+            <ul class="divide-border/70 divide-y">
+              <li class="tnum flex items-baseline justify-between gap-3 py-2 text-sm">
+                <span class="text-foreground/85">Checking account</span><span class="text-gain font-bold"
+                  >12,400 zł</span
+                >
+              </li>
+              <li class="tnum flex items-baseline justify-between gap-3 py-2 text-sm">
+                <span class="text-foreground/85">Index funds (VWCE)</span><span class="text-gain font-bold"
+                  >€31,200</span
+                >
+              </li>
+              <li class="tnum flex items-baseline justify-between gap-3 py-2 text-sm">
+                <span class="text-foreground/85">Bitcoin</span><span class="text-gain font-bold">0.42 BTC</span>
+              </li>
+              <li class="tnum flex items-baseline justify-between gap-3 py-2 text-sm">
+                <span class="text-foreground/85">Apartment</span><span class="text-gain font-bold">€165,000</span>
+              </li>
+            </ul>
+          </div>
+          <div class="border-seal/50 hidden border-l-2 border-dotted sm:block" aria-hidden="true"></div>
+          <div>
+            <h3 class="text-foreground/60 mb-3 text-xs font-bold tracking-[0.12em] uppercase">What you owe</h3>
+            <ul class="divide-border/70 divide-y">
+              <li class="tnum flex items-baseline justify-between gap-3 py-2 text-sm">
+                <span class="text-foreground/85">Mortgage</span><span class="text-loss font-bold">−€96,300</span>
+              </li>
+              <li class="tnum flex items-baseline justify-between gap-3 py-2 text-sm">
+                <span class="text-foreground/85">Car loan</span><span class="text-loss font-bold">−18,000 zł</span>
+              </li>
+            </ul>
+            <p class="text-foreground/55 mt-3 text-xs leading-relaxed">
+              Liabilities count against you — the map doesn't flatter.
+            </p>
+          </div>
+        </div>
+
+        <svg viewBox="0 0 600 72" class="mx-auto mt-2 hidden w-full max-w-lg sm:block" aria-hidden="true">
+          <path
+            d="M80 4 C80 46 300 26 300 68 M520 4 C520 46 300 26 300 68"
+            fill="none"
+            stroke="var(--primary)"
+            stroke-width="1.8"
+            stroke-dasharray="1.5 6"
+            stroke-linecap="round"
+            opacity="0.6"></path>
+        </svg>
+
+        <div class="border-primary/70 bg-card mx-auto mt-4 w-fit rounded-md border-2 px-8 py-4 text-center sm:mt-0">
+          <p class="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">Net worth · EUR</p>
+          <p class="font-display tnum text-foreground mt-1 text-3xl font-extrabold sm:text-4xl">= €248,310</p>
+          <p class="text-foreground/55 mt-1 text-xs">converted at live rates · sample data</p>
         </div>
       </div>
-    </div>
+    </section>
+  </main>
 
-    <!-- Value props -->
-    <div class="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 pb-24 sm:grid-cols-2 lg:grid-cols-4">
-      <div
-        class="rounded-xl border border-zinc-200 bg-white/80 p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5"
+  <!-- ====== PRIVACY BAND ====== -->
+  <section
+    class="border-y-[1.5px] border-[color:var(--kraft)] bg-[color:var(--kraft)]/35 py-14 sm:py-16"
+    aria-labelledby="privacy-heading"
+  >
+    <div class="mx-auto max-w-6xl px-4 text-center sm:px-6">
+      <p class="kicker mb-3">Nothing to breach</p>
+      <h2
+        id="privacy-heading"
+        class="font-display text-foreground mx-auto max-w-2xl text-3xl leading-tight font-bold sm:text-4xl"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="mb-4 text-purple-600 dark:text-purple-300"
-        >
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path>
-          <path d="M9 12l2 2 4-4"></path>
-        </svg>
-        <h3 class="mb-2 text-lg font-semibold text-zinc-900 dark:text-white">Private by default</h3>
-        <p class="text-sm leading-relaxed text-zinc-600 dark:text-blue-100/60">
-          No bank connections, no third-party syncing. You enter your assets manually — your financial data stays yours.
-        </p>
-      </div>
-
-      <div
-        class="rounded-xl border border-zinc-200 bg-white/80 p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="mb-4 text-purple-600 dark:text-purple-300"
-        >
-          <path d="M3 7h13l-3-3"></path>
-          <path d="M21 17H8l3 3"></path>
-        </svg>
-        <h3 class="mb-2 text-lg font-semibold text-zinc-900 dark:text-white">Multi-currency</h3>
-        <p class="text-sm leading-relaxed text-zinc-600 dark:text-blue-100/60">
-          Hold PLN, USD, EUR and more. Everything auto-converts to one display currency using live exchange rates.
-        </p>
-      </div>
-
-      <div
-        class="rounded-xl border border-zinc-200 bg-white/80 p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="mb-4 text-purple-600 dark:text-purple-300"
-        >
-          <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"></path>
-          <circle cx="12" cy="13" r="3"></circle>
-        </svg>
-        <h3 class="mb-2 text-lg font-semibold text-zinc-900 dark:text-white">One-click snapshots</h3>
-        <p class="text-sm leading-relaxed text-zinc-600 dark:text-blue-100/60">
-          Capture your net worth each month with a single click — no spreadsheet copy-paste ritual to remember.
-        </p>
-      </div>
-
-      <div
-        class="rounded-xl border border-zinc-200 bg-white/80 p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="mb-4 text-purple-600 dark:text-purple-300"
-        >
-          <path d="M3 3v18h18"></path>
-          <path d="M7 14l4-4 3 3 5-6"></path>
-        </svg>
-        <h3 class="mb-2 text-lg font-semibold text-zinc-900 dark:text-white">Trends over time</h3>
-        <p class="text-sm leading-relaxed text-zinc-600 dark:text-blue-100/60">
-          Watch your net worth grow on a clean line chart, with deltas vs last month and the start of the year.
-        </p>
+        Your numbers never leave your hands.
+      </h2>
+      <p class="text-foreground/75 mx-auto mt-4 max-w-xl leading-relaxed">
+        BitWorth never asks for a bank login, never syncs with an aggregator, and never shares a row. You already know
+        your balances — this is simply the honest place to keep them.
+      </p>
+      <div class="mt-8 flex flex-wrap items-center justify-center gap-5">
+        <span class="privacy-stamp -rotate-3">No bank links</span>
+        <span class="privacy-stamp rotate-2">No sharing</span>
+        <span class="privacy-stamp -rotate-1">Yours only</span>
       </div>
     </div>
+  </section>
 
-    <!-- Closing CTA band -->
-    <div class="mx-auto max-w-4xl px-4 pb-24">
-      <div
-        class="rounded-xl border border-zinc-200 bg-white/80 p-8 text-center backdrop-blur-xl sm:p-12 dark:border-white/10 dark:bg-white/5"
-      >
-        <h2 class="mb-3 text-2xl font-bold text-zinc-900 sm:text-3xl dark:text-white">
-          Start tracking in minutes — free and private
-        </h2>
-        <p class="mx-auto mb-8 max-w-xl text-base text-zinc-600 sm:text-lg dark:text-blue-100/60">
-          One private number for everything you own. No bank logins, no formulas — just sign up and start.
-        </p>
-        <div class="flex flex-col justify-center gap-4 sm:flex-row">
+  <!-- ====== CLOSE ====== -->
+  <section class="mx-auto max-w-6xl px-4 py-16 text-center sm:px-6 sm:py-24">
+    <BrandSeal class="mx-auto h-14 w-14" />
+    <h2 class="font-display text-foreground mx-auto mt-6 max-w-2xl text-3xl leading-tight font-bold sm:text-4xl">
+      Start tracking in minutes — free and private.
+    </h2>
+    <p class="text-foreground/75 mx-auto mt-4 max-w-xl leading-relaxed">
+      One private number for everything you own. No bank logins, no formulas — just sign up and stamp your first month.
+    </p>
+    <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+      {
+        user ? (
           <a
-            href="/auth/signup"
-            class="inline-flex items-center justify-center rounded-lg bg-purple-600 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-purple-500"
+            href="/dashboard"
+            class="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm px-7 py-3 text-base font-medium transition-colors"
           >
-            Sign Up
+            Open your dashboard
           </a>
-          <a
-            href="/auth/signin"
-            class="inline-flex items-center justify-center rounded-lg border border-zinc-300 px-6 py-3 text-base font-medium text-zinc-900 transition-colors hover:bg-zinc-100 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
-          >
-            Sign In
-          </a>
-        </div>
-      </div>
+        ) : (
+          <>
+            <a
+              href="/auth/signup"
+              class="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm px-7 py-3 text-base font-medium transition-colors"
+            >
+              Sign up — it's free
+            </a>
+            <a
+              href="/auth/signin"
+              class="border-primary text-primary hover:bg-primary/8 dark:text-foreground dark:border-foreground rounded-sm border-[1.5px] px-7 py-3 text-base font-medium transition-colors"
+            >
+              Sign in
+            </a>
+          </>
+        )
+      }
     </div>
-  </div>
+    <p class="text-foreground/50 mt-14 text-xs tracking-wide">
+      BitWorth · printed in one ink · built as a 10xDevs project
+    </p>
+  </section>
 </div>
+
+<style>
+  /* SVG annotation type: the map's small print. */
+  .lid-note,
+  .map-note {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+  .map-num {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .map-glyph {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  /* Privacy stamps: outlined vermilion, slightly askew like a real impression. */
+  .privacy-stamp {
+    display: inline-block;
+    border: 2px solid color-mix(in srgb, var(--seal) 70%, transparent);
+    border-radius: 4px;
+    color: var(--seal);
+    padding: 0.375rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* The one authored motion: the ridge draws itself at arrival. */
+  .ridge-draw {
+    stroke-dasharray: 700;
+    stroke-dashoffset: 700;
+    animation: ridge-draw 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
+  }
+  @keyframes ridge-draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ridge-draw {
+      animation: none;
+      stroke-dashoffset: 0;
+    }
+  }
+</style>

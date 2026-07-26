@@ -50,8 +50,9 @@ const toPct = (v: number): number => Math.round(v * 10000) / 100;
 function seedState(startingPrincipal: number, initial: Partial<FireInputs>): FormState {
   return {
     // The override (initial.startingPrincipal) wins over the seeded net worth;
-    // otherwise the user starts from their current net worth.
-    startingPrincipal: initial.startingPrincipal ?? startingPrincipal,
+    // otherwise the user starts from their current net worth. Rounded to whole
+    // units — a projection input has no business showing ten float decimals.
+    startingPrincipal: Math.round(initial.startingPrincipal ?? startingPrincipal),
     annualIncome: initial.annualIncome ?? DEFAULTS.annualIncome,
     annualExpenses: initial.annualExpenses ?? DEFAULTS.annualExpenses,
     expectedReturnPct: initial.nominalReturn !== undefined ? toPct(initial.nominalReturn) : DEFAULTS.expectedReturnPct,
@@ -241,11 +242,11 @@ export function FireCalculatorForm({ displayCurrency, startingPrincipal, initial
           type="button"
           onClick={handleSave}
           disabled={pending}
-          className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-sm px-4 py-2 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         >
           {pending ? (
             <>
-              <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              <span className="border-primary-foreground/30 border-t-primary-foreground size-4 animate-spin rounded-full border-2" />
               Saving...
             </>
           ) : (
@@ -259,30 +260,30 @@ export function FireCalculatorForm({ displayCurrency, startingPrincipal, initial
 
       <div className="space-y-4">
         {result === null ? (
-          <div className="rounded-2xl border border-amber-300 bg-amber-50 p-6 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+          <div className="bg-kraft/40 border-kraft text-foreground/80 rounded-sm border p-6 text-sm">
             Enter a safe withdrawal rate greater than 0% to see your projection.
           </div>
         ) : (
           <>
-            <div className="rounded-2xl border border-zinc-200 bg-white/80 p-6 dark:border-white/10 dark:bg-white/5">
-              <p className="text-sm tracking-wider text-zinc-500 uppercase dark:text-white/50">
+            <div className="bg-card border-border rounded-md border p-6">
+              <p className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">
                 Projected retirement age
               </p>
               {result.retirementAge !== null ? (
-                <p className="mt-1 text-4xl font-bold text-zinc-900 dark:text-white">
+                <p className="font-display tnum text-foreground mt-1 text-4xl font-bold">
                   {result.retirementAge}
-                  <span className="ml-2 text-base font-normal text-zinc-500 dark:text-white/50">
+                  <span className="text-muted-foreground ml-2 font-sans text-base font-normal">
                     in {result.yearsToFi} {result.yearsToFi === 1 ? "year" : "years"}
                   </span>
                 </p>
               ) : (
-                <p className="mt-1 text-lg font-semibold text-amber-700 dark:text-amber-300">
+                <p className="text-loss mt-1 text-lg font-semibold">
                   Not reachable within the projection horizon at this savings rate.
                 </p>
               )}
             </div>
 
-            <dl className="space-y-3 rounded-2xl border border-zinc-200 bg-white/80 p-6 dark:border-white/10 dark:bg-white/5">
+            <dl className="bg-card border-border space-y-3 rounded-md border p-6">
               <ResultRow label="FIRE number" value={formatMoney(result.fireNumber, displayCurrency)} />
               <ResultRow
                 label="Savings rate"
@@ -316,7 +317,7 @@ export function FireCalculatorForm({ displayCurrency, startingPrincipal, initial
               )}
             </dl>
 
-            <p className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-xs text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-white/50">
+            <p className="bg-card border-border text-muted-foreground rounded-md border p-4 text-xs">
               All figures are an <strong>estimate, not financial advice</strong>, shown in {displayCurrency} in
               today&apos;s purchasing power (real terms).
             </p>
@@ -349,10 +350,10 @@ interface NumberFieldProps {
 function NumberField({ id, label, help, value, onChange, min, max, step, placeholder }: NumberFieldProps) {
   return (
     <div>
-      <label htmlFor={id} className="mb-1 block text-sm text-zinc-700 dark:text-blue-100/80">
+      <label htmlFor={id} className="text-foreground/70 mb-1 block text-sm">
         {label}
       </label>
-      {help && <p className="mb-2 text-xs text-zinc-500 dark:text-white/40">{help}</p>}
+      {help && <p className="text-muted-foreground mb-2 text-xs">{help}</p>}
       <input
         id={id}
         name={id}
@@ -364,7 +365,7 @@ function NumberField({ id, label, help, value, onChange, min, max, step, placeho
         max={max}
         step={step}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 transition-colors focus:ring-2 focus:outline-none dark:border-white/20 dark:bg-white/10 dark:text-white"
+        className="tnum border-input bg-card text-foreground focus:border-primary w-full rounded-sm border px-3 py-2 transition-colors focus:outline-none"
       />
     </div>
   );
@@ -373,11 +374,11 @@ function NumberField({ id, label, help, value, onChange, min, max, step, placeho
 function ResultRow({ label, value, detail }: { label: string; value: string; detail?: string }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
-      <dt className="text-sm text-zinc-600 dark:text-white/60">
+      <dt className="text-foreground/70 text-sm">
         {label}
-        {detail && <span className="mt-0.5 block text-xs text-zinc-400 dark:text-white/40">{detail}</span>}
+        {detail && <span className="text-muted-foreground mt-0.5 block text-xs">{detail}</span>}
       </dt>
-      <dd className="text-right text-sm font-semibold whitespace-nowrap text-zinc-900 dark:text-white">{value}</dd>
+      <dd className="tnum text-foreground text-right text-sm font-semibold whitespace-nowrap">{value}</dd>
     </div>
   );
 }

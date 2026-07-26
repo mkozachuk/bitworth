@@ -69,7 +69,7 @@ export default function InstallButton({ className }: { className?: string }) {
   };
 
   return (
-    <Button variant="ghost" size="sm" onClick={onClick} className={className ?? "text-purple-600 dark:text-purple-300"}>
+    <Button variant="ghost" size="sm" onClick={onClick} className={className ?? "text-primary dark:text-foreground"}>
       <Download className="size-4" />
       Install app
     </Button>

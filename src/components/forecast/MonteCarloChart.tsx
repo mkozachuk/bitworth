@@ -50,15 +50,15 @@ function CustomTooltip({
     { key: "p10", label: "P10 (pessimistic)" },
   ];
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white/95 p-3 text-zinc-900 backdrop-blur dark:border-white/10 dark:bg-white/10 dark:text-white">
-      <p className="mb-1 text-xs text-zinc-600 dark:text-white/60">Year {label}</p>
+    <div className="bg-card text-card-foreground border-border shadow-paper rounded-md border p-3">
+      <p className="text-muted-foreground mb-1 text-xs">Year {label}</p>
       {rows.map(({ key, label: rowLabel }) => {
         const value = byKey.get(key);
         if (value === undefined) return null;
         return (
           <p key={key} className="text-sm">
-            <span className="text-zinc-500 dark:text-white/50">{rowLabel}: </span>
-            <span className="font-semibold">
+            <span className="text-muted-foreground">{rowLabel}: </span>
+            <span className="tnum font-bold">
               {formatCurrency(value)} {displayCurrency}
             </span>
           </p>
@@ -80,8 +80,8 @@ export function MonteCarloChart({ paths, bands, fireNumber, displayCurrency, tot
   // Recharts refuses an empty dataset; guard before building rows.
   if (paths.length === 0 || bands.length === 0) {
     return (
-      <div className="rounded-2xl border border-zinc-200 bg-white/80 p-8 text-center dark:border-white/10 dark:bg-white/5">
-        <p className="text-sm text-zinc-600 dark:text-white/60">
+      <div className="border-kraft rounded-md border-2 border-dashed p-8 text-center">
+        <p className="text-foreground/70 text-sm">
           Nothing to plot yet — adjust your assumptions to run the simulation.
         </p>
       </div>
@@ -100,12 +100,12 @@ export function MonteCarloChart({ paths, bands, fireNumber, displayCurrency, tot
   });
 
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white/80 p-6 dark:border-white/10 dark:bg-white/5">
+    <div className="bg-card border-border rounded-md border p-6">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-medium tracking-wider text-zinc-600 uppercase dark:text-white/60">
+        <h2 className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">
           Simulated Paths (today&apos;s money)
         </h2>
-        <span className="text-xs text-zinc-500 dark:text-white/40">{displayCurrency}</span>
+        <span className="text-muted-foreground text-xs font-bold">{displayCurrency}</span>
       </div>
 
       <ResponsiveContainer width="100%" height={300} initialDimension={{ width: 600, height: 300 }} debounce={50}>
@@ -150,7 +150,7 @@ export function MonteCarloChart({ paths, bands, fireNumber, displayCurrency, tot
             type="monotone"
             dataKey="p10"
             name="P10 (pessimistic)"
-            stroke="var(--chart-5)"
+            stroke="var(--loss-soft)"
             strokeWidth={2.5}
             dot={false}
             isAnimationActive={false}
@@ -168,7 +168,7 @@ export function MonteCarloChart({ paths, bands, fireNumber, displayCurrency, tot
             type="monotone"
             dataKey="p90"
             name="P90 (optimistic)"
-            stroke="var(--chart-2)"
+            stroke="var(--gain-soft)"
             strokeWidth={2.5}
             dot={false}
             isAnimationActive={false}
@@ -176,12 +176,12 @@ export function MonteCarloChart({ paths, bands, fireNumber, displayCurrency, tot
 
           <ReferenceLine
             y={fireNumber}
-            stroke="var(--chart-3)"
+            stroke="var(--chart-2)"
             strokeDasharray="3 3"
             ifOverflow="extendDomain"
             label={{
               value: "FIRE number",
-              fill: "var(--chart-3)",
+              fill: "var(--chart-2)",
               position: "insideTopRight",
             }}
           />

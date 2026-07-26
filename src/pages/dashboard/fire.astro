@@ -65,18 +65,12 @@ const initialInputs: Partial<FireInputs> = {
 
 <Layout title="FIRE Calculator">
   <div class="mx-auto max-w-4xl px-4 py-8">
-    <h1
-      class="mb-2 bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-3xl font-bold text-transparent dark:from-blue-200 dark:to-purple-200"
-    >
-      FIRE Calculator
-    </h1>
-    <p class="mb-6 text-sm text-zinc-600 dark:text-blue-100/60">
+    <h1 class="font-display text-foreground mb-2 text-3xl font-bold">FIRE Calculator</h1>
+    <p class="text-foreground/70 mb-6 text-sm">
       Project your path to Financial Independence / Retire Early. Figures are in {displayCurrency} in today's purchasing power.
     </p>
 
-    <div
-      class="rounded-2xl border border-zinc-200 bg-white/80 p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/10"
-    >
+    <div class="bg-card border-border rounded-md border p-6">
       <FireCalculatorForm
         displayCurrency={displayCurrency}
         startingPrincipal={startingPrincipal}
@@ -87,7 +81,7 @@ const initialInputs: Partial<FireInputs> = {
 
     <a
       href="/dashboard/forecast"
-      class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-purple-600 transition-colors hover:text-purple-800 hover:underline dark:text-purple-300 dark:hover:text-purple-100"
+      class="text-primary dark:text-foreground mt-4 inline-flex items-center gap-1 text-sm font-medium transition-colors hover:underline"
     >
       See the probability of reaching this goal →
     </a>

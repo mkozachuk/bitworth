@@ -60,12 +60,12 @@ function CustomTooltip({
     const point = entry.payload;
     const isProjected = entry.dataKey === "projected" && point.netWorth === null;
     return (
-      <div className="rounded-lg border border-zinc-200 bg-white/95 p-3 text-zinc-900 backdrop-blur dark:border-white/10 dark:bg-white/10 dark:text-white">
-        <p className="text-xs text-zinc-600 dark:text-white/60">
+      <div className="bg-card text-card-foreground border-border shadow-paper rounded-md border p-3">
+        <p className="text-muted-foreground text-xs">
           {formattedDate}
           {isProjected ? " (projected)" : ""}
         </p>
-        <p className="text-sm font-semibold">
+        <p className="tnum text-sm font-bold">
           {formatMoney(entry.value)} {point.displayCurrency}
         </p>
       </div>
@@ -109,15 +109,27 @@ export function NetWorthChart({ snapshots, displayCurrency, showTrajectory = fal
 
   if (snapshots.length === 0) {
     return (
-      <div className="mt-6 rounded-2xl border border-zinc-200 bg-white/80 p-8 text-center dark:border-white/10 dark:bg-white/5">
-        <p className="mb-4 text-sm text-zinc-600 dark:text-white/60">
-          No snapshots yet. Save your first one to see your trend.
-        </p>
+      <div className="border-kraft mt-6 rounded-md border-2 border-dashed p-8 text-center">
+        <svg
+          viewBox="0 0 160 56"
+          className="text-primary/50 mx-auto mb-3 h-12 w-36"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 40 L44 22 L66 32 L102 12 L124 20 L148 8" strokeWidth="2.5" strokeDasharray="3 6" />
+          <path d="M12 48 H148" strokeWidth="1.5" strokeDasharray="1 5" />
+          <circle cx="148" cy="8" r="3" strokeWidth="2" />
+        </svg>
+        <p className="text-foreground/60 mb-1 text-xs font-bold tracking-[0.12em] uppercase">Net worth trend</p>
+        <p className="text-foreground/70 mb-4 text-sm">This compartment is empty — no snapshots saved yet.</p>
         <button
           onClick={() => onSaveSnapshot?.()}
-          className="rounded-lg bg-purple-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-500"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm px-6 py-2 text-sm font-medium transition-colors"
         >
-          Save your first snapshot
+          Stamp your first snapshot
         </button>
       </div>
     );
@@ -176,22 +188,33 @@ export function NetWorthChart({ snapshots, displayCurrency, showTrajectory = fal
     paceDate = new Date(originMs + endT * MS_PER_DAY).toISOString();
   }
 
+  // One tick per calendar month — several snapshots in a month would otherwise
+  // print "May May May" along the axis. January ticks carry the year.
+  const monthTicks: string[] = [];
+  let lastMonthKey = "";
+  for (const p of renderData) {
+    const d = new Date(p.date);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    if (key !== lastMonthKey) {
+      monthTicks.push(p.date);
+      lastMonthKey = key;
+    }
+  }
+
   const targetValue = target.trim() === "" ? null : Number(target);
   const hasTarget = targetValue !== null && Number.isFinite(targetValue);
   const etaT = projectionOn && hasTarget ? etaToTarget(activeFit, targetValue, lastT) : null;
   const etaDate = etaT !== null ? new Date(originMs + etaT * MS_PER_DAY).toISOString() : null;
 
   return (
-    <div className="mt-6 rounded-2xl border border-zinc-200 bg-white/80 p-6 dark:border-white/10 dark:bg-white/5">
+    <div className="bg-card border-border mt-6 rounded-md border p-6">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-medium tracking-wider text-zinc-600 uppercase dark:text-white/60">
-          Net Worth Trend
-        </h2>
-        <span className="text-xs text-zinc-500 dark:text-white/40">{displayCurrency}</span>
+        <h2 className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">Net worth trend</h2>
+        <span className="text-muted-foreground text-xs font-bold">{displayCurrency}</span>
       </div>
 
       {isMixed && changeDateFormatted && (
-        <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+        <div className="bg-kraft/40 border-kraft text-foreground/80 mb-4 rounded-sm border px-3 py-2 text-xs">
           Your chart mixes {sortedCurrencies.join(" and ")} snapshots from before/after your currency change on{" "}
           {changeDateFormatted}.
         </div>
@@ -202,8 +225,13 @@ export function NetWorthChart({ snapshots, displayCurrency, showTrajectory = fal
           <CartesianGrid stroke="var(--border)" strokeDasharray="5 5" />
           <XAxis
             dataKey="date"
+            ticks={monthTicks}
             tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-            tickFormatter={(v: string) => new Date(v).toLocaleDateString("en-US", { month: "short" })}
+            tickFormatter={(v: string) => {
+              const d = new Date(v);
+              const month = d.toLocaleDateString("en-US", { month: "short" });
+              return d.getMonth() === 0 ? `${month} ${d.getFullYear()}` : month;
+            }}
           />
           <YAxis
             tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
@@ -243,21 +271,19 @@ export function NetWorthChart({ snapshots, displayCurrency, showTrajectory = fal
       </ResponsiveContainer>
 
       {showTrajectory && !hasEnoughHistory && (
-        <p className="mt-4 text-xs text-zinc-500 dark:text-white/40">
+        <p className="text-muted-foreground mt-4 text-xs">
           Not enough history yet — save more snapshots to see a projection.
         </p>
       )}
 
       {projectionOn && (
-        <div className="mt-6 border-t border-zinc-200 pt-4 dark:border-white/10">
+        <div className="border-border mt-6 border-t pt-4">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-xs font-medium tracking-wider text-zinc-600 uppercase dark:text-white/60">
-              Projection
-            </span>
+            <span className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">Projection</span>
             <div
               role="group"
               aria-label="Projection model"
-              className="inline-flex rounded-lg border border-zinc-200 p-0.5 dark:border-white/10"
+              className="border-border inline-flex rounded-sm border p-0.5"
             >
               <button
                 type="button"
@@ -265,10 +291,8 @@ export function NetWorthChart({ snapshots, displayCurrency, showTrajectory = fal
                 onClick={() => {
                   setModel("linear");
                 }}
-                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                  model === "linear"
-                    ? "bg-purple-600 text-white"
-                    : "text-zinc-600 hover:text-zinc-900 dark:text-white/60 dark:hover:text-white"
+                className={`rounded-sm px-3 py-1 text-xs font-medium transition-colors ${
+                  model === "linear" ? "bg-primary text-primary-foreground" : "text-foreground/60 hover:text-foreground"
                 }`}
               >
                 Linear
@@ -280,10 +304,8 @@ export function NetWorthChart({ snapshots, displayCurrency, showTrajectory = fal
                 onClick={() => {
                   setModel("cagr");
                 }}
-                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-                  model === "cagr"
-                    ? "bg-purple-600 text-white"
-                    : "text-zinc-600 hover:text-zinc-900 dark:text-white/60 dark:hover:text-white"
+                className={`rounded-sm px-3 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                  model === "cagr" ? "bg-primary text-primary-foreground" : "text-foreground/60 hover:text-foreground"
                 }`}
               >
                 CAGR
@@ -292,18 +314,18 @@ export function NetWorthChart({ snapshots, displayCurrency, showTrajectory = fal
           </div>
 
           {cagrFit === null && (
-            <p className="mt-2 text-xs text-zinc-500 dark:text-white/40">Compound projection needs positive history.</p>
+            <p className="text-muted-foreground mt-2 text-xs">Compound projection needs positive history.</p>
           )}
 
           {paceValue !== null && paceDate !== null && (
-            <p className="mt-3 text-sm text-zinc-700 dark:text-white/70">
+            <p className="text-foreground/80 tnum mt-3 text-sm">
               At your current pace you&apos;ll reach {formatMoney(paceValue)} {displayCurrency} by{" "}
               {formatDate(paceDate)}.
             </p>
           )}
 
           <div className="mt-4">
-            <label htmlFor="trajectory-target" className="text-xs text-zinc-600 dark:text-white/60">
+            <label htmlFor="trajectory-target" className="text-foreground/70 text-xs font-medium">
               Target ({displayCurrency})
             </label>
             <input
@@ -315,19 +337,19 @@ export function NetWorthChart({ snapshots, displayCurrency, showTrajectory = fal
                 setTarget(e.target.value);
               }}
               placeholder="e.g. 100000"
-              className="mt-1 block w-48 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-900 dark:border-white/10 dark:bg-white/5 dark:text-white"
+              className="tnum border-input bg-card text-foreground focus:border-primary mt-1 block w-48 rounded-sm border px-3 py-1.5 text-sm focus:outline-none"
             />
           </div>
 
           {hasTarget && (
-            <p className="mt-2 text-sm text-zinc-700 dark:text-white/70">
+            <p className="text-foreground/80 tnum mt-2 text-sm">
               {etaDate !== null
                 ? `You'll reach ${formatMoney(targetValue)} ${displayCurrency} around ${formatDate(etaDate)}.`
                 : "On your current trend, you won't reach this."}
             </p>
           )}
 
-          <p className="mt-4 text-xs text-zinc-500 dark:text-white/40">
+          <p className="text-muted-foreground mt-4 text-xs">
             An <strong>estimate, not financial advice</strong>, shown in {displayCurrency}.
           </p>
         </div>

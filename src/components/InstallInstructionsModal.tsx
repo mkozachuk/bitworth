@@ -54,46 +54,44 @@ export default function InstallInstructionsModal() {
       ref={dialogRef}
       onClose={close}
       onClick={onBackdropClick}
-      className="rounded-2xl border border-zinc-200 bg-white/95 p-0 text-zinc-800 shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-sm dark:border-white/10 dark:bg-zinc-900/95 dark:text-zinc-100"
+      className="bg-card text-card-foreground border-border shadow-paper rounded-md border p-0 backdrop:bg-[#3b2f2a]/50"
     >
-      <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-3 dark:border-white/10">
-        <h2 className="text-base font-semibold">Install BitWorth</h2>
+      <div className="border-border flex items-center justify-between border-b px-5 py-3">
+        <h2 className="font-display text-base font-bold">Install BitWorth</h2>
         <button
           type="button"
           onClick={close}
           aria-label="Close"
-          className="rounded-md p-1 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-zinc-100"
+          className="text-foreground/60 hover:bg-accent hover:text-foreground rounded-sm p-1 transition-colors"
         >
           <X className="size-4" />
         </button>
       </div>
       <ol className="space-y-4 px-5 py-5 text-sm">
         <li className="flex items-start gap-3">
-          <Share className="mt-0.5 size-5 shrink-0 text-purple-600 dark:text-purple-300" />
+          <Share className="text-primary mt-0.5 size-5 shrink-0" />
           <span>
             Tap the <strong>Share</strong> button in Safari&rsquo;s bottom bar.
           </span>
         </li>
         <li className="flex items-start gap-3">
-          <Plus className="mt-0.5 size-5 shrink-0 text-purple-600 dark:text-purple-300" />
+          <Plus className="text-primary mt-0.5 size-5 shrink-0" />
           <span>
             Scroll down and tap <strong>Add to Home Screen</strong>.
           </span>
         </li>
         <li className="flex items-start gap-3">
-          <span className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-purple-600 text-xs font-semibold text-white dark:bg-purple-400 dark:text-zinc-900">
-            3
-          </span>
+          <span className="number-chip mt-0.5">3</span>
           <span>
             Tap <strong>Add</strong> in the top right.
           </span>
         </li>
       </ol>
-      <div className="flex justify-end border-t border-zinc-200 px-5 py-3 dark:border-white/10">
+      <div className="border-border flex justify-end border-t px-5 py-3">
         <button
           type="button"
           onClick={close}
-          className="rounded-md bg-purple-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-purple-700 dark:bg-purple-400 dark:text-zinc-900 dark:hover:bg-purple-300"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm px-4 py-1.5 text-sm font-medium transition-colors"
         >
           Got it
         </button>

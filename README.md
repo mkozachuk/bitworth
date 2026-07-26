@@ -57,11 +57,11 @@ Tracking net worth in a spreadsheet works until it doesn't: formulas drift, curr
 
 ![Settings — display currency, theme, FIRE progress card toggle, and backup/restore](docs/screenshots/settings.png)
 
-> Screenshots show the default dark theme. BitWorth also ships a light theme (and a "system" option) — here's the dashboard and FIRE calculator in light:
+> Screenshots show the canonical paper-light theme. BitWorth also ships a committed "night ink" dark theme (and a "system" option) — here's the dashboard and FIRE calculator at night:
 >
-> | Dashboard (light)                                                                                       | FIRE (light)                                                                             |
-> | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-> | [![Dashboard, light theme](docs/screenshots/dashboard-light.png)](docs/screenshots/dashboard-light.png) | [![FIRE, light theme](docs/screenshots/fire-light.png)](docs/screenshots/fire-light.png) |
+> | Dashboard (dark)                                                                                    | FIRE (dark)                                                                          |
+> | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+> | [![Dashboard, dark theme](docs/screenshots/dashboard-dark.png)](docs/screenshots/dashboard-dark.png) | [![FIRE, dark theme](docs/screenshots/fire-dark.png)](docs/screenshots/fire-dark.png) |
 
 ## Mobile & PWA
 

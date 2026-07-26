@@ -27,7 +27,7 @@ export function ContributionField({
 }: ContributionFieldProps) {
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-sm font-medium text-zinc-700 dark:text-white/80">
+      <label htmlFor={id} className="text-foreground/70 text-sm font-medium">
         Net contribution
       </label>
       <input
@@ -41,9 +41,9 @@ export function ContributionField({
           onChange(e.target.value);
         }}
         placeholder="e.g. 500 or -200"
-        className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 transition-colors focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none disabled:opacity-50 dark:border-white/15 dark:bg-white/5 dark:text-white"
+        className="border-input bg-card text-foreground focus:border-primary tnum w-full rounded-sm border px-3 py-2 text-sm transition-colors focus:outline-none disabled:opacity-50"
       />
-      <p className="text-xs text-zinc-500 dark:text-white/50">
+      <p className="text-muted-foreground text-xs">
         Amount in {currency}: use <span className="font-medium">+</span> for money added,{" "}
         <span className="font-medium">−</span> for money withdrawn. Leave blank if unknown.
       </p>

@@ -1,3 +1,21 @@
+/*
+  BitWorth — "The Contents Map" (direction contract)
+
+  THESIS: Your wealth as an honestly-mapped box in the ekiben-wrapper tradition;
+  refuses the dark-neon fintech dashboard this category always ships.
+  OWN-WORLD: Warm paper and washi grounds drawn by one Hida-indigo ink; vermilion
+  hanko seals, numbered compartment chips, dotted rules; sage for growth; carved
+  Mincho display numerals over quiet print gothic; woodblock line art, never
+  photography; dark mode is the same print at night (ink-plate ground, cream type).
+  STORY: A spreadsheet-keeper sees their money mapped like a trusted diagram —
+  private, manual, always true — and signs up; the owner reads one number and
+  stamps the month.
+  FIRST VIEWPORT (landing): kiosk header; Mincho hook left with indigo Sign Up
+  plate; right, the box lid whose ridgeline art IS a labeled sample trend chart.
+  FORM: Ekiben kiosk world (challenger, seed da226bac) staged lid-to-contents-map;
+  the dealt parallel-streams-merge stages the assets-minus-liabilities passage.
+*/
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -6,79 +24,101 @@
 :root {
   --safe-top: max(env(safe-area-inset-top), 0px);
   --safe-bottom: max(env(safe-area-inset-bottom), 0px);
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 0.375rem;
+
+  /* The Contents Map — day print on paper */
+  --background: #f6f1e6; /* paper */
+  --foreground: #3b2f2a; /* ink brown */
+  --card: #fcfaf4; /* washi sheet */
+  --card-foreground: #3b2f2a;
+  --popover: #fcfaf4;
+  --popover-foreground: #3b2f2a;
+  --primary: #1e3a5f; /* Hida indigo */
+  --primary-foreground: #f6f1e6;
+  --secondary: #ece3cf; /* kraft tint */
+  --secondary-foreground: #3b2f2a;
+  --muted: #efe8d6;
+  --muted-foreground: #6f5f4d;
+  --accent: #ece3cf;
+  --accent-foreground: #1e3a5f;
+  --destructive: #c73a2b; /* seal vermilion */
+  --border: #d9ccae; /* kraft rule */
+  --input: #cbbb96;
+  --ring: #1e3a5f;
+  --chart-1: #1e3a5f; /* indigo ink */
+  --chart-2: #c73a2b; /* vermilion */
+  --chart-3: #5f7f66; /* pine sage */
+  --chart-4: #b08728; /* ochre */
+  --chart-5: #6e5a8e; /* plum */
+  --sidebar: #fcfaf4;
+  --sidebar-foreground: #3b2f2a;
+  --sidebar-primary: #1e3a5f;
+  --sidebar-primary-foreground: #f6f1e6;
+  --sidebar-accent: #ece3cf;
+  --sidebar-accent-foreground: #1e3a5f;
+  --sidebar-border: #d9ccae;
+  --sidebar-ring: #1e3a5f;
+
+  /* World roles beyond the shadcn set */
+  --seal: #c73a2b; /* stamps, number chips, kickers */
+  --kraft: #dcc8a5; /* bands, wrapping */
+  --gain: #47684f; /* positive figures (text-safe on paper) */
+  --gain-soft: #5f7f66; /* positive strokes/fills */
+  --loss: #b13223; /* negative figures (text-safe on paper) */
+  --loss-soft: #c73a2b;
+  --ink-faint: #8a7a64; /* annotations, chart axes */
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* Night print — the ink plate itself */
+  --background: #101a29;
+  --foreground: #f2ecdd; /* paper-on-night */
+  --card: #182740;
+  --card-foreground: #f2ecdd;
+  --popover: #182740;
+  --popover-foreground: #f2ecdd;
+  --primary: #f2ecdd; /* inverted plate: paper button, ink text */
+  --primary-foreground: #142338;
+  --secondary: #223452;
+  --secondary-foreground: #f2ecdd;
+  --muted: #1e2f4a;
+  --muted-foreground: #c2b69c;
+  --accent: #223452;
+  --accent-foreground: #f2ecdd;
+  --destructive: #e0644e;
+  --border: rgb(242 236 221 / 16%);
+  --input: rgb(242 236 221 / 28%);
+  --ring: #a9c1e0;
+  --chart-1: #8fafd6; /* night indigo */
+  --chart-2: #e0644e;
+  --chart-3: #8fae94;
+  --chart-4: #d3a84c;
+  --chart-5: #a794c7;
+  --sidebar: #182740;
+  --sidebar-foreground: #f2ecdd;
+  --sidebar-primary: #f2ecdd;
+  --sidebar-primary-foreground: #142338;
+  --sidebar-accent: #223452;
+  --sidebar-accent-foreground: #f2ecdd;
+  --sidebar-border: rgb(242 236 221 / 16%);
+  --sidebar-ring: #a9c1e0;
+
+  --seal: #e0644e;
+  --kraft: #3a4a66;
+  --gain: #9dbba2;
+  --gain-soft: #8fae94;
+  --loss: #e88a73;
+  --loss-soft: #e0644e;
+  --ink-faint: #a99e86;
 }
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: "Zen Kaku Gothic New", "Hiragino Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Shippori Mincho B1", "Iowan Old Style", Georgia, serif;
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -110,14 +150,74 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-seal: var(--seal);
+  --color-kraft: var(--kraft);
+  --color-gain: var(--gain);
+  --color-gain-soft: var(--gain-soft);
+  --color-loss: var(--loss);
+  --color-loss-soft: var(--loss-soft);
+  --color-ink-faint: var(--ink-faint);
+  --shadow-paper: 4px 4px 0 rgb(59 47 42 / 18%);
 }
 
-@utility bg-cosmic {
-  background-image: linear-gradient(to bottom, #0a0e1a, #0f1529, #0a0e1a);
+/* Section kicker: vermilion tracked caps, wrapper grammar. */
+@utility kicker {
+  color: var(--seal);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
-@utility bg-cosmic-light {
-  background-image: linear-gradient(to bottom, var(--background), oklch(0.97 0.01 250), var(--background));
+/* Dotted vermilion leader running to the edge of a kicker row. */
+@utility rule-dotted {
+  height: 2px;
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--seal) 55%, transparent) 1px, transparent 1.5px);
+  background-size: 8px 2px;
+  background-repeat: repeat-x;
+  background-position: center;
+}
+
+/* Numbered compartment chip: small vermilion circle, paper numeral. */
+@utility number-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+  border-radius: 9999px;
+  background: var(--seal);
+  color: var(--background);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Financial figures: tabular lining numerals, always. */
+@utility tnum {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* The stamp landing: one authored moment when a snapshot is sealed. */
+@utility stamp-land {
+  animation: stamp-land 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes stamp-land {
+  from {
+    transform: scale(1.4) rotate(-9deg);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) rotate(-3deg);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stamp-land {
+    animation: none;
+    transform: rotate(-3deg);
+  }
 }
 
 @layer base {
@@ -126,6 +226,17 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    /* Washi grain — felt at rest, invisible while reading. */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.29 0 0 0 0 0.22 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23w)'/%3E%3C/svg%3E");
+  }
+  .dark body {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.93 0 0 0 0 0.87 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23w)'/%3E%3C/svg%3E");
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
   }
   /* Tailwind Preflight resets `margin: 0` on every element, which clobbers the
      user-agent `margin: auto` that centers a modal <dialog>. Restore it so all

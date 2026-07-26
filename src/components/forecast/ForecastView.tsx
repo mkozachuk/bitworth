@@ -259,7 +259,7 @@ export function ForecastView({ displayCurrency, startingPrincipal, initialInputs
             onClick={() => {
               setSeed((prev) => prev + 1);
             }}
-            className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-500"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-sm px-4 py-2 font-medium transition-colors"
           >
             <Dices className="size-4" />
             Re-run simulation
@@ -268,9 +268,9 @@ export function ForecastView({ displayCurrency, startingPrincipal, initialInputs
 
         <div className="space-y-4">
           {showCta && (
-            <div className="rounded-2xl border border-blue-300 bg-blue-50 p-4 text-sm text-blue-900 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-200">
+            <div className="bg-kraft/40 border-kraft text-foreground/80 rounded-sm border p-4 text-sm">
               Using default assumptions. Set up your FIRE plan on the{" "}
-              <a href="/dashboard/fire" className="font-semibold underline hover:no-underline">
+              <a href="/dashboard/fire" className="text-primary dark:text-foreground font-semibold hover:underline">
                 FIRE Calculator
               </a>{" "}
               to pre-fill these from your saved figures.
@@ -278,25 +278,25 @@ export function ForecastView({ displayCurrency, startingPrincipal, initialInputs
           )}
 
           {result === null ? (
-            <div className="rounded-2xl border border-amber-300 bg-amber-50 p-6 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+            <div className="bg-kraft/40 border-kraft text-foreground/80 rounded-sm border p-6 text-sm">
               Enter a safe withdrawal rate greater than 0% to run the simulation.
             </div>
           ) : (
-            <div className="rounded-2xl border border-zinc-200 bg-white/80 p-6 dark:border-white/10 dark:bg-white/5">
-              <p className="text-sm tracking-wider text-zinc-500 uppercase dark:text-white/50">
+            <div className="bg-card border-border rounded-md border p-6">
+              <p className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">
                 Probability of reaching FIRE
               </p>
-              <p className="mt-1 text-5xl font-bold text-zinc-900 dark:text-white">
+              <p className="font-display tnum text-foreground mt-1 text-5xl font-bold">
                 {formatPct(result.successProbability)}
               </p>
               {fireResult?.retirementAge != null ? (
-                <p className="mt-2 text-sm text-zinc-600 dark:text-white/60">
+                <p className="text-foreground/70 mt-2 text-sm">
                   of {result.pathCount.toLocaleString("en-US")} simulated paths reach your FIRE number by your projected
                   retirement age of {fireResult.retirementAge} — about {result.horizonYears}{" "}
                   {result.horizonYears === 1 ? "year" : "years"} from now.
                 </p>
               ) : (
-                <p className="mt-2 text-sm text-zinc-600 dark:text-white/60">
+                <p className="text-foreground/70 mt-2 text-sm">
                   of {result.pathCount.toLocaleString("en-US")} simulated paths reach your FIRE number within{" "}
                   {result.horizonYears} {result.horizonYears === 1 ? "year" : "years"}. On a steady return you wouldn’t
                   reach FIRE in that window — this is the chance market volatility gets you there.
@@ -317,8 +317,8 @@ export function ForecastView({ displayCurrency, startingPrincipal, initialInputs
         />
       )}
 
-      <div className="rounded-2xl border border-zinc-200 bg-white/80 p-6 text-sm text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-white/60">
-        <h2 className="mb-2 text-sm font-medium tracking-wider text-zinc-700 uppercase dark:text-white/70">
+      <div className="bg-card border-border text-foreground/70 rounded-md border p-6 text-sm">
+        <h2 className="text-foreground/60 mb-2 text-xs font-bold tracking-[0.12em] uppercase">
           How to read this forecast
         </h2>
         <ul className="list-disc space-y-2 pl-5">
@@ -343,7 +343,7 @@ export function ForecastView({ displayCurrency, startingPrincipal, initialInputs
             than you have), which makes the worst outcomes very marginally rosier than an unbounded model would show.
           </li>
         </ul>
-        <p className="mt-4 text-xs text-zinc-500 dark:text-white/40">
+        <p className="text-muted-foreground mt-4 text-xs">
           This is a statistical estimate, not financial advice. Markets don&apos;t follow tidy bell curves, and past
           returns don&apos;t guarantee future ones. Use it to understand the range of possibilities, not as a
           prediction.
@@ -368,10 +368,10 @@ interface NumberFieldProps {
 function NumberField({ id, label, help, value, onChange, min, max, step, placeholder }: NumberFieldProps) {
   return (
     <div>
-      <label htmlFor={id} className="mb-1 block text-sm text-zinc-700 dark:text-blue-100/80">
+      <label htmlFor={id} className="text-foreground/70 mb-1 block text-sm">
         {label}
       </label>
-      {help && <p className="mb-2 text-xs text-zinc-500 dark:text-white/40">{help}</p>}
+      {help && <p className="text-muted-foreground mb-2 text-xs">{help}</p>}
       <input
         id={id}
         name={id}
@@ -383,7 +383,7 @@ function NumberField({ id, label, help, value, onChange, min, max, step, placeho
         max={max}
         step={step}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 transition-colors focus:ring-2 focus:outline-none dark:border-white/20 dark:bg-white/10 dark:text-white"
+        className="tnum border-input bg-card text-foreground focus:border-primary w-full rounded-sm border px-3 py-2 transition-colors focus:outline-none"
       />
     </div>
   );

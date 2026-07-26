@@ -288,7 +288,7 @@ async function revealAssetTrends(page: import("@playwright/test").Page) {
   const toggle = page.getByRole("button", { name: "Show asset trends" });
   await toggle.waitFor({ state: "visible" });
   await toggle.click();
-  const card = page.locator("div.rounded-2xl").filter({ has: page.getByRole("heading", { name: "Asset Trends" }) });
+  const card = page.locator("div.rounded-md").filter({ has: page.getByRole("heading", { name: "Asset Trends" }) });
   await card.locator(".recharts-line-curve").first().waitFor({ state: "visible" });
   await card.scrollIntoViewIfNeeded();
   return card;
@@ -299,17 +299,18 @@ test("capture README screenshots", async ({ page, browser }) => {
   mkdirSync(SHOTS_DIR, { recursive: true });
 
   // Theme follows prefers-color-scheme (seeded account keeps theme="system"), so
-  // emulating colorScheme dark/light picks the theme. Dark is the primary set;
-  // a couple of light shots showcase the light theme. reducedMotion disables
-  // Recharts' reveal animation so lines render statically (see settleChart).
-  await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "dark" });
+  // emulating colorScheme dark/light picks the theme. Paper-light is the
+  // canonical set (see PRODUCT.md Brand Commitments); a couple of dark shots
+  // showcase the "night ink" variant. reducedMotion disables Recharts' reveal
+  // animation so lines render statically (see settleChart).
+  await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "light" });
 
-  // 1. Public landing page (unauthenticated, desktop) — dark.
+  // 1. Public landing page (unauthenticated, desktop) — canonical light.
   const landingCtx = await browser.newContext({
     baseURL: BASE_URL,
     viewport: { width: 1280, height: 900 },
     reducedMotion: "reduce",
-    colorScheme: "dark",
+    colorScheme: "light",
   });
   const landingPage = await landingCtx.newPage();
   await landingPage.goto("/");
@@ -324,7 +325,7 @@ test("capture README screenshots", async ({ page, browser }) => {
   await seedSnapshots(email, password);
   await seedAllocationTargets(page.request, email, password);
 
-  // 3. Desktop product screenshots — dark (primary).
+  // 3. Desktop product screenshots — paper-light (canonical).
   await page.setViewportSize({ width: 1280, height: 1000 });
 
   await page.goto("/dashboard");
@@ -353,22 +354,22 @@ test("capture README screenshots", async ({ page, browser }) => {
   await page.waitForLoadState("networkidle");
   await page.screenshot({ path: join(SHOTS_DIR, "settings.png"), fullPage: true });
 
-  // 4. A few light-theme shots (dashboard + FIRE) to showcase the light theme.
-  await page.emulateMedia({ colorScheme: "light" });
+  // 4. A few night-ink shots (dashboard + FIRE) to showcase the dark variant.
+  await page.emulateMedia({ colorScheme: "dark" });
 
   await page.goto("/dashboard");
   await settleChart(page, /net worth trend/i);
   await revealAssetTrends(page);
-  await page.screenshot({ path: join(SHOTS_DIR, "dashboard-light.png"), fullPage: true });
+  await page.screenshot({ path: join(SHOTS_DIR, "dashboard-dark.png"), fullPage: true });
 
   await page.goto("/dashboard/fire");
   await settleChart(page, /projected portfolio/i);
-  await page.screenshot({ path: join(SHOTS_DIR, "fire-light.png"), fullPage: true });
+  await page.screenshot({ path: join(SHOTS_DIR, "fire-dark.png"), fullPage: true });
 
   // Reuse the authenticated session for the mobile contexts.
   const storageState = await page.context().storageState();
 
-  // 5. Mobile product screenshots — dark (Pixel 5 → Android UA, no iOS install modal).
+  // 5. Mobile product screenshots — light (Pixel 5 → Android UA, no iOS install modal).
   const androidUa =
     "Mozilla/5.0 (Linux; Android 13; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
   const mobileCtx = await browser.newContext({
@@ -380,7 +381,7 @@ test("capture README screenshots", async ({ page, browser }) => {
     hasTouch: true,
     userAgent: androidUa,
     reducedMotion: "reduce",
-    colorScheme: "dark",
+    colorScheme: "light",
   });
   const mobilePage = await mobileCtx.newPage();
 
@@ -401,13 +402,13 @@ test("capture README screenshots", async ({ page, browser }) => {
   await mobilePage.screenshot({ path: join(SHOTS_DIR, "mobile-balancer.png"), fullPage: true });
   await mobileCtx.close();
 
-  // 6. iOS install instructions modal — dark (iPhone UA → InstallInstructionsModal shows).
+  // 6. iOS install instructions modal — light (iPhone UA → InstallInstructionsModal shows).
   const iosCtx = await browser.newContext({
     ...devices["iPhone 13"],
     baseURL: BASE_URL,
     storageState,
     reducedMotion: "reduce",
-    colorScheme: "dark",
+    colorScheme: "light",
   });
   const iosPage = await iosCtx.newPage();
   await iosPage.goto("/dashboard");

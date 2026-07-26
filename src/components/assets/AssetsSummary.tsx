@@ -39,15 +39,18 @@ export function AssetsSummary({ assets, displayCurrency, rates }: Props) {
   if (rows.length === 0) return null;
 
   return (
-    <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-white/10 dark:bg-white/5">
-      <h3 className="mb-3 text-xs font-medium tracking-wider text-zinc-600 uppercase dark:text-white/60">
-        Assets by Currency
-      </h3>
-      <div className="space-y-2">
-        {rows.map((row) => (
-          <div key={row.currency} className="flex items-center justify-between">
-            <CurrencyBadge currency={row.currency} />
-            <span className="text-sm font-semibold text-zinc-900 dark:text-white">
+    <div className="bg-card border-border mt-4 rounded-md border p-4">
+      <h3 className="text-foreground/60 mb-3 text-xs font-bold tracking-[0.12em] uppercase">Assets by currency</h3>
+      <div className="divide-border/70 divide-y">
+        {rows.map((row, i) => (
+          <div key={row.currency} className="flex items-center justify-between gap-3 py-2">
+            <span className="flex items-center gap-2.5">
+              <span className="number-chip" aria-hidden="true">
+                {i + 1}
+              </span>
+              <CurrencyBadge currency={row.currency} />
+            </span>
+            <span className="tnum text-foreground text-sm font-bold">
               {row.original.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,

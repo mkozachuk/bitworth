@@ -58,14 +58,14 @@ function formatDate(iso: string): string {
 export function GoalsProgress({ goals, displayCurrency }: GoalsProgressProps) {
   if (goals.length === 0) {
     return (
-      <div className="mt-6 rounded-2xl border border-zinc-200 bg-white/80 p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/10">
-        <p className="text-sm tracking-wider text-zinc-500 uppercase dark:text-white/50">Savings goals</p>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-white/60">
+      <div className="border-kraft mt-6 rounded-md border-2 border-dashed p-6">
+        <p className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">Savings goals</p>
+        <p className="text-foreground/70 mt-2 text-sm">
           Name a target — total net worth or a single asset category — to track your progress toward it here.
         </p>
         <a
           href="/dashboard/goals"
-          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-500"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 mt-4 inline-flex items-center gap-2 rounded-sm px-4 py-2 text-sm font-medium transition-colors"
         >
           Create your first goal
         </a>
@@ -79,8 +79,8 @@ export function GoalsProgress({ goals, displayCurrency }: GoalsProgressProps) {
   const remainder = ranked.length - shown.length;
 
   return (
-    <div className="mt-6 rounded-2xl border border-zinc-200 bg-white/80 p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/10">
-      <p className="text-sm tracking-wider text-zinc-500 uppercase dark:text-white/50">Savings goals</p>
+    <div className="bg-card border-border mt-6 rounded-md border p-6">
+      <p className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">Savings goals</p>
 
       <div className="mt-4 space-y-6">
         {shown.map((goal) => (
@@ -91,13 +91,13 @@ export function GoalsProgress({ goals, displayCurrency }: GoalsProgressProps) {
       {remainder > 0 && (
         <a
           href="/dashboard/goals"
-          className="mt-5 inline-block text-xs text-zinc-500 transition-colors hover:text-zinc-700 dark:text-white/40 dark:hover:text-white/70"
+          className="text-primary dark:text-foreground mt-5 inline-block text-xs transition-colors hover:underline"
         >
           +{remainder} more {remainder === 1 ? "goal" : "goals"}
         </a>
       )}
 
-      <p className="mt-4 text-xs text-zinc-500 dark:text-white/40">
+      <p className="text-muted-foreground mt-4 text-xs">
         An <strong>estimate, not financial advice</strong>, shown in {displayCurrency}.
       </p>
     </div>
@@ -117,21 +117,15 @@ function GoalRow({ goal, displayCurrency }: { goal: GoalProgressItem; displayCur
   return (
     <div>
       <div className="flex items-baseline justify-between gap-4">
-        <p className="text-sm text-zinc-600 dark:text-white/60">{goal.name}</p>
-        <p
-          className={`text-sm font-semibold ${
-            reached ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-900 dark:text-white"
-          }`}
-        >
+        <p className="text-foreground/70 text-sm">{goal.name}</p>
+        <p className={`tnum text-sm font-semibold ${reached ? "text-gain" : "text-foreground"}`}>
           {formatPercent(pct)}
         </p>
       </div>
 
-      <div className="mt-2 h-3 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-white/10">
+      <div className="bg-secondary mt-2 h-3 w-full overflow-hidden rounded-sm">
         <div
-          className={`h-full rounded-full transition-[width] duration-700 ease-out motion-reduce:transition-none ${
-            reached ? "bg-emerald-500" : "bg-gradient-to-r from-blue-500 to-purple-500"
-          }`}
+          className="bg-primary h-full rounded-sm transition-[width] duration-700 ease-out motion-reduce:transition-none"
           style={{ width: `${fillWidth}%` }}
           role="progressbar"
           aria-valuenow={Math.round(pct)}
@@ -160,14 +154,12 @@ function GoalRow({ goal, displayCurrency }: { goal: GoalProgressItem; displayCur
             }
           />
         )}
-        {goal.eta.status === "reached" && (
-          <Metric label="Status" value={<span className="text-emerald-600 dark:text-emerald-400">Reached</span>} />
-        )}
+        {goal.eta.status === "reached" && <Metric label="Status" value={<span className="text-gain">Reached</span>} />}
       </dl>
 
       {/* The two "no date" explanations are prose, not metrics, so they live
           outside the <dl> — a bare <p> is not valid description-list content. */}
-      {note !== null && <p className="mt-3 text-xs text-zinc-500 dark:text-white/40">{note}</p>}
+      {note !== null && <p className="text-muted-foreground mt-3 text-xs">{note}</p>}
     </div>
   );
 }
@@ -185,10 +177,8 @@ function Badge({ verdict }: { verdict: "on_track" | "behind" }) {
   const onTrack = verdict === "on_track";
   return (
     <span
-      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-        onTrack
-          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
-          : "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"
+      className={`rounded-sm border px-2 py-0.5 text-xs font-medium ${
+        onTrack ? "border-gain-soft text-gain bg-transparent" : "bg-kraft/40 border-kraft text-foreground/80"
       }`}
     >
       {onTrack ? "On track" : "Behind"}
@@ -199,8 +189,8 @@ function Badge({ verdict }: { verdict: "on_track" | "behind" }) {
 function Metric({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
-      <dt className="text-sm text-zinc-600 dark:text-white/60">{label}</dt>
-      <dd className="text-right text-sm font-semibold whitespace-nowrap text-zinc-900 dark:text-white">{value}</dd>
+      <dt className="text-foreground/70 text-sm">{label}</dt>
+      <dd className="tnum text-foreground text-right text-sm font-semibold whitespace-nowrap">{value}</dd>
     </div>
   );
 }
