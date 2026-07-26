@@ -137,7 +137,9 @@ describe("GET /api/backup/export", () => {
     const response = await GET({ request: makeRequest(), cookies: createCookiesStub() } as never);
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toBe("application/json");
-    expect(response.headers.get("Content-Disposition")).toBe('attachment; filename="bitworth-backup.json"');
+    expect(response.headers.get("Content-Disposition")).toMatch(
+      /^attachment; filename="\d{4}-\d{2}-\d{2}-bitworth-export\.json"$/,
+    );
   });
 
   it("scopes each user-owned table to the caller and snapshot_items via snapshot ids", async () => {

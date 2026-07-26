@@ -27,7 +27,12 @@ export function BackupRestore() {
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = "bitworth-backup.json";
+      // `anchor.download` wins over the server's Content-Disposition for blob
+      // URLs, so the yyyy-MM-dd prefix is rebuilt here from the local date.
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+      anchor.download = `${stamp}-bitworth-export.json`;
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();

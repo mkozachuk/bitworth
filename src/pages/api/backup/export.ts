@@ -78,13 +78,17 @@ export const GET: APIRoute = async ({ request, cookies }) => {
     goals: goalsRes.data,
   } as unknown as BackupInput;
 
-  const envelope = serialize(input, new Date().toISOString());
+  const exportedAt = new Date().toISOString();
+  const envelope = serialize(input, exportedAt);
+
+  // `yyyy-MM-dd` prefix so backups sort chronologically in a file listing.
+  const filename = `${exportedAt.slice(0, 10)}-bitworth-export.json`;
 
   return new Response(JSON.stringify(envelope), {
     status: 200,
     headers: {
       "Content-Type": "application/json",
-      "Content-Disposition": 'attachment; filename="bitworth-backup.json"',
+      "Content-Disposition": `attachment; filename="${filename}"`,
     },
   });
 };
