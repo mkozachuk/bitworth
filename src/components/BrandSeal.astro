@@ -1,0 +1,31 @@
+---
+/**
+ * The BitWorth hanko: a vermilion seal whose glyph is a rising ridgeline —
+ * the net-worth trend carved as a mountain. Single-ink, stamp-imperfect.
+ */
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+---
+
+<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" class:list={[className]} aria-hidden="true">
+  <!-- stamp ring, slightly irregular like a real impression -->
+  <circle
+    cx="24"
+    cy="24"
+    r="21.5"
+    stroke="var(--seal)"
+    stroke-width="3"
+    stroke-dasharray="128 3 2 2"
+    stroke-linecap="round"></circle>
+  <!-- ridgeline: the trend carved as a mountain -->
+  <path
+    d="M9 32 L16 24 L21 28 L29 17 L33 21 L39 13"
+    stroke="var(--seal)"
+    stroke-width="3.25"
+    stroke-linecap="round"
+    stroke-linejoin="round"></path>
+  <!-- baseline tick -->
+  <path d="M10 38 H38" stroke="var(--seal)" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 5"></path>
+</svg>

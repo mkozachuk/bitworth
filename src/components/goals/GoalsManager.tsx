@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Inbox, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { ServerError } from "@/components/auth/ServerError";
-import { categoryEmoji } from "@/lib/category-icons";
 import { convertAmount, type Currency } from "@/lib/net-worth";
 
 // One goal exactly as `/api/goals` projects it. `user_id` is deliberately absent
@@ -171,7 +170,7 @@ export function GoalsManager({ goals: initialGoals, categories, displayCurrency,
     if (id === null) return "—";
     const found = categories.find((c) => c.id === id);
     if (!found) return id;
-    return [categoryEmoji(found.icon), found.name].filter(Boolean).join(" ");
+    return found.name;
   }
 
   // The target in the display currency, shown as a secondary line whenever the
@@ -186,18 +185,18 @@ export function GoalsManager({ goals: initialGoals, categories, displayCurrency,
   }
 
   const inputClass =
-    "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 transition-colors focus:ring-2 focus:outline-none dark:border-white/20 dark:bg-white/10 dark:text-white";
-  const labelClass = "mb-1 block text-sm text-zinc-700 dark:text-blue-100/80";
+    "w-full rounded-sm border border-input bg-card px-3 py-2 text-sm text-foreground transition-colors focus:border-primary focus:outline-none";
+  const labelClass = "mb-1 block text-sm text-foreground/70";
 
   return (
     <div>
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-sm font-medium tracking-wider text-zinc-600 uppercase dark:text-white/60">Your goals</h2>
+        <h2 className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">Your goals</h2>
         {!formOpen && (
           <button
             type="button"
             onClick={openCreate}
-            className="flex items-center gap-1.5 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-500"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-1.5 rounded-sm px-4 py-2 text-sm font-medium transition-colors"
           >
             <Plus className="size-4" />
             Add goal
@@ -209,12 +208,8 @@ export function GoalsManager({ goals: initialGoals, categories, displayCurrency,
         this repo and a native <dialog> would be a second interaction model on
         the same page. */}
       {formOpen && (
-        <form
-          onSubmit={handleSubmit}
-          noValidate
-          className="mb-6 space-y-4 rounded-xl border border-zinc-200 p-4 dark:border-white/10"
-        >
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">
+        <form onSubmit={handleSubmit} noValidate className="border-border bg-card mb-6 space-y-4 rounded-md border p-4">
+          <h3 className="font-display text-foreground text-sm font-bold">
             {editingId === null ? "New goal" : "Edit goal"}
           </h3>
 
@@ -272,7 +267,7 @@ export function GoalsManager({ goals: initialGoals, categories, displayCurrency,
                   <option value="">Select a category</option>
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {[categoryEmoji(c.icon), c.name].filter(Boolean).join(" ")}
+                      {c.name}
                     </option>
                   ))}
                 </select>
@@ -342,7 +337,7 @@ export function GoalsManager({ goals: initialGoals, categories, displayCurrency,
             <button
               type="submit"
               disabled={pending}
-              className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-sm px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               {pending ? (
                 <>
@@ -359,7 +354,7 @@ export function GoalsManager({ goals: initialGoals, categories, displayCurrency,
             <button
               type="button"
               onClick={closeForm}
-              className="flex items-center gap-1.5 rounded-lg border border-zinc-300 px-4 py-2 text-sm text-zinc-600 transition-colors hover:border-zinc-400 hover:text-zinc-800 dark:border-white/20 dark:text-white/60 dark:hover:border-white/40 dark:hover:text-white"
+              className="border-primary text-primary hover:bg-primary/8 flex items-center gap-1.5 rounded-sm border-[1.5px] px-4 py-2 text-sm transition-colors"
             >
               <X className="size-4" />
               Cancel
@@ -373,10 +368,10 @@ export function GoalsManager({ goals: initialGoals, categories, displayCurrency,
       {!formOpen && <ServerError message={error} />}
 
       {goals.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Inbox className="mb-3 size-10 text-zinc-300 dark:text-white/20" />
-          <p className="text-zinc-500 dark:text-white/50">No goals yet</p>
-          <p className="mt-1 text-sm text-zinc-400 dark:text-white/30">
+        <div className="border-kraft flex flex-col items-center justify-center rounded-md border-2 border-dashed py-16 text-center">
+          <Inbox className="text-ink-faint mb-3 size-10" />
+          <p className="text-foreground/70">No goals yet</p>
+          <p className="text-muted-foreground mt-1 text-sm">
             Add your first savings goal to track it on your dashboard
           </p>
         </div>
@@ -385,32 +380,30 @@ export function GoalsManager({ goals: initialGoals, categories, displayCurrency,
           <div className="hidden sm:block">
             <table className="w-full">
               <thead>
-                <tr className="text-left text-xs tracking-wider text-zinc-500 uppercase dark:text-white/40">
-                  <th className="pr-4 pb-3 font-medium">Name</th>
-                  <th className="pr-4 pb-3 font-medium">Target</th>
-                  <th className="pr-4 pb-3 font-medium">Measured against</th>
-                  <th className="pr-4 pb-3 font-medium">Target date</th>
-                  <th className="pb-3 font-medium">Actions</th>
+                <tr className="text-foreground/60 text-left text-xs tracking-[0.12em] uppercase">
+                  <th className="pr-4 pb-3 font-bold">Name</th>
+                  <th className="pr-4 pb-3 font-bold">Target</th>
+                  <th className="pr-4 pb-3 font-bold">Measured against</th>
+                  <th className="pr-4 pb-3 font-bold">Target date</th>
+                  <th className="pb-3 font-bold">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {goals.map((goal) => {
                   const converted = targetInDisplay(goal);
                   return (
-                    <tr key={goal.id} className="border-b border-zinc-200 last:border-0 dark:border-white/10">
+                    <tr key={goal.id} className="border-border border-b last:border-0">
                       <td className="py-3 pr-4">
-                        <span className="font-medium text-zinc-900 dark:text-white">{goal.name}</span>
+                        <span className="text-foreground font-medium">{goal.name}</span>
                       </td>
                       <td className="py-3 pr-4">
-                        <span className="text-zinc-900 dark:text-white">
-                          {money(goal.target_amount, goal.target_currency)}
-                        </span>
-                        {converted && <p className="mt-0.5 text-xs text-zinc-500 dark:text-white/40">≈ {converted}</p>}
+                        <span className="text-foreground tnum">{money(goal.target_amount, goal.target_currency)}</span>
+                        {converted && <p className="text-muted-foreground tnum mt-0.5 text-xs">≈ {converted}</p>}
                       </td>
-                      <td className="py-3 pr-4 text-sm text-zinc-700 dark:text-white/70">
+                      <td className="text-foreground/70 py-3 pr-4 text-sm">
                         {goal.kind === "category" ? categoryLabel(goal.category_id) : kindLabel(goal.kind)}
                       </td>
-                      <td className="py-3 pr-4 text-sm text-zinc-700 dark:text-white/70">{goal.target_date ?? "—"}</td>
+                      <td className="text-foreground/70 tnum py-3 pr-4 text-sm">{goal.target_date ?? "—"}</td>
                       <td className="py-3">
                         <div className="flex items-center gap-2">
                           <button
@@ -419,19 +412,19 @@ export function GoalsManager({ goals: initialGoals, categories, displayCurrency,
                               openEdit(goal);
                             }}
                             disabled={pending}
-                            className="flex items-center gap-1 text-sm text-purple-600 transition-colors hover:text-purple-800 disabled:cursor-not-allowed disabled:opacity-50 dark:text-purple-300 dark:hover:text-purple-200"
+                            className="text-primary dark:text-foreground flex items-center gap-1 text-sm transition-colors hover:underline disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             <Pencil className="size-3.5" />
                             Edit
                           </button>
-                          <span className="text-zinc-300 dark:text-white/20">|</span>
+                          <span className="text-border">|</span>
                           <button
                             type="button"
                             onClick={() => {
                               void handleDelete(goal);
                             }}
                             disabled={pending}
-                            className="flex items-center gap-1 text-sm text-red-600 transition-colors hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-300 dark:hover:text-red-200"
+                            className="text-destructive flex items-center gap-1 text-sm transition-colors hover:underline disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             <Trash2 className="size-3.5" />
                             Delete
@@ -450,15 +443,15 @@ export function GoalsManager({ goals: initialGoals, categories, displayCurrency,
             {goals.map((goal) => {
               const converted = targetInDisplay(goal);
               return (
-                <li key={goal.id} className="border-b border-zinc-200 py-3 last:border-0 dark:border-white/10">
+                <li key={goal.id} className="border-border border-b py-3 last:border-0">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate font-medium text-zinc-900 dark:text-white">{goal.name}</p>
-                      <p className="mt-0.5 text-sm text-zinc-700 dark:text-white/70">
+                      <p className="text-foreground truncate font-medium">{goal.name}</p>
+                      <p className="text-foreground/70 tnum mt-0.5 text-sm">
                         {money(goal.target_amount, goal.target_currency)}
                       </p>
-                      {converted && <p className="mt-0.5 text-xs text-zinc-500 dark:text-white/40">≈ {converted}</p>}
-                      <p className="mt-0.5 text-xs text-zinc-500 dark:text-white/40">
+                      {converted && <p className="text-muted-foreground tnum mt-0.5 text-xs">≈ {converted}</p>}
+                      <p className="text-muted-foreground mt-0.5 text-xs">
                         {goal.kind === "category" ? categoryLabel(goal.category_id) : kindLabel(goal.kind)}
                         {goal.target_date && ` · by ${goal.target_date}`}
                       </p>
@@ -471,7 +464,7 @@ export function GoalsManager({ goals: initialGoals, categories, displayCurrency,
                         }}
                         disabled={pending}
                         aria-label={`Edit ${goal.name}`}
-                        className="flex items-center gap-1 text-sm text-purple-600 transition-colors hover:text-purple-800 disabled:cursor-not-allowed disabled:opacity-50 dark:text-purple-300 dark:hover:text-purple-200"
+                        className="text-primary dark:text-foreground flex items-center gap-1 text-sm transition-colors hover:underline disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <Pencil className="size-3.5" />
                         Edit
@@ -483,7 +476,7 @@ export function GoalsManager({ goals: initialGoals, categories, displayCurrency,
                         }}
                         disabled={pending}
                         aria-label={`Delete ${goal.name}`}
-                        className="flex items-center gap-1 text-sm text-red-600 transition-colors hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-300 dark:hover:text-red-200"
+                        className="text-destructive flex items-center gap-1 text-sm transition-colors hover:underline disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <Trash2 className="size-3.5" />
                         Delete

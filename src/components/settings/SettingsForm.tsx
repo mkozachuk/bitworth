@@ -98,10 +98,10 @@ export function SettingsForm({
       <ServerError message={error} />
 
       <div>
-        <label htmlFor="display_currency" className="mb-1 block text-sm text-zinc-700 dark:text-blue-100/80">
+        <label htmlFor="display_currency" className="text-foreground/70 mb-1 block text-sm">
           Display currency
         </label>
-        <p className="mb-2 text-xs text-zinc-500 dark:text-white/40">
+        <p className="text-muted-foreground mb-2 text-xs">
           Used for new snapshots and dashboard totals. Historical snapshots keep the currency they were saved in.
         </p>
         <div className="relative">
@@ -112,7 +112,7 @@ export function SettingsForm({
             onChange={(e) => {
               setDisplayCurrency(e.target.value as Currency);
             }}
-            className="w-full appearance-none rounded-lg border border-zinc-300 bg-white px-3 py-2 pr-8 text-zinc-900 transition-colors focus:ring-2 focus:outline-none dark:border-white/20 dark:bg-white/10 dark:text-white"
+            className="border-input bg-card text-foreground focus:border-primary w-full appearance-none rounded-sm border px-3 py-2 pr-8 transition-colors focus:outline-none"
           >
             {CURRENCIES.map((c) => (
               <option key={c.value} value={c.value}>
@@ -120,22 +120,20 @@ export function SettingsForm({
               </option>
             ))}
           </select>
-          <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs text-zinc-500 dark:text-white/40">
+          <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs">
             ▼
           </span>
         </div>
       </div>
 
       <fieldset>
-        <legend className="mb-2 block text-sm text-zinc-700 dark:text-blue-100/80">Theme</legend>
+        <legend className="text-foreground/70 mb-2 block text-sm">Theme</legend>
         <div className="space-y-2">
           {THEMES.map((t) => (
             <label
               key={t.value}
-              className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
-                theme === t.value
-                  ? "border-purple-500 bg-purple-50 dark:border-purple-400/60 dark:bg-purple-900/20"
-                  : "border-zinc-200 bg-white hover:border-zinc-300 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20"
+              className={`flex cursor-pointer items-start gap-3 rounded-sm border p-3 transition-colors ${
+                theme === t.value ? "border-primary bg-card" : "border-border bg-card hover:border-primary/50"
               }`}
             >
               <input
@@ -146,11 +144,11 @@ export function SettingsForm({
                 onChange={() => {
                   setTheme(t.value);
                 }}
-                className="mt-1 size-4 cursor-pointer accent-purple-600"
+                className="accent-primary mt-1 size-4 cursor-pointer"
               />
               <span>
-                <span className="block text-sm font-medium text-zinc-900 dark:text-white">{t.label}</span>
-                <span className="block text-xs text-zinc-500 dark:text-white/50">{t.description}</span>
+                <span className="text-foreground block text-sm font-medium">{t.label}</span>
+                <span className="text-muted-foreground block text-xs">{t.description}</span>
               </span>
             </label>
           ))}
@@ -158,10 +156,7 @@ export function SettingsForm({
       </fieldset>
 
       <div>
-        <label
-          htmlFor="show_fire_dashboard"
-          className="flex items-center gap-2 text-sm text-zinc-700 dark:text-blue-100/80"
-        >
+        <label htmlFor="show_fire_dashboard" className="text-foreground/70 flex items-center gap-2 text-sm">
           <input
             id="show_fire_dashboard"
             type="checkbox"
@@ -169,20 +164,17 @@ export function SettingsForm({
             onChange={(e) => {
               setShowFireDashboard(e.target.checked);
             }}
-            className="size-4 accent-purple-600"
+            className="accent-primary size-4"
           />
           Show FIRE progress on dashboard
         </label>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-white/40">
+        <p className="text-muted-foreground mt-1 text-xs">
           Adds a card to your dashboard showing progress toward financial independence.
         </p>
       </div>
 
       <div>
-        <label
-          htmlFor="show_drift_alerts"
-          className="flex items-center gap-2 text-sm text-zinc-700 dark:text-blue-100/80"
-        >
+        <label htmlFor="show_drift_alerts" className="text-foreground/70 flex items-center gap-2 text-sm">
           <input
             id="show_drift_alerts"
             type="checkbox"
@@ -190,20 +182,17 @@ export function SettingsForm({
             onChange={(e) => {
               setShowDriftAlerts(e.target.checked);
             }}
-            className="size-4 accent-purple-600"
+            className="accent-primary size-4"
           />
           Show allocation drift alerts on dashboard
         </label>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-white/40">
+        <p className="text-muted-foreground mt-1 text-xs">
           Adds a card highlighting balancer cards whose real allocation has drifted from target.
         </p>
       </div>
 
       <div>
-        <label
-          htmlFor="show_trajectory"
-          className="flex items-center gap-2 text-sm text-zinc-700 dark:text-blue-100/80"
-        >
+        <label htmlFor="show_trajectory" className="text-foreground/70 flex items-center gap-2 text-sm">
           <input
             id="show_trajectory"
             type="checkbox"
@@ -211,17 +200,17 @@ export function SettingsForm({
             onChange={(e) => {
               setShowTrajectory(e.target.checked);
             }}
-            className="size-4 accent-purple-600"
+            className="accent-primary size-4"
           />
           Show net-worth projection on dashboard
         </label>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-white/40">
+        <p className="text-muted-foreground mt-1 text-xs">
           Extends your net-worth chart with a projected trend line and an estimated date to reach a target.
         </p>
       </div>
 
       <div>
-        <label htmlFor="show_goals" className="flex items-center gap-2 text-sm text-zinc-700 dark:text-blue-100/80">
+        <label htmlFor="show_goals" className="text-foreground/70 flex items-center gap-2 text-sm">
           <input
             id="show_goals"
             type="checkbox"
@@ -229,11 +218,11 @@ export function SettingsForm({
             onChange={(e) => {
               setShowGoals(e.target.checked);
             }}
-            className="size-4 accent-purple-600"
+            className="accent-primary size-4"
           />
           Show savings goals on dashboard
         </label>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-white/40">
+        <p className="text-muted-foreground mt-1 text-xs">
           Adds a card with your top savings goals, each with a progress bar and an estimated completion date.
         </p>
       </div>
@@ -242,11 +231,11 @@ export function SettingsForm({
         <button
           type="submit"
           disabled={pending || !hasChanges}
-          className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-sm px-4 py-2 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         >
           {pending ? (
             <>
-              <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              <span className="border-primary-foreground/30 border-t-primary-foreground size-4 animate-spin rounded-full border-2" />
               Saving...
             </>
           ) : (

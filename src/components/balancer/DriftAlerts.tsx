@@ -60,33 +60,33 @@ function DriftBar({ name, realPct, normalizedTargetPct, drift }: Omit<DriftOffen
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between gap-4">
-        <div className="flex items-center gap-1.5 text-sm text-zinc-600 dark:text-white/60">
-          <Arrow className="size-3.5 text-amber-500 dark:text-amber-400" aria-hidden="true" />
+        <div className="text-foreground/70 flex items-center gap-1.5 text-sm">
+          <Arrow className="text-loss size-3.5" aria-hidden="true" />
           <span>{name}</span>
         </div>
-        <span className="text-right text-sm font-semibold whitespace-nowrap text-zinc-900 dark:text-white">
-          {label}
-        </span>
+        <span className="tnum text-foreground text-right text-sm font-semibold whitespace-nowrap">{label}</span>
       </div>
 
       <div
-        className="relative h-3 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-white/10"
+        className="bg-secondary relative h-3 w-full overflow-hidden rounded-sm"
         role="progressbar"
         aria-valuenow={Math.round(drift)}
         aria-valuemin={-DRIFT_SATURATION_PP}
         aria-valuemax={DRIFT_SATURATION_PP}
         aria-label={ariaLabel}
       >
-        {/* Center target marker: a thin vertical rule at 50%. */}
-        <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-zinc-400/70 dark:bg-white/30" />
-        {/* Amber severity fill, growing from center toward the drift's side. */}
+        {/* Indigo severity fill, growing from center toward the drift's side.
+            Direction and magnitude live in the arrow + "+35pp over target" text,
+            so the fill stays quiet ink (The Seal Rule keeps vermilion small). */}
         <div
           className={cn(
-            "absolute inset-y-0 bg-amber-500 transition-[width] duration-700 ease-out motion-reduce:transition-none dark:bg-amber-400",
-            over ? "left-1/2 rounded-r-full" : "right-1/2 rounded-l-full",
+            "bg-primary/70 absolute inset-y-0 transition-[width] duration-700 ease-out motion-reduce:transition-none",
+            over ? "left-1/2 rounded-r-sm" : "right-1/2 rounded-l-sm",
           )}
           style={{ width: `${halfWidthPct}%` }}
         />
+        {/* Center target marker: a vermilion threshold tick at 50%. */}
+        <div className="bg-seal absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2" />
       </div>
     </div>
   );
@@ -97,9 +97,9 @@ export function DriftAlerts({ worstName, declaredSum, offenders, otherBreachingN
   const declaredSumOffTarget = Math.abs(declaredSum - 100) > EPSILON;
 
   return (
-    <div className="mt-6 rounded-2xl border border-zinc-200 bg-white/80 p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/10">
-      <p className="text-sm tracking-wider text-zinc-500 uppercase dark:text-white/50">Allocation drift</p>
-      <p className="mt-2 text-sm font-semibold text-zinc-900 dark:text-white">{worstName}</p>
+    <div className="bg-card border-border mt-6 rounded-md border p-6">
+      <p className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">Allocation drift</p>
+      <p className="text-foreground mt-2 text-sm font-semibold">{worstName}</p>
 
       <div className="mt-5 space-y-4">
         {shownOffenders.map((offender) => (
@@ -114,18 +114,18 @@ export function DriftAlerts({ worstName, declaredSum, offenders, otherBreachingN
       </div>
 
       {otherBreachingNames.length > 0 && (
-        <p className="mt-5 text-xs text-zinc-500 dark:text-white/40">Also drifting: {otherBreachingNames.join(", ")}</p>
+        <p className="text-muted-foreground mt-5 text-xs">Also drifting: {otherBreachingNames.join(", ")}</p>
       )}
 
       {declaredSumOffTarget && (
-        <p className="mt-2 text-xs text-zinc-500 dark:text-white/40">
+        <p className="text-muted-foreground tnum mt-2 text-xs">
           Targets sum to {Math.round(declaredSum)}% — compared proportionally.
         </p>
       )}
 
       <a
         href="/dashboard/balancer"
-        className="mt-5 inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-500"
+        className="bg-primary text-primary-foreground hover:bg-primary/90 mt-5 inline-flex items-center gap-2 rounded-sm px-4 py-2 text-sm font-medium transition-colors"
       >
         Review in balancer
       </a>

@@ -32,22 +32,13 @@ if (!asset) {
 <Layout title="Edit Asset">
   <div class="mx-auto max-w-lg px-4 py-8">
     <div class="mb-6">
-      <a
-        href="/dashboard/assets"
-        class="text-sm text-purple-600 transition-colors hover:text-purple-800 hover:underline dark:text-purple-300 dark:hover:text-purple-100"
-      >
+      <a href="/dashboard/assets" class="text-primary dark:text-foreground text-sm transition-colors hover:underline">
         &larr; Back to Assets
       </a>
     </div>
 
-    <div
-      class="rounded-2xl border border-zinc-200 bg-white/80 p-8 text-zinc-900 backdrop-blur-xl dark:border-white/10 dark:bg-white/10 dark:text-white"
-    >
-      <h1
-        class="mb-6 bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-2xl font-bold text-transparent dark:from-blue-200 dark:to-purple-200"
-      >
-        Edit Asset
-      </h1>
+    <div class="bg-card border-border rounded-md border p-8">
+      <h1 class="font-display text-foreground mb-6 text-2xl font-bold">Edit Asset</h1>
       <AssetForm
         asset={asset}
         mode="edit"

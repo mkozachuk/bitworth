@@ -103,12 +103,12 @@ function EditContributionForm({
 
   return (
     <>
-      <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-3 dark:border-white/10">
-        <h2 className="text-base font-semibold">Edit contribution</h2>
+      <div className="border-border flex items-center justify-between border-b px-5 py-3">
+        <h2 className="font-display text-base font-bold">Edit contribution</h2>
       </div>
       <div className="px-5 py-5">
-        <p className="mb-4 text-sm text-zinc-600 dark:text-white/60">
-          Contribution recorded for <span className="font-medium text-zinc-900 dark:text-white">{dateLabel}</span>
+        <p className="text-foreground/70 mb-4 text-sm">
+          Contribution recorded for <span className="text-foreground font-medium">{dateLabel}</span>
         </p>
         <ContributionField
           id="edit-net-contribution"
@@ -117,16 +117,14 @@ function EditContributionForm({
           currency={displayCurrency}
           disabled={state === "loading"}
         />
-        {state === "error" && errorMessage && (
-          <p className="mt-3 text-xs text-red-600 dark:text-red-300">{errorMessage}</p>
-        )}
+        {state === "error" && errorMessage && <p className="text-destructive mt-3 text-xs">{errorMessage}</p>}
       </div>
-      <div className="flex justify-end gap-2 border-t border-zinc-200 px-5 py-3 dark:border-white/10">
+      <div className="border-border flex justify-end gap-2 border-t px-5 py-3">
         <button
           type="button"
           onClick={onClose}
           disabled={state === "loading"}
-          className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-white/15 dark:text-white/80 dark:hover:bg-white/10"
+          className="border-primary text-primary hover:bg-primary/8 rounded-sm border-[1.5px] px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
         >
           Cancel
         </button>
@@ -134,16 +132,11 @@ function EditContributionForm({
           type="button"
           onClick={handleConfirm}
           disabled={state === "loading"}
-          className="flex items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:bg-purple-600/50"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-primary/50 flex items-center justify-center gap-2 rounded-sm px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed"
         >
           {state === "loading" ? (
             <>
-              <svg
-                className="h-4 w-4 animate-spin text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
+              <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
@@ -178,7 +171,7 @@ export function EditContributionDialog({ open, onClose, ...formProps }: EditCont
       onClick={(e) => {
         if (e.target === dialogRef.current) onClose();
       }}
-      className="w-[min(92vw,28rem)] rounded-2xl border border-zinc-200 bg-white/95 p-0 text-zinc-800 shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-sm dark:border-white/10 dark:bg-zinc-900/95 dark:text-zinc-100"
+      className="bg-card text-card-foreground border-border shadow-paper w-[min(92vw,28rem)] rounded-md border p-0 backdrop:bg-[#3b2f2a]/50"
     >
       {open && <EditContributionForm onClose={onClose} {...formProps} />}
     </dialog>

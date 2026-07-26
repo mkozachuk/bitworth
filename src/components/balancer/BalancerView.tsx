@@ -33,9 +33,10 @@ interface Props {
   rates: Record<Currency, number>;
 }
 
-// Both pies cycle the same five chart variables; slice i shares one color
+// Both pies cycle five categorical inks (vermilion excluded — it is the seal
+// and loss color, never a category); slice i shares one color
 // across declared + real because both iterate the same ordered slice list.
-const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
+const CHART_COLORS = ["var(--chart-1)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--kraft)"];
 const colorFor = (index: number): string => CHART_COLORS[index % CHART_COLORS.length];
 
 // Currencies the buy-plan budget can be entered in. Mirrors the `Currency` union
@@ -55,8 +56,8 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: { name
   if (active && payload?.length) {
     const slice = payload[0];
     return (
-      <div className="rounded-lg border border-zinc-200 bg-white/95 p-3 text-zinc-900 backdrop-blur dark:border-white/10 dark:bg-white/10 dark:text-white">
-        <p className="text-sm font-semibold">
+      <div className="border-border bg-card text-foreground shadow-paper rounded-md border p-3">
+        <p className="tnum text-sm font-semibold">
           {slice.name}: {(slice.value ?? 0).toFixed(1)}%
         </p>
       </div>
@@ -91,7 +92,7 @@ function AllocationPie({
 
   return (
     <div>
-      <h3 className="mb-4 text-center text-sm font-medium tracking-wider text-zinc-600 uppercase dark:text-white/60">
+      <h3 className="text-foreground/60 mb-4 text-center font-sans text-xs font-bold tracking-[0.12em] uppercase">
         {title}
       </h3>
       <ResponsiveContainer width="100%" height={280} initialDimension={{ width: 400, height: 280 }}>
@@ -109,7 +110,7 @@ function AllocationPie({
           <Tooltip content={<CustomTooltip />} />
           <Legend
             wrapperStyle={{ fontSize: 12 }}
-            formatter={(value: string) => <span className="text-zinc-600 dark:text-white/60">{value}</span>}
+            formatter={(value: string) => <span className="text-foreground/70">{value}</span>}
           />
         </PieChart>
       </ResponsiveContainer>
@@ -143,13 +144,13 @@ function BuyPlanCard({
     money(convertAmount(value, displayCurrency, planCurrency, rates), planCurrency);
 
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white/80 p-6 lg:col-span-3 dark:border-white/10 dark:bg-white/5">
+    <div className="border-border bg-card rounded-md border p-6 lg:col-span-3">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 text-sm font-medium tracking-wider text-zinc-600 uppercase dark:text-white/60">
+        <h2 className="text-foreground/60 flex items-center gap-2 font-sans text-xs font-bold tracking-[0.12em] uppercase">
           <Wallet className="size-4" />
           Buy plan
         </h2>
-        <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-white/60">
+        <label className="text-foreground/70 flex items-center gap-2 text-sm">
           Available to invest
           <input
             type="number"
@@ -162,7 +163,7 @@ function BuyPlanCard({
             min={0}
             step={100}
             placeholder="0"
-            className="w-32 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-right text-sm text-zinc-900 transition-colors focus:ring-2 focus:outline-none dark:border-white/20 dark:bg-white/10 dark:text-white"
+            className="border-input bg-card text-foreground focus:border-primary tnum w-32 rounded-sm border px-3 py-2 text-right text-sm transition-colors focus:outline-none"
           />
           <select
             aria-label="Budget currency"
@@ -170,7 +171,7 @@ function BuyPlanCard({
             onChange={(e) => {
               setPlanCurrency(e.target.value as Currency);
             }}
-            className="appearance-none rounded-lg border border-zinc-300 bg-white px-2 py-2 text-sm text-zinc-900 transition-colors focus:ring-2 focus:outline-none dark:border-white/20 dark:bg-white/10 dark:text-white"
+            className="border-input bg-card text-foreground focus:border-primary appearance-none rounded-sm border px-2 py-2 text-sm transition-colors focus:outline-none"
           >
             {CURRENCIES.map((c) => (
               <option key={c} value={c}>
@@ -182,7 +183,7 @@ function BuyPlanCard({
       </div>
 
       {plan === null ? (
-        <p className="text-sm text-zinc-500 dark:text-white/40">
+        <p className="text-muted-foreground text-sm">
           Set a target percentage on at least one asset above to compute a buy plan.
         </p>
       ) : (
@@ -190,35 +191,33 @@ function BuyPlanCard({
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-200 text-left text-xs tracking-wider text-zinc-500 uppercase dark:border-white/10 dark:text-white/40">
-                  <th className="py-2 pr-4 font-medium">Asset</th>
-                  <th className="py-2 pr-4 text-right font-medium">Current</th>
-                  <th className="py-2 pr-4 text-right font-medium">Target</th>
-                  <th className="py-2 pr-4 text-right font-medium">Buy</th>
-                  <th className="py-2 text-right font-medium">After</th>
+                <tr className="border-border text-foreground/60 border-b text-left text-xs tracking-[0.12em] uppercase">
+                  <th className="py-2 pr-4 font-bold">Asset</th>
+                  <th className="py-2 pr-4 text-right font-bold">Current</th>
+                  <th className="py-2 pr-4 text-right font-bold">Target</th>
+                  <th className="py-2 pr-4 text-right font-bold">Buy</th>
+                  <th className="py-2 text-right font-bold">After</th>
                 </tr>
               </thead>
               <tbody>
                 {plan.rows.map((row, index) => (
-                  <tr key={row.asset_id} className="border-b border-zinc-100 dark:border-white/5">
-                    <td className="flex items-center gap-2 py-2 pr-4 text-zinc-900 dark:text-white">
+                  <tr key={row.asset_id} className="border-border border-b">
+                    <td className="text-foreground flex items-center gap-2 py-2 pr-4">
                       <span className="size-2.5 shrink-0 rounded-full" style={{ background: colorFor(index) }} />
                       <span className="truncate">{row.name}</span>
                     </td>
-                    <td className="py-2 pr-4 text-right text-zinc-600 dark:text-white/60">{show(row.currentValue)}</td>
-                    <td className="py-2 pr-4 text-right text-zinc-500 dark:text-white/40">
-                      {row.targetPct.toFixed(1)}%
-                    </td>
+                    <td className="text-foreground/70 tnum py-2 pr-4 text-right">{show(row.currentValue)}</td>
+                    <td className="text-muted-foreground tnum py-2 pr-4 text-right">{row.targetPct.toFixed(1)}%</td>
                     <td
                       className={
                         row.buy > 0
-                          ? "py-2 pr-4 text-right font-medium text-emerald-600 dark:text-emerald-400"
-                          : "py-2 pr-4 text-right text-zinc-400 dark:text-white/30"
+                          ? "text-gain tnum py-2 pr-4 text-right font-medium"
+                          : "text-muted-foreground tnum py-2 pr-4 text-right"
                       }
                     >
                       {row.buy > 0 ? `+${show(row.buy)}` : "—"}
                     </td>
-                    <td className="py-2 text-right text-zinc-600 dark:text-white/60">{row.finalPct.toFixed(1)}%</td>
+                    <td className="text-foreground/70 tnum py-2 text-right">{row.finalPct.toFixed(1)}%</td>
                   </tr>
                 ))}
               </tbody>
@@ -226,11 +225,11 @@ function BuyPlanCard({
           </div>
 
           <div className="mt-4 flex flex-wrap items-center justify-end gap-x-6 gap-y-1 text-sm">
-            <span className="text-zinc-600 dark:text-white/60">
-              Deployed <strong className="text-zinc-900 dark:text-white">{show(plan.deployed)}</strong>
+            <span className="text-foreground/70">
+              Deployed <strong className="text-foreground tnum">{show(plan.deployed)}</strong>
             </span>
             {plan.leftover > 0.01 && (
-              <span className="text-amber-600 dark:text-amber-400">
+              <span className="border-kraft bg-kraft/40 text-foreground/80 tnum rounded-sm border px-2 py-1">
                 Leftover {show(plan.leftover)} — everything else is already at or above target
               </span>
             )}
@@ -383,14 +382,14 @@ function PortfolioCard({
             if (e.key === "Enter") e.currentTarget.blur();
           }}
           maxLength={60}
-          className="min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-2 py-1 text-lg font-semibold text-zinc-900 transition-colors hover:border-zinc-200 focus:border-zinc-300 focus:ring-2 focus:outline-none dark:text-white dark:hover:border-white/10 dark:focus:border-white/20"
+          className="font-display text-foreground hover:border-border focus:border-primary min-w-0 flex-1 rounded-sm border border-transparent bg-transparent px-2 py-1 text-lg font-bold transition-colors focus:outline-none"
         />
         <button
           type="button"
           onClick={() => {
             onDelete(card.id);
           }}
-          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 transition-colors hover:border-red-300 hover:text-red-600 dark:border-white/20 dark:text-white/60 dark:hover:border-red-400/40 dark:hover:text-red-300"
+          className="border-destructive text-destructive hover:bg-destructive hover:text-background flex shrink-0 items-center gap-1.5 rounded-sm border-[1.5px] px-3 py-1.5 text-sm transition-colors"
         >
           <Trash2 className="size-4" />
           Delete
@@ -398,16 +397,14 @@ function PortfolioCard({
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="rounded-2xl border border-zinc-200 bg-white/80 p-6 lg:col-span-1 dark:border-white/10 dark:bg-white/5">
+        <div className="border-border bg-card rounded-md border p-6 lg:col-span-1">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-medium tracking-wider text-zinc-600 uppercase dark:text-white/60">
+            <h2 className="text-foreground/60 font-sans text-xs font-bold tracking-[0.12em] uppercase">
               Select assets &amp; targets
             </h2>
             <span
               className={
-                sumOffBy100
-                  ? "text-xs font-medium text-amber-600 dark:text-amber-400"
-                  : "text-xs text-zinc-500 dark:text-white/40"
+                sumOffBy100 ? "text-destructive tnum text-xs font-medium" : "text-muted-foreground tnum text-xs"
               }
             >
               Targets sum = {result.declaredSum.toFixed(1)}%
@@ -425,7 +422,7 @@ function PortfolioCard({
                   setPick(e.target.value);
                 }}
                 disabled={available.length === 0}
-                className="w-full appearance-none rounded-lg border border-zinc-300 bg-white px-3 py-2 pr-8 text-sm text-zinc-900 transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/20 dark:bg-white/10 dark:text-white"
+                className="border-input bg-card text-foreground focus:border-primary w-full appearance-none rounded-sm border px-3 py-2 pr-8 text-sm transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="">{available.length === 0 ? "All assets added" : "Add an asset…"}</option>
                 {available.map((asset) => (
@@ -440,7 +437,7 @@ function PortfolioCard({
               onClick={addPicked}
               disabled={!pick}
               aria-label="Add selected asset"
-              className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-purple-600 text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 flex size-9 shrink-0 items-center justify-center rounded-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Plus className="size-4" />
             </button>
@@ -449,7 +446,7 @@ function PortfolioCard({
           {/* Configurable list: one row per selected asset with its target input
             and a "−" button to remove it from the set. */}
           {selectedAssets.length === 0 ? (
-            <p className="mt-4 text-sm text-zinc-500 dark:text-white/40">
+            <p className="text-muted-foreground mt-4 text-sm">
               No assets selected yet. Add one above to set its target.
             </p>
           ) : (
@@ -459,9 +456,9 @@ function PortfolioCard({
                 return (
                   <div
                     key={asset.asset_id}
-                    className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 dark:border-white/10"
+                    className="border-border flex items-center gap-2 rounded-sm border px-3 py-2"
                   >
-                    <span className="flex-1 truncate text-sm text-zinc-900 dark:text-white">{asset.name}</span>
+                    <span className="text-foreground flex-1 truncate text-sm">{asset.name}</span>
                     <input
                       type="number"
                       inputMode="decimal"
@@ -472,16 +469,16 @@ function PortfolioCard({
                       max={100}
                       step={0.1}
                       placeholder="0"
-                      className="w-20 rounded-lg border border-zinc-300 bg-white px-2 py-1 text-right text-sm text-zinc-900 transition-colors focus:ring-2 focus:outline-none dark:border-white/20 dark:bg-white/10 dark:text-white"
+                      className="border-input bg-card text-foreground focus:border-primary tnum w-20 rounded-sm border px-2 py-1 text-right text-sm transition-colors focus:outline-none"
                     />
-                    <span className="text-sm text-zinc-500 dark:text-white/40">%</span>
+                    <span className="text-muted-foreground text-sm">%</span>
                     <button
                       type="button"
                       onClick={() => {
                         removeAsset(asset.asset_id);
                       }}
                       aria-label={`Remove ${asset.name}`}
-                      className="flex size-7 shrink-0 items-center justify-center rounded-lg border border-zinc-300 text-zinc-500 transition-colors hover:border-red-300 hover:text-red-600 dark:border-white/20 dark:text-white/50 dark:hover:border-red-400/40 dark:hover:text-red-300"
+                      className="border-input text-foreground/60 hover:border-destructive hover:text-destructive flex size-7 shrink-0 items-center justify-center rounded-sm border transition-colors"
                     >
                       <Minus className="size-4" />
                     </button>
@@ -492,7 +489,7 @@ function PortfolioCard({
           )}
 
           {sumOffBy100 && (
-            <p className="mt-3 text-xs text-amber-600 dark:text-amber-400">
+            <p className="border-kraft bg-kraft/40 text-foreground/80 mt-3 rounded-sm border px-2 py-1 text-xs">
               Your targets don&apos;t add up to 100%. You can still save — the declared pie shows your raw percentages.
             </p>
           )}
@@ -503,11 +500,11 @@ function PortfolioCard({
             type="button"
             onClick={handleSave}
             disabled={pending}
-            className="mt-4 flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 mt-4 flex items-center gap-2 rounded-sm px-4 py-2 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             {pending ? (
               <>
-                <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                <span className="border-primary-foreground/30 border-t-primary-foreground size-4 animate-spin rounded-full border-2" />
                 Saving...
               </>
             ) : (
@@ -520,7 +517,7 @@ function PortfolioCard({
         </div>
 
         {/* Both pies share one card: side by side on desktop, stacked on mobile. */}
-        <div className="rounded-2xl border border-zinc-200 bg-white/80 p-6 lg:col-span-2 dark:border-white/10 dark:bg-white/5">
+        <div className="border-border bg-card rounded-md border p-6 lg:col-span-2">
           {hasSelection ? (
             <div className="grid gap-6 md:grid-cols-2">
               <AllocationPie title="Declared (target %)" slices={result.slices} mode="declared" />
@@ -528,7 +525,7 @@ function PortfolioCard({
             </div>
           ) : (
             <div className="flex h-full items-center justify-center py-12 text-center">
-              <p className="text-sm text-zinc-600 dark:text-white/60">
+              <p className="text-foreground/70 text-sm">
                 Add one or more assets to compare your declared targets against their real current-value allocation.
               </p>
             </div>
@@ -618,8 +615,8 @@ export function BalancerView({ assets, cards: initialCards, displayCurrency, rat
 
   if (assets.length === 0) {
     return (
-      <div className="rounded-2xl border border-zinc-200 bg-white/80 p-8 text-center dark:border-white/10 dark:bg-white/5">
-        <p className="text-sm text-zinc-600 dark:text-white/60">
+      <div className="border-kraft rounded-md border-2 border-dashed p-8 text-center">
+        <p className="text-foreground/70 text-sm">
           You have no assets yet. Add some assets first, then come back to set your target allocation.
         </p>
       </div>
@@ -641,8 +638,8 @@ export function BalancerView({ assets, cards: initialCards, displayCurrency, rat
             }}
             className={
               c.id === activeId
-                ? "max-w-[12rem] truncate rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white"
-                : "max-w-[12rem] truncate rounded-lg border border-zinc-300 px-4 py-2 text-sm text-zinc-600 transition-colors hover:border-purple-300 hover:text-purple-700 dark:border-white/20 dark:text-white/60 dark:hover:border-purple-400/40 dark:hover:text-purple-200"
+                ? "bg-primary text-primary-foreground max-w-[12rem] truncate rounded-sm px-4 py-2 text-sm font-medium"
+                : "border-border text-foreground/70 hover:border-primary hover:text-primary max-w-[12rem] truncate rounded-sm border px-4 py-2 text-sm transition-colors"
             }
           >
             {c.name}
@@ -652,7 +649,7 @@ export function BalancerView({ assets, cards: initialCards, displayCurrency, rat
           type="button"
           onClick={addCard}
           disabled={busy}
-          className="flex items-center gap-1.5 rounded-lg border border-dashed border-zinc-300 px-4 py-2 text-sm text-zinc-600 transition-colors hover:border-purple-400 hover:text-purple-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/20 dark:text-white/60 dark:hover:border-purple-400/40 dark:hover:text-purple-200"
+          className="border-kraft text-foreground/70 hover:border-primary hover:text-primary flex items-center gap-1.5 rounded-sm border border-dashed px-4 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Plus className="size-4" />
           Add portfolio
@@ -673,15 +670,15 @@ export function BalancerView({ assets, cards: initialCards, displayCurrency, rat
           onSaved={handleSaved}
         />
       ) : (
-        <div className="rounded-2xl border border-zinc-200 bg-white/80 p-8 text-center dark:border-white/10 dark:bg-white/5">
-          <p className="mb-4 text-sm text-zinc-600 dark:text-white/60">
+        <div className="border-kraft rounded-md border-2 border-dashed p-8 text-center">
+          <p className="text-foreground/70 mb-4 text-sm">
             No portfolios yet. Create one to set target allocations and compare them against your real split.
           </p>
           <button
             type="button"
             onClick={addCard}
             disabled={busy}
-            className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-sm px-4 py-2 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus className="size-4" />
             Create your first portfolio

@@ -43,19 +43,13 @@ const categories = (categoryRows ?? []) as GoalCategory[];
 
 <Layout title="Goals">
   <div class="mx-auto max-w-3xl px-4 py-8">
-    <h1
-      class="mb-2 bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-3xl font-bold text-transparent dark:from-blue-200 dark:to-purple-200"
-    >
-      Savings Goals
-    </h1>
-    <p class="mb-6 text-sm text-zinc-600 dark:text-blue-100/60">
+    <h1 class="font-display text-foreground mb-2 text-3xl font-bold">Savings Goals</h1>
+    <p class="text-foreground/70 mb-6 text-sm">
       Track a named target against your total net worth or a single asset category. Progress appears on your dashboard.
       Values are shown in {displayCurrency}.
     </p>
 
-    <div
-      class="rounded-2xl border border-zinc-200 bg-white/80 p-6 text-zinc-900 backdrop-blur-xl dark:border-white/10 dark:bg-white/10 dark:text-white"
-    >
+    <div class="bg-card border-border rounded-md border p-6">
       <GoalsManager goals={goals} categories={categories} displayCurrency={displayCurrency} rates={rates} client:load />
     </div>
   </div>

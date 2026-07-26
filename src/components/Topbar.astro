@@ -1,92 +1,81 @@
 ---
 import TopbarMenu from "@/components/TopbarMenu";
 import InstallButton from "@/components/InstallButton";
+import BrandSeal from "@/components/BrandSeal.astro";
 
 const { user } = Astro.locals;
+const path = Astro.url.pathname;
+
+const navLinks = [
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/dashboard/assets", label: "Assets" },
+  { href: "/dashboard/goals", label: "Goals" },
+  { href: "/dashboard/balancer", label: "Balance" },
+  { href: "/dashboard/fire", label: "FIRE" },
+  { href: "/dashboard/forecast", label: "Forecast" },
+  { href: "/dashboard/settings", label: "Settings" },
+];
+
+const isActive = (href: string) => (href === "/dashboard" ? path === "/dashboard" : path.startsWith(href));
 ---
 
-<div
-  class="mb-4 flex items-center justify-between rounded-xl border border-zinc-200 bg-white/80 px-4 py-2 pt-[max(env(safe-area-inset-top),0.5rem)] text-sm text-zinc-700 dark:border-white/10 dark:bg-white/5 dark:text-white/80"
+<header
+  class="border-primary/80 mb-6 flex items-center justify-between gap-3 border-b-2 px-4 py-3 pt-[max(env(safe-area-inset-top),0.75rem)] sm:px-6"
 >
+  <a href="/" class="flex min-w-0 items-center gap-2.5" aria-label="BitWorth home">
+    <BrandSeal class="h-7 w-7 flex-none" />
+    <span class="font-display text-foreground text-lg leading-none font-bold tracking-wide">BitWorth</span>
+    {
+      user && (
+        <span class="text-muted-foreground mt-0.5 hidden max-w-[160px] truncate text-xs xl:inline">{user.email}</span>
+      )
+    }
+  </a>
   {
     user ? (
-      <>
-        <span class="max-w-[140px] truncate text-zinc-600 dark:text-blue-100/70">{user.email}</span>
-        <div class="flex items-center gap-3">
+      <nav class="flex items-center gap-4" aria-label="Main">
+        {navLinks.map((link) => (
           <a
-            href="/dashboard"
-            class="hidden text-purple-600 transition-colors hover:text-purple-800 hover:underline sm:inline-flex dark:text-purple-300 dark:hover:text-purple-100"
+            href={link.href}
+            aria-current={isActive(link.href) ? "page" : undefined}
+            class:list={[
+              "hidden text-sm underline-offset-8 transition-colors sm:inline-flex",
+              isActive(link.href)
+                ? "text-primary dark:text-foreground font-medium underline decoration-2"
+                : "text-foreground/70 hover:text-primary dark:hover:text-foreground",
+            ]}
           >
-            Dashboard
+            {link.label}
           </a>
-          <a
-            href="/dashboard/assets"
-            class="hidden text-purple-600 transition-colors hover:text-purple-800 hover:underline sm:inline-flex dark:text-purple-300 dark:hover:text-purple-100"
+        ))}
+        <InstallButton client:load />
+        <form method="POST" action="/api/auth/signout" class="hidden sm:block">
+          <button
+            type="submit"
+            class="text-foreground/70 hover:text-primary dark:hover:text-foreground text-sm underline-offset-8 transition-colors"
           >
-            Assets
-          </a>
-          <a
-            href="/dashboard/goals"
-            class="hidden text-purple-600 transition-colors hover:text-purple-800 hover:underline sm:inline-flex dark:text-purple-300 dark:hover:text-purple-100"
-          >
-            Goals
-          </a>
-          <a
-            href="/dashboard/balancer"
-            class="hidden text-purple-600 transition-colors hover:text-purple-800 hover:underline sm:inline-flex dark:text-purple-300 dark:hover:text-purple-100"
-          >
-            Balance
-          </a>
-          <a
-            href="/dashboard/fire"
-            class="hidden text-purple-600 transition-colors hover:text-purple-800 hover:underline sm:inline-flex dark:text-purple-300 dark:hover:text-purple-100"
-          >
-            FIRE
-          </a>
-          <a
-            href="/dashboard/forecast"
-            class="hidden text-purple-600 transition-colors hover:text-purple-800 hover:underline sm:inline-flex dark:text-purple-300 dark:hover:text-purple-100"
-          >
-            Forecast
-          </a>
-          <a
-            href="/dashboard/settings"
-            class="hidden text-purple-600 transition-colors hover:text-purple-800 hover:underline sm:inline-flex dark:text-purple-300 dark:hover:text-purple-100"
-          >
-            Settings
-          </a>
-          <InstallButton client:load />
-          <form method="POST" action="/api/auth/signout" class="hidden sm:block">
-            <button
-              type="submit"
-              class="text-purple-600 transition-colors hover:text-purple-800 hover:underline dark:text-purple-300 dark:hover:text-purple-100"
-            >
-              Sign out
-            </button>
-          </form>
-          <div class="sm:hidden">
-            <TopbarMenu user={{ email: user.email }} client:load />
-          </div>
+            Sign out
+          </button>
+        </form>
+        <div class="sm:hidden">
+          <TopbarMenu user={{ email: user.email }} client:load />
         </div>
-      </>
+      </nav>
     ) : (
-      <>
-        <span class="text-zinc-600 dark:text-blue-100/70">Not signed in</span>
-        <div class="flex gap-3">
-          <a
-            href="/auth/signin"
-            class="text-purple-600 transition-colors hover:text-purple-800 hover:underline dark:text-purple-300 dark:hover:text-purple-100"
-          >
-            Sign in
-          </a>
-          <a
-            href="/auth/signup"
-            class="text-purple-600 transition-colors hover:text-purple-800 hover:underline dark:text-purple-300 dark:hover:text-purple-100"
-          >
-            Sign up
-          </a>
-        </div>
-      </>
+      <nav class="flex items-center gap-4" aria-label="Main">
+        <a
+          href="/auth/signin"
+          class="text-foreground/70 hover:text-primary dark:hover:text-foreground text-sm underline-offset-8 transition-colors"
+        >
+          Sign in
+        </a>
+        <a
+          href="/auth/signup"
+          class="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm px-4 py-1.5 text-sm font-medium transition-colors"
+        >
+          Sign up
+        </a>
+      </nav>
     )
   }
-</div>
+</header>

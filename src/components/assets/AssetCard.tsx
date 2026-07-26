@@ -2,7 +2,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { CurrencyBadge } from "./CurrencyBadge";
 import type { Tables } from "@/lib/database.types";
 import { convertAmount, type Currency } from "@/lib/net-worth";
-import { categoryEmoji } from "@/lib/category-icons";
+import { CategoryIcon } from "@/lib/category-icons";
 import { assetSharePct } from "@/lib/allocation";
 
 type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
@@ -21,16 +21,16 @@ export function AssetCard({ asset, onDelete, displayCurrency, rates, totalAssets
   const priceSymbol = asset.crypto_symbol ?? asset.metal_symbol;
 
   return (
-    <li className="border-b border-zinc-200 transition-colors last:border-0 active:bg-zinc-50 dark:border-white/10 dark:active:bg-white/5">
+    // py keeps intra-card spacing tighter than the ruled gap between cards, so
+    // the actions row reads as part of THIS asset, not the next one.
+    <li className="border-border active:bg-accent border-b py-4 transition-colors first:pt-1 last:border-0 last:pb-1">
       <div className="flex items-baseline justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <span className="min-w-0 truncate font-medium text-zinc-900 dark:text-white">{asset.name}</span>
-          {asset.notes && <p className="mt-0.5 line-clamp-1 text-xs text-zinc-500 dark:text-white/50">{asset.notes}</p>}
+          <span className="text-foreground min-w-0 truncate font-medium">{asset.name}</span>
+          {asset.notes && <p className="text-muted-foreground mt-0.5 line-clamp-1 text-xs">{asset.notes}</p>}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <span
-            className={`tabular-nums ${asset.category.is_liability ? "text-red-600 dark:text-red-300" : "text-zinc-900 dark:text-white"}`}
-          >
+          <span className={`tnum ${asset.category.is_liability ? "text-loss" : "text-foreground"}`}>
             {asset.category.is_liability ? "-" : ""}
             {converted.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
             {displayCurrency}
@@ -43,7 +43,7 @@ export function AssetCard({ asset, onDelete, displayCurrency, rates, totalAssets
         </div>
       </div>
       {priceSymbol ? (
-        <p className="mt-1 text-xs text-zinc-500 tabular-nums dark:text-white/40">
+        <p className="text-muted-foreground tnum mt-1 text-xs">
           ~
           {asset.quantity != null
             ? asset.quantity.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 4 })
@@ -51,34 +51,34 @@ export function AssetCard({ asset, onDelete, displayCurrency, rates, totalAssets
           {priceSymbol}
         </p>
       ) : (
-        <p className="mt-1 text-xs text-zinc-500 tabular-nums dark:text-white/40">
+        <p className="text-muted-foreground tnum mt-1 text-xs">
           {asset.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
           {asset.currency}
         </p>
       )}
-      <div className="mt-2 flex items-center gap-1.5 text-sm text-zinc-700 dark:text-white/70">
-        {categoryEmoji(asset.category.icon) && <span>{categoryEmoji(asset.category.icon)}</span>}
+      <div className="text-foreground/70 mt-2 flex items-center gap-1.5 text-sm">
+        <CategoryIcon name={asset.category.icon} />
         <span>{asset.category.name}</span>
-        {asset.category.is_liability && <span className="text-xs text-red-600 dark:text-red-300">(liability)</span>}
+        {asset.category.is_liability && <span className="text-loss text-xs">(liability)</span>}
       </div>
       {sharePct != null && (
-        <p className="mt-1 text-xs text-zinc-500 dark:text-white/40">{sharePct.toFixed(1)}% of all assets</p>
+        <p className="text-muted-foreground tnum mt-1 text-xs">{sharePct.toFixed(1)}% of all assets</p>
       )}
-      <div className="mt-3 flex items-center gap-2 border-t border-zinc-200 pt-3 dark:border-white/10">
+      <div className="border-border mt-3 flex items-center gap-2 border-t pt-3">
         <a
           href={`/dashboard/assets/${asset.id}/edit`}
-          className="flex items-center gap-1 text-sm text-purple-600 transition-colors hover:text-purple-800 dark:text-purple-300 dark:hover:text-purple-200"
+          className="text-primary dark:text-foreground flex items-center gap-1 text-sm transition-colors hover:underline"
         >
           <Pencil className="size-3.5" />
           Edit
         </a>
-        <span className="text-zinc-300 dark:text-white/20">|</span>
+        <span className="text-border">|</span>
         <button
           type="button"
           onClick={() => {
             onDelete(asset.id);
           }}
-          className="flex items-center gap-1 text-sm text-red-600 transition-colors hover:text-red-800 dark:text-red-300 dark:hover:text-red-200"
+          className="text-destructive flex items-center gap-1 text-sm transition-colors hover:underline"
         >
           <Trash2 className="size-3.5" />
           Delete

@@ -102,19 +102,19 @@ export function BackupRestore() {
       <ServerError message={error} />
 
       <section>
-        <h3 className="text-sm font-medium text-zinc-900 dark:text-white">Export</h3>
-        <p className="mt-1 mb-3 text-xs text-zinc-500 dark:text-white/40">
+        <h3 className="font-display text-foreground text-sm font-bold">Export</h3>
+        <p className="text-muted-foreground mt-1 mb-3 text-xs">
           Download a single JSON file containing all your preferences, assets, snapshots, and snapshot items.
         </p>
         <button
           type="button"
           onClick={handleExport}
           disabled={exporting}
-          className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-sm px-4 py-2 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         >
           {exporting ? (
             <>
-              <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              <span className="border-primary-foreground/30 border-t-primary-foreground size-4 animate-spin rounded-full border-2" />
               Exporting...
             </>
           ) : (
@@ -126,13 +126,11 @@ export function BackupRestore() {
         </button>
       </section>
 
-      <hr className="border-zinc-200 dark:border-white/10" />
+      <hr className="border-border" />
 
       <section>
-        <h3 className="text-sm font-medium text-zinc-900 dark:text-white">Import</h3>
-        <p className="mt-1 mb-3 text-xs text-zinc-500 dark:text-white/40">
-          Restore data from a previously exported backup file.
-        </p>
+        <h3 className="font-display text-foreground text-sm font-bold">Import</h3>
+        <p className="text-muted-foreground mt-1 mb-3 text-xs">Restore data from a previously exported backup file.</p>
 
         <input
           type="file"
@@ -142,17 +140,15 @@ export function BackupRestore() {
             setFile(e.target.files?.[0] ?? null);
             setError(null);
           }}
-          className="block w-full text-sm text-zinc-700 file:mr-3 file:rounded-lg file:border-0 file:bg-zinc-100 file:px-4 file:py-2 file:text-sm file:font-medium file:text-zinc-700 hover:file:bg-zinc-200 dark:text-white/70 dark:file:bg-white/10 dark:file:text-white dark:hover:file:bg-white/20"
+          className="text-foreground/70 file:bg-secondary file:text-secondary-foreground hover:file:bg-kraft/60 block w-full text-sm file:mr-3 file:rounded-sm file:border-0 file:px-4 file:py-2 file:text-sm file:font-medium"
         />
 
         <fieldset className="mt-4">
-          <legend className="mb-2 block text-sm text-zinc-700 dark:text-blue-100/80">Import mode</legend>
+          <legend className="text-foreground/70 mb-2 block text-sm">Import mode</legend>
           <div className="space-y-2">
             <label
-              className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
-                mode === "merge"
-                  ? "border-purple-500 bg-purple-50 dark:border-purple-400/60 dark:bg-purple-900/20"
-                  : "border-zinc-200 bg-white hover:border-zinc-300 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20"
+              className={`flex cursor-pointer items-start gap-3 rounded-sm border p-3 transition-colors ${
+                mode === "merge" ? "border-primary bg-card" : "border-border bg-card hover:border-primary/50"
               }`}
             >
               <input
@@ -163,21 +159,19 @@ export function BackupRestore() {
                 onChange={() => {
                   setMode("merge");
                 }}
-                className="mt-1 size-4 cursor-pointer accent-purple-600"
+                className="accent-primary mt-1 size-4 cursor-pointer"
               />
               <span>
-                <span className="block text-sm font-medium text-zinc-900 dark:text-white">Merge</span>
-                <span className="block text-xs text-zinc-500 dark:text-white/50">
+                <span className="text-foreground block text-sm font-medium">Merge</span>
+                <span className="text-muted-foreground block text-xs">
                   Append the file&rsquo;s data alongside your existing data.
                 </span>
               </span>
             </label>
 
             <label
-              className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
-                mode === "replace"
-                  ? "border-purple-500 bg-purple-50 dark:border-purple-400/60 dark:bg-purple-900/20"
-                  : "border-zinc-200 bg-white hover:border-zinc-300 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20"
+              className={`flex cursor-pointer items-start gap-3 rounded-sm border p-3 transition-colors ${
+                mode === "replace" ? "border-primary bg-card" : "border-border bg-card hover:border-primary/50"
               }`}
             >
               <input
@@ -188,11 +182,11 @@ export function BackupRestore() {
                 onChange={() => {
                   setMode("replace");
                 }}
-                className="mt-1 size-4 cursor-pointer accent-purple-600"
+                className="accent-primary mt-1 size-4 cursor-pointer"
               />
               <span>
-                <span className="block text-sm font-medium text-zinc-900 dark:text-white">Replace all</span>
-                <span className="block text-xs text-zinc-500 dark:text-white/50">
+                <span className="text-foreground block text-sm font-medium">Replace all</span>
+                <span className="text-muted-foreground block text-xs">
                   Delete your current assets and snapshots, then restore from the file.
                 </span>
               </span>
@@ -201,7 +195,7 @@ export function BackupRestore() {
         </fieldset>
 
         {mode === "merge" && (
-          <p className="mt-3 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+          <p className="border-kraft bg-kraft/40 text-foreground/80 mt-3 flex items-center gap-2 rounded-sm border px-3 py-2 text-sm">
             <TriangleAlert className="size-4 shrink-0" />
             Merge appends a copy of the file&rsquo;s data — importing the same file twice creates duplicates.
           </p>
@@ -212,11 +206,11 @@ export function BackupRestore() {
             type="button"
             onClick={handleImportClick}
             disabled={!file || importing}
-            className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-sm px-4 py-2 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             {importing ? (
               <>
-                <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                <span className="border-primary-foreground/30 border-t-primary-foreground size-4 animate-spin rounded-full border-2" />
                 Importing...
               </>
             ) : (
@@ -232,27 +226,27 @@ export function BackupRestore() {
       <dialog
         ref={dialogRef}
         onClose={cancelReplace}
-        className="rounded-2xl border border-zinc-200 bg-white/95 p-0 text-zinc-800 shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-sm dark:border-white/10 dark:bg-zinc-900/95 dark:text-zinc-100"
+        className="bg-card text-card-foreground border-border shadow-paper rounded-md border p-0 backdrop:bg-[#3b2f2a]/50"
       >
-        <div className="border-b border-zinc-200 px-5 py-3 dark:border-white/10">
-          <h2 className="text-base font-semibold">Replace all data?</h2>
+        <div className="border-border border-b px-5 py-3">
+          <h2 className="font-display text-base font-bold">Replace all data?</h2>
         </div>
         <p className="max-w-sm px-5 py-5 text-sm">
           This permanently deletes your current assets and snapshots, then restores everything from the selected file.
           This cannot be undone.
         </p>
-        <div className="flex justify-end gap-3 border-t border-zinc-200 px-5 py-3 dark:border-white/10">
+        <div className="border-border flex justify-end gap-3 border-t px-5 py-3">
           <button
             type="button"
             onClick={cancelReplace}
-            className="rounded-md px-4 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/10"
+            className="border-primary text-primary hover:bg-primary/8 rounded-sm border-[1.5px] px-4 py-1.5 text-sm font-medium transition-colors"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={confirmReplace}
-            className="rounded-md bg-red-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-500"
+            className="border-destructive text-destructive hover:bg-destructive hover:text-background rounded-sm border-[1.5px] px-4 py-1.5 text-sm font-medium transition-colors"
           >
             Replace all
           </button>

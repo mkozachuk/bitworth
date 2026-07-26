@@ -4,8 +4,11 @@ import { Eye, EyeOff } from "lucide-react";
 import type { Tables } from "@/lib/database.types";
 import type { Currency } from "@/lib/net-worth";
 import { key } from "@/lib/movers";
-import { categoryEmoji } from "@/lib/category-icons";
-import { assetColor, buildAssetTrends, type TrendItem } from "@/lib/asset-trends";
+import { buildAssetTrends, type TrendItem } from "@/lib/asset-trends";
+
+// Five categorical inks (they resolve per light/dark theme); series beyond five
+// cycle the array. Vermilion is excluded — it is the seal and loss color.
+const CHART_COLORS = ["var(--chart-1)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--kraft)"];
 
 type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
 type SnapshotRow = Tables<"snapshots">;
@@ -69,8 +72,8 @@ function CustomTooltip({
   const rows = payload.filter((p): p is typeof p & { value: number } => p.value !== null);
   if (rows.length === 0) return null;
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white/95 p-3 text-zinc-900 backdrop-blur dark:border-white/10 dark:bg-white/10 dark:text-white">
-      <p className="mb-1 text-xs text-zinc-600 dark:text-white/60">{formattedDate}</p>
+    <div className="bg-card text-card-foreground border-border shadow-paper rounded-md border p-3">
+      <p className="text-muted-foreground mb-1 text-xs">{formattedDate}</p>
       <div className="space-y-1">
         {rows.map((row) => {
           const meta = metaById.get(row.dataKey);
@@ -78,8 +81,8 @@ function CustomTooltip({
           return (
             <p key={row.dataKey} className="flex items-center gap-2 text-sm">
               <span className="inline-block size-2 shrink-0 rounded-full" style={{ backgroundColor: row.color }} />
-              <span className="text-zinc-600 dark:text-white/60">{meta?.label ?? row.dataKey}</span>
-              <span className="ml-auto font-semibold">
+              <span className="text-foreground/70">{meta?.label ?? row.dataKey}</span>
+              <span className="tnum ml-auto font-bold">
                 {mode === "percent" ? formatPercent(value) : formatAbsolute(value, displayCurrency)}
               </span>
             </p>
@@ -92,8 +95,8 @@ function CustomTooltip({
 
 function Placeholder({ message }: { message: string }) {
   return (
-    <div className="mt-4 rounded-xl border border-zinc-200 bg-white/60 p-8 text-center dark:border-white/10 dark:bg-white/5">
-      <p className="text-sm text-zinc-600 dark:text-white/60">{message}</p>
+    <div className="border-kraft mt-4 rounded-md border-2 border-dashed p-8 text-center">
+      <p className="text-foreground/70 text-sm">{message}</p>
     </div>
   );
 }
@@ -145,8 +148,7 @@ export function AssetTrendsChart({
 
   const metaById = new Map<string, LineMeta>(
     lines.map(({ asset, series }) => {
-      const emoji = categoryEmoji(series.icon);
-      const base = emoji ? `${emoji} ${asset.name}` : asset.name;
+      const base = asset.name;
       return [
         asset.id,
         { id: asset.id, label: series.is_liability ? `${base} (liability)` : base, isLiability: series.is_liability },
@@ -160,19 +162,19 @@ export function AssetTrendsChart({
       : (v: number) => v.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
   return (
-    <div className="mt-6 rounded-2xl border border-zinc-200 bg-white/80 p-6 dark:border-white/10 dark:bg-white/5">
+    <div className="bg-card border-border mt-6 rounded-md border p-6">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-sm font-medium tracking-wider text-zinc-600 uppercase dark:text-white/60">Asset Trends</h2>
+        <h2 className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">Asset Trends</h2>
         <div className="flex items-center gap-3">
           {visible && (
             <fieldset className="flex items-center gap-1" aria-label="Chart scale">
               {(["percent", "absolute"] as const).map((m) => (
                 <label
                   key={m}
-                  className={`cursor-pointer rounded-md border px-2 py-1 text-xs transition-colors ${
+                  className={`cursor-pointer rounded-sm border px-2 py-1 text-xs transition-colors ${
                     mode === m
-                      ? "border-purple-500 bg-purple-50 font-medium text-purple-700 dark:border-purple-400/60 dark:bg-purple-900/20 dark:text-purple-200"
-                      : "border-zinc-200 text-zinc-600 hover:border-zinc-300 dark:border-white/10 dark:text-white/60 dark:hover:border-white/20"
+                      ? "border-primary bg-primary text-primary-foreground font-medium"
+                      : "border-border text-foreground/70 hover:border-primary hover:text-primary"
                   }`}
                 >
                   <input
@@ -195,7 +197,7 @@ export function AssetTrendsChart({
             onClick={() => {
               setVisible((v) => !v);
             }}
-            className="text-zinc-500 transition-colors hover:text-zinc-700 dark:text-white/40 dark:hover:text-white/70"
+            className="text-foreground/60 hover:text-foreground transition-colors"
             aria-label={visible ? "Hide asset trends" : "Show asset trends"}
           >
             {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -226,7 +228,7 @@ export function AssetTrendsChart({
                 dataKey={asset.id}
                 name={metaById.get(asset.id)?.label ?? asset.name}
                 connectNulls={false}
-                stroke={assetColor(i, lines.length)}
+                stroke={CHART_COLORS[i % CHART_COLORS.length]}
                 dot={false}
                 strokeWidth={2}
               />

@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#0a0a0a" />
+    <meta name="theme-color" content="#f6f1e6" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="BitWorth" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
     <title>BitWorth — Offline</title>
@@ -20,8 +20,8 @@
         margin: 0;
         padding: 0;
         min-height: 100%;
-        background: #0a0a0a;
-        color: #e4e4e7;
+        background: #f6f1e6;
+        color: #3b2f2a;
         font-family:
           -apple-system,
           BlinkMacSystemFont,
@@ -52,37 +52,33 @@
         max-width: 28rem;
         width: 100%;
         text-align: center;
-        background: #18181b;
-        border: 1px solid #27272a;
-        border-radius: 0.75rem;
+        background: #fcfaf4;
+        border: 1px solid #d9ccae;
+        border-radius: 6px;
         padding: 2.5rem 1.5rem;
       }
 
-      .icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+      .seal {
+        display: block;
         width: 4rem;
         height: 4rem;
         margin: 0 auto 1.5rem;
-        border-radius: 9999px;
-        background: rgba(167, 139, 250, 0.1);
-        color: #a78bfa;
       }
 
       h1 {
+        font-family: "Iowan Old Style", Georgia, serif;
         font-size: 1.5rem;
         line-height: 2rem;
-        font-weight: 600;
+        font-weight: 700;
         margin: 0 0 0.75rem;
-        color: #fafafa;
+        color: #3b2f2a;
       }
 
       p {
-        font-size: 0.9375rem;
+        font-size: 1rem;
         line-height: 1.5rem;
         margin: 0 0 2rem;
-        color: #a1a1aa;
+        color: #6f5f4d;
       }
 
       .retry {
@@ -91,51 +87,38 @@
         justify-content: center;
         gap: 0.5rem;
         min-height: 2.75rem;
-        padding: 0.625rem 1.25rem;
-        font-size: 0.9375rem;
+        padding: 0.625rem 1.5rem;
+        font-size: 0.875rem;
         font-weight: 500;
-        color: #0a0a0a;
-        background: #a78bfa;
+        color: #f6f1e6;
+        background: #1e3a5f;
         border: none;
-        border-radius: 0.5rem;
+        border-radius: 4px;
         cursor: pointer;
         transition: background 150ms ease;
       }
 
       .retry:hover {
-        background: #c4b5fd;
+        background: #162b47;
       }
 
       .retry:active {
-        background: #8b5cf6;
+        background: #162b47;
       }
 
       .retry:focus-visible {
-        outline: 2px solid #c4b5fd;
+        outline: 2px solid #1e3a5f;
         outline-offset: 2px;
       }
     </style>
   </head>
   <body>
     <main class="card" role="main">
-      <div class="icon" aria-hidden="true">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="32"
-          height="32"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M2 8.82a15 15 0 0 1 20 0" />
-          <path d="M5 12.86a10 10 0 0 1 14 0" />
-          <path d="M8.5 16.43a5 5 0 0 1 7 0" />
-          <line x1="2" y1="2" x2="22" y2="22" />
-        </svg>
-      </div>
+      <svg class="seal" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="24" cy="24" r="21.5" stroke="#c73a2b" stroke-width="3" stroke-dasharray="128 3 2 2" stroke-linecap="round" />
+        <path d="M9 32 L16 24 L21 28 L29 17 L33 21 L39 13" stroke="#c73a2b" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M10 38 H38" stroke="#c73a2b" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 5" />
+      </svg>
       <h1>You're offline</h1>
       <p>BitWorth needs a connection to load your dashboard. Reconnect and try again.</p>
       <button type="button" class="retry" onclick="location.reload()">Retry</button>

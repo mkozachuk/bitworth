@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-26T15:25:00+02:00",
+  "title": "Design System: BitWorth",
+  "extensions": {
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#F6F1E6",
+        "tonalRamp": ["#2b2620", "#4f463a", "#746753", "#998a6f", "#bcac8d", "#d9ccae", "#e9e1cf", "#f6f1e6"]
+      },
+      "washi": { "role": "neutral", "displayName": "Washi Sheet", "canonical": "#FCFAF4" },
+      "kraft": {
+        "role": "neutral",
+        "displayName": "Kraft",
+        "canonical": "#DCC8A5",
+        "tonalRamp": ["#3a3223", "#5c4f38", "#7e6c4e", "#9f8a66", "#bda884", "#dcc8a5", "#e8dabf", "#f2ead8"]
+      },
+      "indigo": {
+        "role": "primary",
+        "displayName": "Hida Indigo",
+        "canonical": "#1E3A5F",
+        "tonalRamp": ["#0d1826", "#162b47", "#1e3a5f", "#2f5180", "#4a6c9c", "#6f8cb5", "#9caecd", "#cdd7e6"]
+      },
+      "vermilion": {
+        "role": "secondary",
+        "displayName": "Seal Vermilion",
+        "canonical": "#C73A2B",
+        "tonalRamp": ["#3d0f0a", "#6b1c13", "#96291d", "#c73a2b", "#d95f4c", "#e68472", "#f0ab9d", "#f8d3cb"]
+      },
+      "sage": {
+        "role": "tertiary",
+        "displayName": "Pine Sage",
+        "canonical": "#5F7F66",
+        "tonalRamp": ["#151f18", "#2b3d2f", "#425c48", "#5f7f66", "#7b9a82", "#9ab5a0", "#bcd0c0", "#dfe9e1"]
+      },
+      "ink": { "role": "neutral", "displayName": "Ink Brown", "canonical": "#3B2F2A" },
+      "ink-muted": { "role": "neutral", "displayName": "Ink Muted", "canonical": "#6F5F4D" },
+      "kraft-rule": { "role": "neutral", "displayName": "Kraft Rule", "canonical": "#D9CCAE" },
+      "night": { "role": "neutral", "displayName": "Night Plate", "canonical": "#101A29" },
+      "paper-on-night": { "role": "neutral", "displayName": "Paper on Night", "canonical": "#F2ECDD" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display (Shippori Mincho B1)", "purpose": "The net worth figure, page titles, landing hook. Always tabular-lining for figures." },
+      "body": { "displayName": "Body (Zen Kaku Gothic New)", "purpose": "All running text and UI copy." },
+      "label": { "displayName": "Label", "purpose": "Kickers (vermilion), card labels (ink 60%), table headers. 0.12em tracked uppercase." }
+    },
+    "shadows": [
+      { "name": "shadow-paper", "value": "4px 4px 0 rgba(59,47,42,0.18)", "purpose": "The only shadow: a lifted second sheet under dialogs, popovers, tooltips. No blur shadows anywhere (The Flat Print Rule)." }
+    ],
+    "motion": [
+      { "name": "ridge-draw", "value": "1.1s cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "The one authored moment per surface: the landing ridgeline draws itself on arrival. Disabled under prefers-reduced-motion." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Indigo printed plate; nothing moves on hover, the ink just deepens.",
+      "html": "<button class=\"ds-btn-primary\">Save snapshot — stamp the month</button>",
+      "css": ".ds-btn-primary { background: var(--primary, #1e3a5f); color: var(--primary-foreground, #f6f1e6); padding: 12px 28px; border: none; border-radius: 4px; font-weight: 500; font-size: 0.875rem; cursor: pointer; transition: background 150ms ease; } .ds-btn-primary:hover { background: color-mix(in srgb, var(--primary, #1e3a5f) 90%, transparent); } .ds-btn-primary:focus-visible { outline: 2px solid var(--ring, #1e3a5f); outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Outlined plate on bare paper.",
+      "html": "<button class=\"ds-btn-secondary\">Sign in</button>",
+      "css": ".ds-btn-secondary { background: transparent; color: var(--primary, #1e3a5f); padding: 12px 28px; border: 1.5px solid var(--primary, #1e3a5f); border-radius: 4px; font-weight: 500; font-size: 0.875rem; cursor: pointer; transition: background 150ms ease; } .ds-btn-secondary:hover { background: color-mix(in srgb, var(--primary, #1e3a5f) 8%, transparent); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--ring, #1e3a5f); outline-offset: 2px; }"
+    },
+    {
+      "name": "Destructive Button",
+      "kind": "button",
+      "refersTo": "button-destructive",
+      "description": "Vermilion outline that floods on hover — a stamp poised to strike.",
+      "html": "<button class=\"ds-btn-destructive\">Delete</button>",
+      "css": ".ds-btn-destructive { background: transparent; color: var(--destructive, #c73a2b); padding: 8px 16px; border: 1.5px solid var(--destructive, #c73a2b); border-radius: 4px; font-weight: 500; font-size: 0.875rem; cursor: pointer; transition: all 150ms ease; } .ds-btn-destructive:hover { background: var(--destructive, #c73a2b); color: var(--background, #f6f1e6); }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "A washi sheet laid on the paper; the leading card earns an indigo border.",
+      "html": "<div class=\"ds-card\"><p class=\"ds-card-label\">Net worth</p><p class=\"ds-card-figure\">308,068.95 USD</p></div>",
+      "css": ".ds-card { background: var(--card, #fcfaf4); color: var(--card-foreground, #3b2f2a); border: 1px solid var(--border, #d9ccae); border-radius: 6px; padding: 24px; } .ds-card-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.6; margin: 0 0 8px; } .ds-card-figure { font-family: 'Shippori Mincho B1', Georgia, serif; font-variant-numeric: tabular-nums lining-nums; font-size: 2.25rem; font-weight: 800; margin: 0; }"
+    },
+    {
+      "name": "Delta Chip",
+      "kind": "chip",
+      "refersTo": "chip-gain",
+      "description": "Gain/loss chips: outlined in their own ink, always sign + arrow + value.",
+      "html": "<span class=\"ds-chip-gain\">▲ +2.4% vs last month</span> <span class=\"ds-chip-loss\">▼ −1.1% vs Jan 1</span>",
+      "css": ".ds-chip-gain, .ds-chip-loss { display: inline-flex; align-items: center; gap: 4px; border-radius: 4px; padding: 2px 8px; font-size: 0.75rem; font-weight: 700; font-variant-numeric: tabular-nums; border: 1px solid currentColor; background: transparent; } .ds-chip-gain { color: var(--gain, #47684f); } .ds-chip-loss { color: var(--loss, #b13223); }"
+    },
+    {
+      "name": "Number Chip",
+      "kind": "chip",
+      "refersTo": "number-chip",
+      "description": "The contents-map compartment marker: vermilion circle, paper numeral.",
+      "html": "<span class=\"ds-number-chip\">1</span> <span class=\"ds-number-chip\">2</span> <span class=\"ds-number-chip\">3</span>",
+      "css": ".ds-number-chip { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 9999px; background: var(--seal, #c73a2b); color: var(--background, #f6f1e6); font-size: 0.75rem; font-weight: 700; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "A ruled field on the sheet; focus inks the rule indigo.",
+      "html": "<input class=\"ds-input\" placeholder=\"e.g. 100000\" />",
+      "css": ".ds-input { width: 220px; background: var(--card, #fcfaf4); color: var(--foreground, #3b2f2a); border: 1px solid var(--input, #cbbb96); border-radius: 4px; padding: 8px 12px; font-size: 0.875rem; font-variant-numeric: tabular-nums; } .ds-input::placeholder { color: var(--muted-foreground, #6f5f4d); } .ds-input:focus { outline: none; border: 1.5px solid var(--primary, #1e3a5f); }"
+    },
+    {
+      "name": "Section Kicker",
+      "kind": "custom",
+      "refersTo": "label",
+      "description": "The wrapper grammar: vermilion tracked caps with a dotted leader running to the edge.",
+      "html": "<div class=\"ds-kicker-row\"><span class=\"ds-kicker\">What's in the box</span><span class=\"ds-kicker-rule\"></span></div>",
+      "css": ".ds-kicker-row { display: flex; align-items: center; gap: 16px; width: 100%; } .ds-kicker { color: var(--seal, #c73a2b); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; } .ds-kicker-rule { flex: 1; height: 2px; background-image: radial-gradient(circle, color-mix(in srgb, var(--seal, #c73a2b) 55%, transparent) 1px, transparent 1.5px); background-size: 8px 2px; background-repeat: repeat-x; background-position: center; }"
+    },
+    {
+      "name": "Privacy Stamp",
+      "kind": "custom",
+      "refersTo": "label",
+      "description": "An outlined vermilion stamp, slightly askew like a real impression.",
+      "html": "<span class=\"ds-stamp\">No bank links</span>",
+      "css": ".ds-stamp { display: inline-block; border: 2px solid color-mix(in srgb, var(--seal, #c73a2b) 70%, transparent); border-radius: 4px; color: var(--seal, #c73a2b); padding: 6px 16px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; transform: rotate(-2deg); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Contents Map",
+    "overview": "BitWorth is designed as an honestly-mapped box in the ekiben-wrapper tradition: warm paper grounds, one deep ink that draws everything, vermilion seals that certify rather than decorate, and a numbered diagram whose promise is that everything is exactly where the wrapper says it is. The product's privacy stance (you enter every number yourself) becomes the world's honesty stance: the map is always true, absences stay visible, nothing is invented. The system is a print world, not a screen world wearing print clothes. Illustration is woodblock-flavored ink line art, always; photography, never. The canonical rendition is paper-light; dark mode is the same print run at night — the ink plate itself, cream type on deep indigo-black, seals still vermilion.",
+    "keyCharacteristics": [
+      "Warm paper grounds with visible texture; flat, outlined surfaces; no glow, no glass, no gradient chrome",
+      "One ink (indigo/ink brown) for type, borders, and illustration alike",
+      "Vermilion reserved for seals, numbered markers, section kickers, and negative amounts",
+      "Numbers are the heroes, set in a carved Mincho display face",
+      "Empty states are honest absence: dotted outlines and plain words"
+    ],
+    "rules": [
+      { "name": "The Seal Rule", "body": "Vermilion behaves like a rubber stamp: small, saturated, certifying. If a vermilion element is wider than a thumb, it has stopped being a seal.", "section": "colors" },
+      { "name": "The One Ink Rule", "body": "Illustration, borders, and type share the same ink colors. Nothing is ever gray-on-gray; muted content tints toward kraft, not gray.", "section": "colors" },
+      { "name": "The Numbers-Are-Cargo Rule", "body": "Financial figures always render tabular-lining; a figure and its currency never break across lines; deltas always carry sign, arrow, and percentage.", "section": "typography" },
+      { "name": "The Flat Print Rule", "body": "No blur shadows, no glow, no glass. If an element needs separation, give it an outline or a different paper tone; if it truly floats, give it the hard paper offset.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do set every financial figure in tabular lining numerals with its currency attached.",
+      "Do draw icons and illustration as single-ink line art (1.5–2px stroke, indigo or current ink).",
+      "Do keep the paper texture subtle — felt at rest, invisible while reading.",
+      "Do pair every color-coded meaning (sage gain, vermilion loss) with a glyph or word.",
+      "Do keep dark mode a true night print: same layout, ink plate grounds, cream type, vermilion seals unchanged."
+    ],
+    "donts": [
+      "Don't use photography, glow, glass/blur decoration, or gradient fills anywhere.",
+      "Don't use blur shadows; floating layers use the hard paper offset (The Flat Print Rule).",
+      "Don't let vermilion carry large fills or body text (The Seal Rule).",
+      "Don't use gray; muted content tints kraft/ink (The One Ink Rule).",
+      "Don't bridge gaps in charts or invent placeholder data; absence renders as honest absence."
+    ]
+  }
+}
