@@ -449,33 +449,33 @@ Backup files exported *before* this change import cleanly: `sort_order` is absen
 
 #### Automated
 
-- [x] 3.1 Type checking passes (`npm run typecheck`)
-- [x] 3.2 Linting passes including `react-compiler` (`npm run lint`)
-- [x] 3.3 Production build succeeds (`npm run build`)
-- [x] 3.4 Full unit suite passes with no regressions (`npm run test:run`)
+- [x] 3.1 Type checking passes (`npm run typecheck`) — 84dfed5
+- [x] 3.2 Linting passes including `react-compiler` (`npm run lint`) — 84dfed5
+- [x] 3.3 Production build succeeds (`npm run build`) — 84dfed5
+- [x] 3.4 Full unit suite passes with no regressions (`npm run test:run`) — 84dfed5
 
 #### Manual
 
-- [x] 3.5 Desktop table drag reorders and persists across reload (verified: driven at 1280×1400 against localhost:4321 — dragged the last row to the top, list became [Main Checking, Emergency Fund, Mortgage, Car, Apartment, Bitcoin, Brokerage — VOO] and reloaded identically)
-- [x] 3.6 Mobile card drag reorders and persists across reload (verified: driven at 390×844 with touch emulation — dragged card 2 to the top, order held across reload)
-- [x] 3.7 Edit list toggle disabled on Assets/Liabilities tabs with a hint (verified: on the Liabilities tab the toggle reports `disabled=true`, the hint "Switch to the All tab to reorder your list." is visible, and edit mode exited — 0 handles remain)
-- [x] 3.8 Done restores the normal list state with Edit/Delete intact (verified: 7 handles in edit mode → 0 after Done, with 7 Edit links and 7 Delete buttons still addressable by role)
-- [x] 3.9 A failed PATCH snaps the order back and shows the inline error (verified: PATCH /api/assets/order stubbed to 500 — post-drag order identical to pre-drag and the inline banner shows "Failed to reorder assets")
-- [x] 3.10 On a real iOS device / installed PWA, card-body swipe scrolls and handle swipe drags (confirmed by the user on device; the underlying property was also checked automatically — card body computes `touch-action: auto`, only the handle computes `none`)
+- [x] 3.5 Desktop table drag reorders and persists across reload (verified: driven at 1280×1400 against localhost:4321 — dragged the last row to the top, list became [Main Checking, Emergency Fund, Mortgage, Car, Apartment, Bitcoin, Brokerage — VOO] and reloaded identically) — 84dfed5
+- [x] 3.6 Mobile card drag reorders and persists across reload (verified: driven at 390×844 with touch emulation — dragged card 2 to the top, order held across reload) — 84dfed5
+- [x] 3.7 Edit list toggle disabled on Assets/Liabilities tabs with a hint (verified: on the Liabilities tab the toggle reports `disabled=true`, the hint "Switch to the All tab to reorder your list." is visible, and edit mode exited — 0 handles remain) — 84dfed5
+- [x] 3.8 Done restores the normal list state with Edit/Delete intact (verified: 7 handles in edit mode → 0 after Done, with 7 Edit links and 7 Delete buttons still addressable by role) — 84dfed5
+- [x] 3.9 A failed PATCH snaps the order back and shows the inline error (verified: PATCH /api/assets/order stubbed to 500 — post-drag order identical to pre-drag and the inline banner shows "Failed to reorder assets") — 84dfed5
+- [x] 3.10 On a real iOS device / installed PWA, card-body swipe scrolls and handle swipe drags (confirmed by the user on device; the underlying property was also checked automatically — card body computes `touch-action: auto`, only the handle computes `none`) — 84dfed5
 
 ### Phase 4: Keyboard, screen-reader, and cross-device verification
 
 #### Automated
 
-- [ ] 4.1 Type checking passes (`npm run typecheck`)
-- [ ] 4.2 Linting passes including `jsx-a11y` and `react-compiler` (`npm run lint`)
-- [ ] 4.3 Production build succeeds (`npm run build`)
-- [ ] 4.4 Full unit suite passes (`npm run test:run`)
+- [x] 4.1 Type checking passes (`npm run typecheck`)
+- [x] 4.2 Linting passes including `jsx-a11y` and `react-compiler` (`npm run lint`)
+- [x] 4.3 Production build succeeds (`npm run build`)
+- [x] 4.4 Full unit suite passes (`npm run test:run`)
 
 #### Manual
 
-- [ ] 4.5 Tab/Space/arrows/Esc drive a reorder end to end
-- [ ] 4.6 A keyboard-driven reorder persists across a reload
-- [ ] 4.7 Screen reader announces asset name and new position on each move
-- [ ] 4.8 Each handle has an accessible name identifying its row
-- [ ] 4.9 Final pass on the installed PWA confirms drag, scroll, and keyboard
+- [x] 4.5 Tab/Space/arrows/Esc drive a reorder end to end (verified: driven against localhost:4321 — Tab reached all 4 handles in visual order; Space grabbed, ArrowDown ×2 moved, Space dropped with `PATCH /api/assets/order` → 200 `{count:4}`; an ArrowUp run walked a row from position 4 to 1; Esc mid-drag restored the original order and issued zero PATCHes)
+- [x] 4.6 A keyboard-driven reorder persists across a reload (verified: post-drop order `[Charlie, Bravo, Delta, Alpha]` held identically after reload; the ArrowUp-to-top run held `[Alpha, Delta, Charlie, Bravo]`)
+- [x] 4.7 Screen reader announces asset name and new position on each move (verified: assertive live region captured at each step — "Picked up Delta Fund, position 1 of 4." → "Delta Fund moved to position 2 of 4." → "…position 3 of 4." → "Moved Delta Fund to position 3 of 4."; cancel → "Reordering cancelled. Delta Fund returned to position 1 of 4." Names, never UUIDs. VoiceOver utterance confirmed by the user)
+- [x] 4.8 Each handle has an accessible name identifying its row (verified: labels `Reorder Delta Fund` / `Reorder Charlie Fund` / `Reorder Bravo Fund` / `Reorder Alpha Fund`, asserted free of UUIDs; `aria-describedby` resolves to the custom grab-and-arrow instructions)
+- [x] 4.9 Final pass on the installed PWA confirms drag, scroll, and keyboard (confirmed by the user on device)
