@@ -1,7 +1,18 @@
 import { useState } from "react";
 import { InboxIcon, AlertCircle, Pencil, Check } from "lucide-react";
-import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type Announcements,
+  type DragEndEvent,
+  type ScreenReaderInstructions,
+  type UniqueIdentifier,
+} from "@dnd-kit/core";
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { AssetRow } from "./AssetRow";
 import { AssetCard } from "./AssetCard";
 import type { Tables } from "@/lib/database.types";
@@ -33,8 +44,13 @@ export function AssetList({ assets, displayCurrency, rates }: Props) {
   const [savingOrder, setSavingOrder] = useState(false);
 
   // A few pixels of travel before a drag starts, so a tap on the handle stays a
-  // tap and does not swallow the click.
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  // tap and does not swallow the click. The keyboard sensor makes the same
+  // reorder reachable without a pointer: space/enter grabs, arrows move, escape
+  // cancels, space/enter drops.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   // Shared denominator for the per-row "% of all assets" sub-label: sum of
   // positive non-liability converted values, computed once over the full set.
@@ -125,6 +141,44 @@ export function AssetList({ assets, displayCurrency, rates }: Props) {
   // design) reject it.
   const canReorder = filter === "all";
   const sortableIds = filtered.map((a) => a.id);
+
+  // Announcements are phrased against asset names and 1-based positions — a
+  // screen-reader user hearing a UUID learns nothing. Positions are read off the
+  // pre-drop array, which is exactly where dnd-kit will land the row.
+  const nameOf = (id: UniqueIdentifier) => filtered.find((a) => a.id === String(id))?.name ?? "asset";
+  const positionOf = (id: UniqueIdentifier) => sortableIds.indexOf(String(id)) + 1;
+  const total = sortableIds.length;
+
+  const announcements: Announcements = {
+    onDragStart({ active }) {
+      return `Picked up ${nameOf(active.id)}, position ${positionOf(active.id)} of ${total}.`;
+    },
+    onDragOver({ active, over }) {
+      if (!over) return `${nameOf(active.id)} is not over a position.`;
+      // dnd-kit fires a dragOver over the grabbed row itself the instant a
+      // keyboard drag starts. Announcing it would overwrite "Picked up …" in
+      // the same frame, so the user would never hear the grab. Returning
+      // undefined is a no-op for the live region.
+      if (active.id === over.id) return undefined;
+      return `${nameOf(active.id)} moved to position ${positionOf(over.id)} of ${total}.`;
+    },
+    onDragEnd({ active, over }) {
+      if (!over) return `${nameOf(active.id)} was dropped in its original position.`;
+      return `Moved ${nameOf(active.id)} to position ${positionOf(over.id)} of ${total}.`;
+    },
+    onDragCancel({ active }) {
+      return `Reordering cancelled. ${nameOf(active.id)} returned to position ${positionOf(active.id)} of ${total}.`;
+    },
+  };
+
+  // The grab-and-arrow interaction is not self-evident, so spell it out rather
+  // than leaving dnd-kit's generic default.
+  const screenReaderInstructions: ScreenReaderInstructions = {
+    draggable:
+      "To reorder an asset, press space or enter while its reorder handle is focused. " +
+      "While reordering, use the up and down arrow keys to move the asset. " +
+      "Press space or enter again to drop it in its new position, or press escape to cancel.",
+  };
 
   const desktopList = (
     <div className="hidden sm:block">
@@ -244,14 +298,24 @@ export function AssetList({ assets, displayCurrency, rates }: Props) {
               The context sits OUTSIDE the table so its hidden live region is not
               an invalid child of <table>. */}
           {editing ? (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+              accessibility={{ announcements, screenReaderInstructions }}
+            >
               {desktopList}
             </DndContext>
           ) : (
             desktopList
           )}
           {editing ? (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+              accessibility={{ announcements, screenReaderInstructions }}
+            >
               {mobileList}
             </DndContext>
           ) : (
