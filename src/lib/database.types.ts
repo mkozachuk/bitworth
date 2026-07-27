@@ -132,6 +132,7 @@ export interface Database {
           notes: string | null;
           quantity: number | null;
           show_on_chart: boolean;
+          sort_order: number;
           updated_at: string;
           user_id: string;
         };
@@ -147,6 +148,7 @@ export interface Database {
           notes?: string | null;
           quantity?: number | null;
           show_on_chart?: boolean;
+          sort_order?: number;
           updated_at?: string;
           user_id: string;
         };
@@ -162,6 +164,7 @@ export interface Database {
           notes?: string | null;
           quantity?: number | null;
           show_on_chart?: boolean;
+          sort_order?: number;
           updated_at?: string;
           user_id?: string;
         };
@@ -450,6 +453,10 @@ export interface Database {
     };
     Views: Record<never, never>;
     Functions: {
+      reorder_assets: {
+        Args: { p_ids: string[] };
+        Returns: undefined;
+      };
       restore_backup: {
         Args: { p_data: Json; p_mode: string };
         Returns: undefined;

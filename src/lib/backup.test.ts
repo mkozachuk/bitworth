@@ -56,6 +56,7 @@ function makeInput(): BackupInput {
         notes: null,
         quantity: null,
         show_on_chart: true,
+        sort_order: 3,
         created_at: ISO,
         updated_at: ISO,
       },
@@ -158,6 +159,10 @@ describe("serialize", () => {
     const asset = env.data.assets[0] as Record<string, unknown>;
     expect(asset).toHaveProperty("quantity");
     expect(asset).toHaveProperty("show_on_chart");
+    // The user's custom list order must reach the file with its VALUE intact —
+    // a whitelist entry that serialized as `undefined` would round-trip the
+    // column away just as thoroughly as omitting it.
+    expect(asset).toHaveProperty("sort_order", 3);
     expect(asset).toHaveProperty("created_at");
     expect(asset).toHaveProperty("updated_at");
 
@@ -265,6 +270,28 @@ describe("validateEnvelope", () => {
 
     // …and it survives the rest of the pipeline, not just validation.
     expect(prepareForImport(result.data, () => "x").goals).toEqual([]);
+  });
+
+  it("accepts an asset row with no `sort_order` key (pre-S-25 file)", () => {
+    // sort_order joined the assets whitelist WITHOUT a CURRENT_SCHEMA_VERSION
+    // bump, because the column has a DB default — so a file exported before it
+    // existed carries the current version number and simply lacks the key. It
+    // must stay valid: it is deliberately absent from REQUIRED_FIELDS. The RPC
+    // COALESCEs the missing value to 0, and the `created_at DESC` tiebreak on
+    // both ordered reads then reproduces the pre-S-25 order.
+    const env = serialize(makeInput(), ISO);
+    const assets = env.data.assets.map((a) => {
+      const { sort_order: _sort_order, ...rest } = a as Record<string, unknown>;
+      return rest;
+    });
+    const legacy = { ...env, data: { ...env.data, assets } };
+
+    const result = validateEnvelope(legacy, VALID_CATEGORIES);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.assets[0]).not.toHaveProperty("sort_order");
+    // …and it survives the rest of the pipeline, not just validation.
+    expect(prepareForImport(result.data, () => "x").assets[0]).not.toHaveProperty("sort_order");
   });
 
   it("rejects a `goals` key that is present but not an array", () => {
