@@ -104,3 +104,10 @@
 - **Problem**: A module that calls Math.random() internally is non-deterministic, so its math can't be pinned with fixed-seed oracles and any UI built on it isn't reproducible across reloads. monte-carlo.ts avoided this by taking an explicit `seed`, threading it through mulberry32, and consuming the RNG in a fixed order (outer paths, inner years, exactly one Gaussian draw per path-year) — which made the stochastic math cheaply unit-testable and the Forecast page reproducible.
 - **Rule**: Any stochastic/randomized module must inject the seed (caller-supplied), never call Math.random() internally, and keep the RNG consumption order fixed and documented so a test can replay the same sequence as an independent oracle.
 - **Applies to**: plan, implement, impl-review
+
+## Verify iOS gestures in WebKit, not Chrome touch emulation
+
+- **Context**: Any change whose acceptance depends on touch or pointer gesture behaviour on iOS — drag-and-drop, swipe, long-press — in `src/components/**`, including the installed PWA (S-08).
+- **Problem**: Chrome's touch emulation never fires `pointercancel` mid-gesture, so a PointerSensor-only dnd-kit setup passes a narrow-viewport check and is dead on a real iPhone. S-25 shipped exactly this way: plan row 3.10 recorded the drag handle as verified on device, yet in the installed PWA the handle rendered and nothing dragged.
+- **Rule**: Never accept a touch-gesture check run in Chrome's touch emulation. Verify in Playwright **WebKit** with `devices["iPhone 13"]`, and explicitly model iOS's cancellation: dispatch `pointercancel` partway through the gesture while continuing to dispatch `touchmove`. If the interaction survives that, it survives iOS.
+- **Applies to**: plan, implement, impl-review
