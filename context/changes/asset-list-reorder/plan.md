@@ -414,7 +414,7 @@ Backup files exported *before* this change import cleanly: `sort_order` is absen
 
 #### Automated
 
-- [ ] 1.1 Migrations apply cleanly from scratch (`supabase db reset`)
+- [x] 1.1 Migrations apply cleanly from scratch (`supabase db reset`) (verified: all 25 migrations applied in order, including this change's three; post-reset schema shows `sort_order integer NOT NULL DEFAULT 0`, index `idx_assets_user_sort`, `reorder_assets` SECURITY DEFINER with `search_path=public, pg_temp` and EXECUTE granted to `authenticated` only, and `restore_backup` carrying `sort_order`) — f5b6ec2
 - [x] 1.2 Backup round-trip parity holds (`npx vitest run src/lib/backup-rpc-parity.test.ts`) — f5b6ec2
 - [x] 1.3 Backup serialization tests pass (`npx vitest run src/lib/backup.test.ts`) — f5b6ec2
 - [x] 1.4 Type checking passes (`npm run typecheck`) — f5b6ec2
@@ -467,15 +467,15 @@ Backup files exported *before* this change import cleanly: `sort_order` is absen
 
 #### Automated
 
-- [x] 4.1 Type checking passes (`npm run typecheck`)
-- [x] 4.2 Linting passes including `jsx-a11y` and `react-compiler` (`npm run lint`)
-- [x] 4.3 Production build succeeds (`npm run build`)
-- [x] 4.4 Full unit suite passes (`npm run test:run`)
+- [x] 4.1 Type checking passes (`npm run typecheck`) — e57a452
+- [x] 4.2 Linting passes including `jsx-a11y` and `react-compiler` (`npm run lint`) — e57a452
+- [x] 4.3 Production build succeeds (`npm run build`) — e57a452
+- [x] 4.4 Full unit suite passes (`npm run test:run`) — e57a452
 
 #### Manual
 
-- [x] 4.5 Tab/Space/arrows/Esc drive a reorder end to end (verified: driven against localhost:4321 — Tab reached all 4 handles in visual order; Space grabbed, ArrowDown ×2 moved, Space dropped with `PATCH /api/assets/order` → 200 `{count:4}`; an ArrowUp run walked a row from position 4 to 1; Esc mid-drag restored the original order and issued zero PATCHes)
-- [x] 4.6 A keyboard-driven reorder persists across a reload (verified: post-drop order `[Charlie, Bravo, Delta, Alpha]` held identically after reload; the ArrowUp-to-top run held `[Alpha, Delta, Charlie, Bravo]`)
-- [x] 4.7 Screen reader announces asset name and new position on each move (verified: assertive live region captured at each step — "Picked up Delta Fund, position 1 of 4." → "Delta Fund moved to position 2 of 4." → "…position 3 of 4." → "Moved Delta Fund to position 3 of 4."; cancel → "Reordering cancelled. Delta Fund returned to position 1 of 4." Names, never UUIDs. VoiceOver utterance confirmed by the user)
-- [x] 4.8 Each handle has an accessible name identifying its row (verified: labels `Reorder Delta Fund` / `Reorder Charlie Fund` / `Reorder Bravo Fund` / `Reorder Alpha Fund`, asserted free of UUIDs; `aria-describedby` resolves to the custom grab-and-arrow instructions)
-- [x] 4.9 Final pass on the installed PWA confirms drag, scroll, and keyboard (confirmed by the user on device)
+- [x] 4.5 Tab/Space/arrows/Esc drive a reorder end to end (verified: driven against localhost:4321 — Tab reached all 4 handles in visual order; Space grabbed, ArrowDown ×2 moved, Space dropped with `PATCH /api/assets/order` → 200 `{count:4}`; an ArrowUp run walked a row from position 4 to 1; Esc mid-drag restored the original order and issued zero PATCHes) — e57a452
+- [x] 4.6 A keyboard-driven reorder persists across a reload (verified: post-drop order `[Charlie, Bravo, Delta, Alpha]` held identically after reload; the ArrowUp-to-top run held `[Alpha, Delta, Charlie, Bravo]`) — e57a452
+- [x] 4.7 Screen reader announces asset name and new position on each move (verified: assertive live region captured at each step — "Picked up Delta Fund, position 1 of 4." → "Delta Fund moved to position 2 of 4." → "…position 3 of 4." → "Moved Delta Fund to position 3 of 4."; cancel → "Reordering cancelled. Delta Fund returned to position 1 of 4." Names, never UUIDs. VoiceOver utterance confirmed by the user) — e57a452
+- [x] 4.8 Each handle has an accessible name identifying its row (verified: labels `Reorder Delta Fund` / `Reorder Charlie Fund` / `Reorder Bravo Fund` / `Reorder Alpha Fund`, asserted free of UUIDs; `aria-describedby` resolves to the custom grab-and-arrow instructions) — e57a452
+- [x] 4.9 Final pass on the installed PWA confirms drag, scroll, and keyboard (confirmed by the user on device) — e57a452
