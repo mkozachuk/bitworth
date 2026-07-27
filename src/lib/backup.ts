@@ -64,6 +64,11 @@ export const ASSETS_COLUMNS = [
   "notes",
   "quantity",
   "show_on_chart",
+  // The user's custom list order (S-25). Deliberately NOT in REQUIRED_FIELDS or
+  // TIMESTAMP_FIELDS: the column has a DB default, so a file exported before
+  // S-25 omits it and must stay valid — `restore_backup` COALESCEs it to 0 and
+  // the `created_at DESC` tiebreak reproduces the pre-S-25 order.
+  "sort_order",
   "created_at",
   "updated_at",
 ] as const satisfies readonly (keyof AssetRow)[];
