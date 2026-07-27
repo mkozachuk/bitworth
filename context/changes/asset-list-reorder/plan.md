@@ -415,35 +415,35 @@ Backup files exported *before* this change import cleanly: `sort_order` is absen
 #### Automated
 
 - [ ] 1.1 Migrations apply cleanly from scratch (`supabase db reset`)
-- [x] 1.2 Backup round-trip parity holds (`npx vitest run src/lib/backup-rpc-parity.test.ts`)
-- [x] 1.3 Backup serialization tests pass (`npx vitest run src/lib/backup.test.ts`)
-- [x] 1.4 Type checking passes (`npm run typecheck`)
-- [x] 1.5 Linting passes (`npm run lint`)
-- [x] 1.6 Full unit suite passes (`npm run test:run`)
+- [x] 1.2 Backup round-trip parity holds (`npx vitest run src/lib/backup-rpc-parity.test.ts`) — f5b6ec2
+- [x] 1.3 Backup serialization tests pass (`npx vitest run src/lib/backup.test.ts`) — f5b6ec2
+- [x] 1.4 Type checking passes (`npm run typecheck`) — f5b6ec2
+- [x] 1.5 Linting passes (`npm run lint`) — f5b6ec2
+- [x] 1.6 Full unit suite passes (`npm run test:run`) — f5b6ec2
 
 #### Manual
 
-- [x] 1.7 Assets page order unchanged after migration on a seeded database
-- [x] 1.8 `sort_order` is contiguous `0..N-1` per user and `updated_at` untouched by the backfill
-- [x] 1.9 `reorder_assets` raises on a partial or foreign-id array
+- [x] 1.7 Assets page order unchanged after migration on a seeded database — f5b6ec2
+- [x] 1.8 `sort_order` is contiguous `0..N-1` per user and `updated_at` untouched by the backfill — f5b6ec2
+- [x] 1.9 `reorder_assets` raises on a partial or foreign-id array — f5b6ec2
 
 ### Phase 2: Order-aware reads, top-slot inserts, and the reorder endpoint
 
 #### Automated
 
-- [ ] 2.1 New unit tests pass (`npx vitest run src/lib/asset-order.test.ts`)
-- [ ] 2.2 New endpoint tests pass (`npx vitest run src/pages/api/assets/order.test.ts`)
-- [ ] 2.3 API auth contract holds for the new route (`npx vitest run src/pages/api/api-auth-contract.test.ts`)
-- [ ] 2.4 Existing asset endpoint tests pass (`npx vitest run src/pages/api/assets`)
-- [ ] 2.5 Type checking passes (`npm run typecheck`)
-- [ ] 2.6 Linting passes (`npm run lint`)
-- [ ] 2.7 Full unit suite passes (`npm run test:run`)
+- [x] 2.1 New unit tests pass (`npx vitest run src/lib/asset-order.test.ts`)
+- [x] 2.2 New endpoint tests pass (`npx vitest run src/pages/api/assets/order.test.ts`)
+- [x] 2.3 API auth contract holds for the new route (`npx vitest run src/pages/api/api-auth-contract.test.ts`)
+- [x] 2.4 Existing asset endpoint tests pass (`npx vitest run src/pages/api/assets`)
+- [x] 2.5 Type checking passes (`npm run typecheck`)
+- [x] 2.6 Linting passes (`npm run lint`)
+- [x] 2.7 Full unit suite passes (`npm run test:run`)
 
 #### Manual
 
-- [ ] 2.8 `PATCH /api/assets/order` reorders and the assets page reflects it after reload
-- [ ] 2.9 A newly added asset appears at the top of the list
-- [ ] 2.10 A reorder leaves `updated_at` untouched on unmoved assets
+- [x] 2.8 `PATCH /api/assets/order` reorders and the assets page reflects it after reload (verified: curl PATCH with [Charlie, Alpha, Bravo] against localhost:4321 → 200 `{count:3}`; DB and a fresh GET of `/dashboard/assets` both render Charlie, Alpha, Bravo)
+- [x] 2.9 A newly added asset appears at the top of the list (verified: POST /api/assets "Delta" → 201 with `sort_order: -1` against a minimum of 0; page reload lists Delta, Charlie, Bravo, Alpha)
+- [x] 2.10 A reorder leaves `updated_at` untouched on unmoved assets (verified: reorder [Charlie, Bravo, Alpha] left Charlie at index 0 with `updated_at` 14:55:50.897193 unchanged while the two moved rows bumped to 14:56:19.617866)
 
 ### Phase 3: Edit mode and drag-and-drop
 

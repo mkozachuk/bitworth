@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@/lib/supabase";
+import { topSortOrder } from "@/lib/asset-order";
 import type { Tables } from "@/lib/database.types";
 
 interface ErrorShape {
@@ -35,6 +36,10 @@ export const GET: APIRoute = async ({ request, cookies }) => {
     .from("assets")
     .select("*, category:asset_categories(*)")
     .eq("user_id", user.id)
+    // `sort_order` alone is not a total order (two rows can share a value, and
+    // every row shares 0 after restoring a pre-sort_order backup), so the
+    // `created_at` tiebreak is required, not decorative.
+    .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -115,6 +120,23 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     );
   }
 
+  // A new asset takes the top slot, preserving the newest-first feel the list
+  // had before `sort_order` existed. A concurrent double-add can produce two
+  // rows sharing the value; the `created_at DESC` tiebreak on every ordered
+  // read keeps the order total, so no locking is needed here.
+  const { data: topRows } = await supabase
+    .from("assets")
+    .select("sort_order")
+    .eq("user_id", user.id)
+    .order("sort_order", { ascending: true })
+    .limit(1);
+  const existingTop = Array.isArray(topRows)
+    ? (topRows as { sort_order?: unknown }[])
+        .map((row) => row.sort_order)
+        .filter((value): value is number => typeof value === "number")
+    : [];
+  const sort_order = topSortOrder(existingTop);
+
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const { data, error } = await supabase
     .from("assets")
@@ -128,6 +150,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       metal_symbol: metal_symbol !== "" ? metal_symbol : null,
       quantity: quantity !== "" && quantity !== null ? parseFloat(quantity) : null,
       show_on_chart: show_on_chart === "true",
+      sort_order,
       user_id: user.id,
     })
     .select()

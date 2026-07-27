@@ -106,6 +106,40 @@ describe("POST /api/assets", () => {
     expect(payload.show_on_chart).toBe(true);
   });
 
+  // The new asset takes the top slot: one below the caller's current minimum
+  // `sort_order`. The first `assets` await is the min-select, the second is the
+  // insert, hence the queue.
+  it("places a new asset one slot above the current minimum sort_order", async () => {
+    const m = createSupabaseMock({
+      userId: userA,
+      tableResultQueues: {
+        assets: [
+          { data: [{ sort_order: -2 }], error: null },
+          { data: { id: "new-asset" }, error: null },
+        ],
+      },
+    });
+    mocks.factory = () => m;
+
+    const form = new FormData();
+    form.set("name", "Test");
+    form.set("amount", "100");
+    form.set("currency", "USD");
+    form.set("category_id", "cash");
+
+    const request = makeRequest("http://localhost/api/assets", {
+      method: "POST",
+      headers: { Cookie: "sb-access-token=fake" },
+      body: form,
+    });
+    const response = await POST({ request, cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(201);
+
+    const insertCall = m.recorded.find((c) => c.method === "insert");
+    const payload = insertCall?.args[0] as Record<string, unknown>;
+    expect(payload.sort_order).toBe(-3);
+  });
+
   it("returns 401 when no Cookie is present", async () => {
     const m = createSupabaseMock({ userId: null });
     mocks.factory = () => m;
