@@ -3,7 +3,8 @@ import { InboxIcon, AlertCircle, Pencil, Check } from "lucide-react";
 import {
   DndContext,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   closestCenter,
   useSensor,
   useSensors,
@@ -43,12 +44,25 @@ export function AssetList({ assets, displayCurrency, rates }: Props) {
   const [ordered, setOrdered] = useState<AssetWithCategory[]>(assets);
   const [savingOrder, setSavingOrder] = useState(false);
 
-  // A few pixels of travel before a drag starts, so a tap on the handle stays a
-  // tap and does not swallow the click. The keyboard sensor makes the same
-  // reorder reachable without a pointer: space/enter grabs, arrows move, escape
-  // cancels, space/enter drops.
+  // Mouse and Touch rather than the single PointerSensor they'd otherwise
+  // collapse into. On iOS Safari — including the installed PWA — a dynamically
+  // added touchmove handler cannot call preventDefault(), so the browser decides
+  // the gesture belongs to the page, fires `pointercancel`, and stops delivering
+  // pointer events while touch events keep flowing. A PointerSensor-only setup
+  // sees the cancel and aborts, which is why the handle rendered but nothing
+  // dragged. TouchSensor.setup() installs the non-passive window touchmove
+  // listener that makes preventDefault() reachable — its own source comments it
+  // "required for iOS Safari". Desktop touch emulation never cancels the pointer
+  // stream, so this only ever reproduced on real WebKit.
+  //
+  // Both use the same few-pixels-of-travel constraint, so a tap on the handle
+  // stays a tap. Distance, not delay: the handle is an explicit, `touch-action:
+  // none` target, so there is no scroll gesture to disambiguate from — and a
+  // hold-to-drag delay would make a quick swipe feel dead. The keyboard sensor
+  // makes the same reorder reachable without a pointer.
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
