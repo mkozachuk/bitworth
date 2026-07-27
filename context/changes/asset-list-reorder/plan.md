@@ -431,37 +431,37 @@ Backup files exported *before* this change import cleanly: `sort_order` is absen
 
 #### Automated
 
-- [x] 2.1 New unit tests pass (`npx vitest run src/lib/asset-order.test.ts`)
-- [x] 2.2 New endpoint tests pass (`npx vitest run src/pages/api/assets/order.test.ts`)
-- [x] 2.3 API auth contract holds for the new route (`npx vitest run src/pages/api/api-auth-contract.test.ts`)
-- [x] 2.4 Existing asset endpoint tests pass (`npx vitest run src/pages/api/assets`)
-- [x] 2.5 Type checking passes (`npm run typecheck`)
-- [x] 2.6 Linting passes (`npm run lint`)
-- [x] 2.7 Full unit suite passes (`npm run test:run`)
+- [x] 2.1 New unit tests pass (`npx vitest run src/lib/asset-order.test.ts`) — cc9de92
+- [x] 2.2 New endpoint tests pass (`npx vitest run src/pages/api/assets/order.test.ts`) — cc9de92
+- [x] 2.3 API auth contract holds for the new route (`npx vitest run src/pages/api/api-auth-contract.test.ts`) — cc9de92
+- [x] 2.4 Existing asset endpoint tests pass (`npx vitest run src/pages/api/assets`) — cc9de92
+- [x] 2.5 Type checking passes (`npm run typecheck`) — cc9de92
+- [x] 2.6 Linting passes (`npm run lint`) — cc9de92
+- [x] 2.7 Full unit suite passes (`npm run test:run`) — cc9de92
 
 #### Manual
 
-- [x] 2.8 `PATCH /api/assets/order` reorders and the assets page reflects it after reload (verified: curl PATCH with [Charlie, Alpha, Bravo] against localhost:4321 → 200 `{count:3}`; DB and a fresh GET of `/dashboard/assets` both render Charlie, Alpha, Bravo)
-- [x] 2.9 A newly added asset appears at the top of the list (verified: POST /api/assets "Delta" → 201 with `sort_order: -1` against a minimum of 0; page reload lists Delta, Charlie, Bravo, Alpha)
-- [x] 2.10 A reorder leaves `updated_at` untouched on unmoved assets (verified: reorder [Charlie, Bravo, Alpha] left Charlie at index 0 with `updated_at` 14:55:50.897193 unchanged while the two moved rows bumped to 14:56:19.617866)
+- [x] 2.8 `PATCH /api/assets/order` reorders and the assets page reflects it after reload (verified: curl PATCH with [Charlie, Alpha, Bravo] against localhost:4321 → 200 `{count:3}`; DB and a fresh GET of `/dashboard/assets` both render Charlie, Alpha, Bravo) — cc9de92
+- [x] 2.9 A newly added asset appears at the top of the list (verified: POST /api/assets "Delta" → 201 with `sort_order: -1` against a minimum of 0; page reload lists Delta, Charlie, Bravo, Alpha) — cc9de92
+- [x] 2.10 A reorder leaves `updated_at` untouched on unmoved assets (verified: reorder [Charlie, Bravo, Alpha] left Charlie at index 0 with `updated_at` 14:55:50.897193 unchanged while the two moved rows bumped to 14:56:19.617866) — cc9de92
 
 ### Phase 3: Edit mode and drag-and-drop
 
 #### Automated
 
-- [ ] 3.1 Type checking passes (`npm run typecheck`)
-- [ ] 3.2 Linting passes including `react-compiler` (`npm run lint`)
-- [ ] 3.3 Production build succeeds (`npm run build`)
-- [ ] 3.4 Full unit suite passes with no regressions (`npm run test:run`)
+- [x] 3.1 Type checking passes (`npm run typecheck`)
+- [x] 3.2 Linting passes including `react-compiler` (`npm run lint`)
+- [x] 3.3 Production build succeeds (`npm run build`)
+- [x] 3.4 Full unit suite passes with no regressions (`npm run test:run`)
 
 #### Manual
 
-- [ ] 3.5 Desktop table drag reorders and persists across reload
-- [ ] 3.6 Mobile card drag reorders and persists across reload
-- [ ] 3.7 Edit list toggle disabled on Assets/Liabilities tabs with a hint
-- [ ] 3.8 Done restores the normal list state with Edit/Delete intact
-- [ ] 3.9 A failed PATCH snaps the order back and shows the inline error
-- [ ] 3.10 On a real iOS device / installed PWA, card-body swipe scrolls and handle swipe drags
+- [x] 3.5 Desktop table drag reorders and persists across reload (verified: driven at 1280×1400 against localhost:4321 — dragged the last row to the top, list became [Main Checking, Emergency Fund, Mortgage, Car, Apartment, Bitcoin, Brokerage — VOO] and reloaded identically)
+- [x] 3.6 Mobile card drag reorders and persists across reload (verified: driven at 390×844 with touch emulation — dragged card 2 to the top, order held across reload)
+- [x] 3.7 Edit list toggle disabled on Assets/Liabilities tabs with a hint (verified: on the Liabilities tab the toggle reports `disabled=true`, the hint "Switch to the All tab to reorder your list." is visible, and edit mode exited — 0 handles remain)
+- [x] 3.8 Done restores the normal list state with Edit/Delete intact (verified: 7 handles in edit mode → 0 after Done, with 7 Edit links and 7 Delete buttons still addressable by role)
+- [x] 3.9 A failed PATCH snaps the order back and shows the inline error (verified: PATCH /api/assets/order stubbed to 500 — post-drag order identical to pre-drag and the inline banner shows "Failed to reorder assets")
+- [x] 3.10 On a real iOS device / installed PWA, card-body swipe scrolls and handle swipe drags (confirmed by the user on device; the underlying property was also checked automatically — card body computes `touch-action: auto`, only the handle computes `none`)
 
 ### Phase 4: Keyboard, screen-reader, and cross-device verification
 
