@@ -1,10 +1,10 @@
 ---
 change_id: asset-list-reorder
 title: Asset list reordering via drag-and-drop in an explicit edit mode
-status: implemented
+status: archived
 created: 2026-07-27
 updated: 2026-07-27
-archived_at: null
+archived_at: 2026-07-27T16:44:38Z
 ---
 
 ## Notes

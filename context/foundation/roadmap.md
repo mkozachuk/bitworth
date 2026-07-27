@@ -3,7 +3,7 @@ project: "BitWorth"
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-07-26
+updated: 2026-07-27
 prd_version: 1
 main_goal: market-feedback
 top_blocker: capacity
@@ -52,7 +52,7 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 | S-22 | snapshot-reminder          | get an in-app nudge when it's been too long since their last snapshot                               | F-01, S-02, S-05       | —                    | proposed |
 | S-23 | category-mix-trends        | see how their allocation across categories shifted over time as a stacked-area chart                | F-01, S-02             | —                    | proposed |
 | S-24 | income-savings-rate        | record income and see their savings rate (contributions ÷ income) per snapshot interval             | F-01, S-02, S-05, S-17 | —                    | proposed |
-| S-25 | asset-list-reorder         | reorder their asset list by drag-and-drop in an explicit "edit list" mode, persisted across sessions | F-01, S-01, S-07       | —                    | proposed |
+| S-25 | asset-list-reorder         | reorder their asset list by drag-and-drop in an explicit "edit list" mode, persisted across sessions | F-01, S-01, S-07       | —                    | done    |
 
 ## Streams
 
@@ -512,7 +512,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - **Scope of the custom order.** Does it apply everywhere assets are listed, or only the assets page? Other surfaces (`dashboard.astro`, `balancer.astro`, `fire.astro`, `forecast.astro`) fetch assets for aggregate math where row order is meaningless. (Owner: planner) Recommendation: v1 = the assets page list only; leave the aggregate reads unordered. New assets take the top slot (`min(sort_order) - 1`), preserving today's newest-first feel.
   - **Accessibility.** A drag-only affordance is unusable by keyboard and screen reader. (Owner: planner) Recommendation: wire dnd-kit's `KeyboardSensor` (grab with Space/Enter, move with arrows) and its `announcements` for an aria-live "moved X to position N of M"; give each handle an accessible name that includes the asset name, so the E2E suite can drive it via `getByRole` rather than CSS selectors (per the project E2E locator rule).
 - **Risk:** Low-to-moderate. The math is trivial; the risk is concentrated in three places the codebase has been bitten before: (a) **a partial bulk write** leaving an incoherent order — mitigant: one atomic renumbering RPC, never a loop of per-row updates; (b) **the backup blind spot** — a new `assets` column that isn't threaded into `backup.ts` *and* `restore_backup` silently loses the user's ordering on every restore; the `metal_symbol` migration is the standing proof this is easy to miss; (c) **touch drag vs page scroll on iOS Safari** — the same class of pointer-event quirk that forced the controlled-state fallback on the Radix dropdown; mitigant: drag from an explicit handle with `touch-action: none` and an activation constraint, and verify on a real iOS device / the installed PWA (S-08), not just a desktop browser at a narrow viewport. Secondary: keep the pure part (given an id array, produce the renumbered pairs) in a small unit-tested helper so the reorder logic isn't only exercised through the DOM.
-- **Status:** proposed
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -605,3 +605,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **S-19: Precious-metals price fetch on asset entry** — Archived 2026-07-12 → `context/archive/2026-07-12-metal-price-fetch/`. Lesson: —.
 - **S-20: Empirical net-worth trajectory** — Archived 2026-07-24 → `context/archive/2026-07-19-net-worth-trajectory/`. Note: built on a feature branch and merged to master on archive day; the eight manual checks were re-run as `e2e/trajectory-verify.spec.ts` rather than recalled. Lesson: a screenshot timed on DOM-readiness catches Recharts mid-animation and reads as a rendering defect — settle on pixels before judging anything visual.
 - **S-21: Custom savings goals** — Archived 2026-07-24 → `context/archive/2026-07-24-savings-goals/`. Note: `goals` table (two kinds — net_worth / category — with a coherence CHECK and RLS USING+WITH CHECK); pure `src/lib/goals.ts` with a five-state `GoalEta` discriminant reusing S-20's `etaToTarget`; `/dashboard/goals` CRUD + settings-gated `GoalsProgress` card mirroring `FireProgress`; backup RPC/whitelist landed together in one phase, schemaVersion bumped to 2 with `goals` optional so v1 files stay importable. Impl-review APPROVED (0 critical/warning; 3 low observations all fixed). Lesson: —.
+- **S-25: Asset list reordering (drag-and-drop)** — Archived 2026-07-27 → `context/archive/2026-07-27-asset-list-reorder/`. Note: `assets.sort_order INTEGER NOT NULL DEFAULT 0` backfilled from `created_at DESC` with the `updated_at` trigger suppressed across the backfill; atomic `reorder_assets(uuid[])` RPC (SECURITY DEFINER, `search_path=public, pg_temp`, EXECUTE to `authenticated` only) validating a complete duplicate-free cover, behind `PATCH /api/assets/order`; both read paths re-sorted with a `created_at DESC` tiebreak so a pre-`sort_order` backup degrades to today's order; column threaded into `backup.ts` + `restore_backup` in the same phase per the `metal_symbol` precedent. `@dnd-kit` edit mode across the desktop table and mobile cards, gated to the All tab, with KeyboardSensor and name-and-position aria-live announcements. No impl-review run. Lesson: dnd-kit fires a `dragOver` over the grabbed row itself on keyboard drag start, silently overwriting the "Picked up …" announcement in the same frame — suppress the self-over case or the grab is never announced.
