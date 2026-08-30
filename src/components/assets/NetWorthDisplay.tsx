@@ -48,6 +48,9 @@ function SaveButton({
   const [state, setState] = useState<ButtonState>("idle");
   const [contribution, setContribution] = useState("");
   const [stampDate, setStampDate] = useState<{ month: string; year: string } | null>(null);
+  // Set when the server could not refresh one or more priced holdings; the
+  // snapshot still saved (with stored values), so this is a notice, not an error.
+  const [repriceWarning, setRepriceWarning] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const openDialog = useCallback(() => {
@@ -89,12 +92,20 @@ function SaveButton({
     setState("loading");
     try {
       const res = await fetch("/api/snapshots", init);
+      const json = (await res.json()) as {
+        error?: { message?: string };
+        repricing?: { failed?: { symbol: string }[] };
+      };
       if (!res.ok) {
-        const json = (await res.json()) as { error?: { message?: string } };
         throw new Error(json.error?.message ?? `HTTP ${res.status}`);
       }
+      const failedSymbols = [...new Set((json.repricing?.failed ?? []).map((f) => f.symbol))];
+      const warning =
+        failedSymbols.length > 0 ? `Price unavailable for ${failedSymbols.join(", ")} — stored values used.` : null;
+      setRepriceWarning(warning);
       // The stamp landing: seal the month visibly, then refresh. The delay is
       // the animation's moment — long enough to read, short enough to not stall.
+      // A reprice warning gets longer so it can actually be read before reload.
       const now = new Date();
       setStampDate({
         month: now.toLocaleDateString("en-US", { month: "short" }),
@@ -102,10 +113,13 @@ function SaveButton({
       });
       closeDialog();
       setState("saved");
-      setTimeout(() => {
-        onSuccess();
-        window.location.reload();
-      }, 1200);
+      setTimeout(
+        () => {
+          onSuccess();
+          window.location.reload();
+        },
+        warning ? 4000 : 1200,
+      );
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       setState("error");
@@ -133,7 +147,10 @@ function SaveButton({
             <span className="text-xs tracking-widest">{stampDate?.month}</span>
             <span className="tnum mt-0.5 text-xs">{stampDate?.year}</span>
           </span>
-          <span className="text-gain text-sm font-bold">Month stamped — refreshing…</span>
+          <span className="flex flex-col">
+            <span className="text-gain text-sm font-bold">Month stamped — refreshing…</span>
+            {repriceWarning && <span className="text-muted-foreground text-xs">{repriceWarning}</span>}
+          </span>
         </div>
       ) : (
         <button onClick={openDialog} className={triggerClass}>

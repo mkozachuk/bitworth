@@ -27,6 +27,14 @@ vi.mock("@/lib/exchange-rates", () => ({
   getRates: async () => ({ USD: 1, EUR: 1, PLN: 1 }),
 }));
 
+// The price modules import `astro:env/server` and call external APIs. The
+// route's contract with them is exercised through `repriceAssets`
+// (src/lib/reprice.test.ts); here they are stubbed so the POST scenarios can
+// pin "the snapshot records the repriced amount" without a network.
+const priceMocks = vi.hoisted(() => ({ crypto: vi.fn(), metal: vi.fn() }));
+vi.mock("@/lib/crypto-prices", () => ({ getPrice: priceMocks.crypto }));
+vi.mock("@/lib/metal-prices", () => ({ getPrice: priceMocks.metal }));
+
 import { GET, POST } from "@/pages/api/snapshots/index";
 
 const userA = "user-A";
@@ -38,6 +46,8 @@ const assetA = {
   amount: 500,
   currency: "USD",
   crypto_symbol: null,
+  metal_symbol: null,
+  quantity: null,
   notes: null,
   created_at: "2026-01-01T00:00:00.000Z",
   updated_at: "2026-01-01T00:00:00.000Z",
@@ -165,6 +175,81 @@ describe("POST /api/snapshots", () => {
     expect(itemsInsert).toBeDefined();
     const items = itemsInsert?.args[0] as unknown[];
     expect(items).toHaveLength(2);
+  });
+
+  it("reprices crypto holdings before recording: total and items use the live amount", async () => {
+    priceMocks.crypto.mockImplementation(() =>
+      Promise.resolve({ price: 80000, isCached: false, fetchedAt: "2026-08-30T00:00:00.000Z" }),
+    );
+    const btc = {
+      ...assetA,
+      id: "asset-btc",
+      name: "Bitcoin",
+      category_id: "crypto",
+      amount: 59941,
+      quantity: 0.5,
+      crypto_symbol: "BTC",
+      category: { ...assetA.category, id: "crypto", name: "Crypto" },
+    };
+    const m = createSupabaseMock({
+      userId: userA,
+      tableResults: { assets: { data: [assetA, btc], error: null } },
+      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
+    });
+    mocks.factory = () => m;
+
+    const response = await POST({ request: makeRequest(), cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(201);
+    const body = (await response.json()) as { repricing: { repriced: number; failed: unknown[] } };
+    expect(body.repricing).toEqual({ repriced: 1, failed: [] });
+
+    // The refreshed amount was written back to the asset row…
+    expect(findCall(m.recorded, "update", [{ amount: 40000, currency: "USD" }])).toBeDefined();
+    // …and is what the snapshot recorded (500 cash + 40,000 BTC).
+    const parentInsert = m.recorded.find(
+      (c) => c.method === "insert" && m.builders.get("snapshots")?.__recorded.includes(c),
+    );
+    expect((parentInsert?.args[0] as { total_net_worth: number }).total_net_worth).toBe(40500);
+    const itemsInsert = m.recorded.find(
+      (c) => c.method === "insert" && m.builders.get("snapshot_items")?.__recorded.includes(c),
+    );
+    const items = itemsInsert?.args[0] as { name: string; original_amount: number }[];
+    expect(items.find((i) => i.name === "Bitcoin")?.original_amount).toBe(40000);
+  });
+
+  it("a price miss is not a snapshot failure: 201 with the stored amount and the miss reported", async () => {
+    priceMocks.metal.mockImplementation(() =>
+      Promise.resolve({ error: { code: "PRICE_UNAVAILABLE", message: "Could not fetch price" } }),
+    );
+    const gold = {
+      ...assetA,
+      id: "asset-gold",
+      name: "Gold",
+      category_id: "precious_metals",
+      amount: 4053,
+      quantity: 1,
+      metal_symbol: "XAU",
+    };
+    const m = createSupabaseMock({
+      userId: userA,
+      tableResults: { assets: { data: [assetA, gold], error: null } },
+      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
+    });
+    mocks.factory = () => m;
+
+    const response = await POST({ request: makeRequest(), cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(201);
+    const body = (await response.json()) as { repricing: { repriced: number; failed: { symbol: string }[] } };
+    expect(body.repricing.repriced).toBe(0);
+    expect(body.repricing.failed).toEqual([
+      { id: "asset-gold", name: "Gold", symbol: "XAU", code: "PRICE_UNAVAILABLE" },
+    ]);
+
+    const parentInsert = m.recorded.find(
+      (c) => c.method === "insert" && m.builders.get("snapshots")?.__recorded.includes(c),
+    );
+    expect((parentInsert?.args[0] as { total_net_worth: number }).total_net_worth).toBe(4553);
+    expect(m.recorded.find((c) => c.method === "update")).toBeUndefined();
   });
 
   it("items insert fails, compensating delete succeeds", async () => {

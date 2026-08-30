@@ -29,7 +29,8 @@ interface FireUpdates {
   fire_expected_return?: number;
   fire_inflation_rate?: number;
   fire_safe_withdrawal_rate?: number;
-  fire_starting_principal_override?: number;
+  // `null` clears the override so the projection falls back to live net worth.
+  fire_starting_principal_override?: number | null;
   fire_traditional_retirement_age?: number;
   fire_barista_income?: number;
 }
@@ -40,6 +41,8 @@ interface FireFieldSpec {
   max: number;
   exclusiveMin?: boolean;
   integer?: boolean;
+  // Accept an explicit `null` to clear the column (only for optional overrides).
+  nullable?: boolean;
 }
 
 const MAX_MONEY = 1e15;
@@ -49,7 +52,7 @@ const FIRE_FIELD_SPECS: readonly FireFieldSpec[] = [
   { key: "fire_traditional_retirement_age", min: 0, max: 120, integer: true },
   { key: "fire_annual_income", min: 0, max: MAX_MONEY },
   { key: "fire_annual_expenses", min: 0, max: MAX_MONEY },
-  { key: "fire_starting_principal_override", min: 0, max: MAX_MONEY },
+  { key: "fire_starting_principal_override", min: 0, max: MAX_MONEY, nullable: true },
   { key: "fire_barista_income", min: 0, max: MAX_MONEY },
   { key: "fire_expected_return", min: 0, max: 1 },
   { key: "fire_inflation_rate", min: 0, max: 1 },
@@ -73,6 +76,11 @@ function parseFireUpdates(raw: Record<string, unknown>): { updates: FireUpdates 
   for (const spec of FIRE_FIELD_SPECS) {
     const value = raw[spec.key];
     if (value === undefined) continue;
+
+    if (value === null && spec.nullable) {
+      (updates as Partial<Record<keyof FireUpdates, number | null>>)[spec.key] = null;
+      continue;
+    }
 
     if (typeof value !== "number" || !Number.isFinite(value)) {
       return { error: `${spec.key} must be a finite number` };

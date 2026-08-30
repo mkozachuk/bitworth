@@ -111,3 +111,23 @@
 - **Problem**: Chrome's touch emulation never fires `pointercancel` mid-gesture, so a PointerSensor-only dnd-kit setup passes a narrow-viewport check and is dead on a real iPhone. S-25 shipped exactly this way: plan row 3.10 recorded the drag handle as verified on device, yet in the installed PWA the handle rendered and nothing dragged.
 - **Rule**: Never accept a touch-gesture check run in Chrome's touch emulation. Verify in Playwright **WebKit** with `devices["iPhone 13"]`, and explicitly model iOS's cancellation: dispatch `pointercancel` partway through the gesture while continuing to dispatch `touchmove`. If the interaction survives that, it survives iOS.
 - **Applies to**: plan, implement, impl-review
+
+## Derived amounts stored on a row go stale — refresh before you record
+
+**Context**: `assets.amount` for crypto / precious-metals holdings is `quantity × price`, computed once in the browser at entry/edit time (`PricedQuantityFields.tsx`) and stored as a fiat total. `POST /api/snapshots` used that stored figure verbatim.
+
+**Problem**: The recorded net-worth series tracked FX drift (re-converted every save) but not the asset itself — BTC carried at $59,941 while live was ~$78,636, gold at $4,053 vs ~$4,456/ozt, ≈$2.6k understated in one month. Nothing in the UI showed the "as-of" date of the stored amount, so the number looked authoritative.
+
+**Rule**: A stored value derived from an external price is a cache, not a fact. Anything that _records_ it (snapshot, export, projection seed) must refresh it first through `repriceAssets` (`src/lib/reprice.ts`), and a refresh miss must be surfaced, not silently absorbed.
+
+**Applies to**: Snapshot POST, any future "Refresh prices" action, any new priced category (equities would need the same path).
+
+## A form that always persists its seeded value manufactures an override
+
+**Context**: `FireCalculatorForm` seeds "Starting principal" from live net worth and, on every save, wrote it to `fire_starting_principal_override` — even when the user never touched it.
+
+**Problem**: The "override" silently equalled whatever net worth was at the last FIRE save, so the projection drifted from the live number on every later visit and the field looked like it was moving by itself (97,200 → 113,950 with no user intent).
+
+**Rule**: An optional override column is only written when the value differs from its seed; equal-to-seed sends `null` to clear it. The API must accept `null` for such columns (`nullable` in `FIRE_FIELD_SPECS`).
+
+**Applies to**: Any "seeded from X, override to model Y" input backed by a nullable column.

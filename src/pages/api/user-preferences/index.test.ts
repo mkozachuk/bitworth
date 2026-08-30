@@ -216,6 +216,37 @@ describe("PUT /api/user-preferences — FIRE fields", () => {
     expect(findCall(m.recorded, "eq", ["user_id", userA])).toBeDefined();
   });
 
+  it("accepts null for fire_starting_principal_override and writes it (clears the override)", async () => {
+    const m = createSupabaseMock({
+      userId: userA,
+      tableResults: { user_preferences: { data: fireRow, error: null } },
+    });
+    mocks.factory = () => m;
+
+    const request = makeJsonRequest("http://localhost/api/user-preferences", {
+      fire_starting_principal_override: null,
+    });
+    const response = await PUT({ request, cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(200);
+
+    const upsertCall = m.recorded.find((c) => c.method === "upsert");
+    const payload = upsertCall?.args[0] as Record<string, unknown>;
+    expect("fire_starting_principal_override" in payload).toBe(true);
+    expect(payload.fire_starting_principal_override).toBeNull();
+  });
+
+  it("rejects null for a non-nullable FIRE field", async () => {
+    const m = createSupabaseMock({ userId: userA });
+    mocks.factory = () => m;
+
+    const request = makeJsonRequest("http://localhost/api/user-preferences", { fire_annual_income: null });
+    const response = await PUT({ request, cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(400);
+    const body = (await response.json()) as { error: { code: string; message: string } };
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+    expect(body.error.message).toContain("fire_annual_income");
+  });
+
   it("rejects an out-of-range rate with VALIDATION_ERROR and names the field", async () => {
     const m = createSupabaseMock({ userId: userA });
     mocks.factory = () => m;

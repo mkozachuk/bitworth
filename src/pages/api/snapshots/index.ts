@@ -1,7 +1,8 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@/lib/supabase";
 import { getRates } from "@/lib/exchange-rates";
-import { convertAmount, type Currency } from "@/lib/net-worth";
+import { computeNetWorth, convertAmount, type Currency } from "@/lib/net-worth";
+import { repriceAssets } from "@/lib/reprice";
 import type { Tables } from "@/lib/database.types";
 import type { PostgrestError } from "@supabase/supabase-js";
 
@@ -89,7 +90,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   }
 
   // Fetch current assets
-  const { data: assets, error: assetsError } = await supabase
+  const { data: storedAssets, error: assetsError } = await supabase
     .from("assets")
     .select("*, category:asset_categories(*)")
     .eq("user_id", user.id);
@@ -100,6 +101,15 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       { status: 500, headers: { "Content-Type": "application/json" } },
     );
   }
+
+  type AssetRow = Tables<"assets"> & { category: Tables<"asset_categories"> };
+
+  // Refresh priced holdings (crypto / metals) from live prices before recording
+  // anything — their stored `amount` is frozen at the last edit. A price that
+  // cannot be fetched is not a snapshot failure: the stored amount is used and
+  // the miss is reported back so the UI can say so.
+  const repricing = await repriceAssets(supabase, storedAssets as AssetRow[]);
+  const assets = repricing.assets;
 
   // Fetch user display currency preference
   const { data: prefs } = await supabase
@@ -114,22 +124,17 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     ? (rawCurrency as Currency)
     : "USD";
 
-  type AssetRow = Tables<"assets"> & { category: Tables<"asset_categories"> };
-
-  // Compute net worth via getRates (server-side, can use existing logic)
   const rates = await getRates(supabase);
 
-  let totalAssets = 0;
-  let totalLiabilities = 0;
-  for (const asset of assets as AssetRow[]) {
-    const converted = convertAmount(asset.amount, asset.currency as Currency, displayCurrency, rates);
-    if (asset.category.is_liability) {
-      totalLiabilities += converted;
-    } else {
-      totalAssets += converted;
-    }
-  }
-  const totalNetWorth = totalAssets - totalLiabilities;
+  const totalNetWorth = computeNetWorth(
+    assets.map((a) => ({
+      amount: a.amount,
+      currency: a.currency as Currency,
+      category: { is_liability: a.category.is_liability },
+    })),
+    displayCurrency,
+    rates,
+  );
 
   // Insert snapshot
   const { data: snapshot, error: snapshotError }: { data: Tables<"snapshots"> | null; error: null | PostgrestError } =
@@ -166,7 +171,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   // Insert snapshot_items for each asset
   if (assets.length > 0) {
-    const items = (assets as AssetRow[]).map((asset, idx) => ({
+    const items = assets.map((asset, idx) => ({
       snapshot_id: snapshot.id,
       category_id: asset.category_id,
       name: asset.name,
@@ -189,8 +194,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
   }
 
-  return new Response(JSON.stringify({ data: snapshot }), {
-    status: 201,
-    headers: { "Content-Type": "application/json" },
-  });
+  return new Response(
+    JSON.stringify({
+      data: snapshot,
+      repricing: { repriced: repricing.repriced.length, failed: repricing.failed },
+    }),
+    {
+      status: 201,
+      headers: { "Content-Type": "application/json" },
+    },
+  );
 };

@@ -89,6 +89,11 @@ function formatPct(fraction: number): string {
 
 export function FireCalculatorForm({ displayCurrency, startingPrincipal, initialInputs }: Props) {
   const [state, setState] = useState<FormState>(() => seedState(startingPrincipal, initialInputs));
+  // Live net worth, rounded like the seed. A starting principal equal to it is
+  // "no override" — persisting it would freeze the projection at today's number
+  // and silently diverge from the live snapshot on every later visit.
+  const liveNetWorth = Math.round(startingPrincipal);
+  const hasOverride = num(state.startingPrincipal) !== liveNetWorth;
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -117,7 +122,7 @@ export function FireCalculatorForm({ displayCurrency, startingPrincipal, initial
       fire_expected_return: num(state.expectedReturnPct) / 100,
       fire_inflation_rate: num(state.inflationRatePct) / 100,
       fire_safe_withdrawal_rate: num(state.safeWithdrawalRatePct) / 100,
-      fire_starting_principal_override: num(state.startingPrincipal),
+      fire_starting_principal_override: hasOverride ? num(state.startingPrincipal) : null,
       fire_traditional_retirement_age: num(state.traditionalRetirementAge),
       fire_barista_income: num(state.baristaIncome),
     };
@@ -166,12 +171,23 @@ export function FireCalculatorForm({ displayCurrency, startingPrincipal, initial
         <NumberField
           id="fire_starting_principal"
           label={`Starting principal (${displayCurrency}, today's money)`}
-          help="Seeded from your current net worth. Override it to model a different starting point."
+          help="Seeded from your live net worth. Type a different value to model another starting point."
           value={state.startingPrincipal}
           onChange={update("startingPrincipal")}
           min={0}
           placeholder="0"
         />
+        {hasOverride && (
+          <button
+            type="button"
+            onClick={() => {
+              setState((prev) => ({ ...prev, startingPrincipal: liveNetWorth }));
+            }}
+            className="text-primary -mt-2 text-xs underline-offset-2 hover:underline"
+          >
+            Use current net worth ({formatMoney(liveNetWorth, displayCurrency)})
+          </button>
+        )}
         <NumberField
           id="fire_annual_income"
           label={`Annual income (${displayCurrency})`}
