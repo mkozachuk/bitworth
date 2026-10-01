@@ -65,24 +65,45 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   }
 
   // Parse optional JSON body defensively: a bodyless legacy call must still
-  // succeed, so missing/empty/invalid JSON is treated as no contribution.
+  // succeed, so missing/empty/invalid JSON is treated as no contribution and no
+  // income. Each key is optional; `null` leaves its column NULL (omitted).
   let netContribution: number | undefined;
+  let income: number | undefined;
   try {
     const body: unknown = await request.json();
-    if (typeof body === "object" && body !== null && "net_contribution" in body) {
-      const raw = (body as Record<string, unknown>).net_contribution;
-      // Signed values allowed (negatives are withdrawals); reject only
-      // non-finite / non-numeric. `null` leaves the column NULL (omitted).
-      if (raw !== null && raw !== undefined) {
-        if (typeof raw !== "number" || !Number.isFinite(raw)) {
-          return new Response(
-            JSON.stringify({
-              error: { code: "VALIDATION_ERROR", message: "net_contribution must be a finite number" },
-            } satisfies ErrorShape),
-            { status: 400, headers: { "Content-Type": "application/json" } },
-          );
+    if (typeof body === "object" && body !== null) {
+      const fields = body as Record<string, unknown>;
+      if ("net_contribution" in fields) {
+        const raw = fields.net_contribution;
+        // Signed values allowed (negatives are withdrawals); reject only
+        // non-finite / non-numeric.
+        if (raw !== null && raw !== undefined) {
+          if (typeof raw !== "number" || !Number.isFinite(raw)) {
+            return new Response(
+              JSON.stringify({
+                error: { code: "VALIDATION_ERROR", message: "net_contribution must be a finite number" },
+              } satisfies ErrorShape),
+              { status: 400, headers: { "Content-Type": "application/json" } },
+            );
+          }
+          netContribution = raw;
         }
-        netContribution = raw;
+      }
+      if ("income" in fields) {
+        const raw = fields.income;
+        // Income earned in the interval ending at this snapshot (S-24), in the
+        // display currency. Never negative (the column's CHECK agrees).
+        if (raw !== null && raw !== undefined) {
+          if (typeof raw !== "number" || !Number.isFinite(raw) || raw < 0) {
+            return new Response(
+              JSON.stringify({
+                error: { code: "VALIDATION_ERROR", message: "income must be a finite number >= 0" },
+              } satisfies ErrorShape),
+              { status: 400, headers: { "Content-Type": "application/json" } },
+            );
+          }
+          income = raw;
+        }
       }
     }
   } catch {
@@ -153,6 +174,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         // Only set the key when a finite number was provided; omitting it
         // leaves the nullable column NULL (unknown split).
         ...(netContribution !== undefined ? { net_contribution: netContribution } : {}),
+        // Same rule for income: omitted unless a number was sent.
+        ...(income !== undefined ? { income } : {}),
       })
       .select()
       .single();

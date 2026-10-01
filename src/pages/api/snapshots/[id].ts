@@ -15,9 +15,13 @@ function jsonError(code: string, message: string, status: number, context?: unkn
   });
 }
 
-// PATCH /api/snapshots/:id — set or correct net_contribution on one snapshot
-// (enables backfilling history). Body: { net_contribution: number | null }.
-// A finite number sets the value; explicit `null` clears it back to unknown.
+// PATCH /api/snapshots/:id — set or correct the interval inputs recorded on one
+// snapshot (enables backfilling history). Body: any of
+//   { net_contribution: number | null, income: number | null }
+// with at least one key present. Only the keys present are written, so editing
+// one never touches the other. A finite number sets the value; explicit `null`
+// clears it back to unknown. `net_contribution` is signed (negatives are
+// withdrawals); `income` must be >= 0 (the column's CHECK says the same).
 export const PATCH: APIRoute = async ({ params, request, cookies }) => {
   const supabase = createClient(request.headers, cookies);
   if (!supabase) {
@@ -43,20 +47,30 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
     return jsonError("VALIDATION_ERROR", "Request body must be valid JSON", 400);
   }
 
-  if (typeof body !== "object" || body === null || !("net_contribution" in body)) {
-    return jsonError("VALIDATION_ERROR", "net_contribution is required", 400);
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
+    return jsonError("VALIDATION_ERROR", "net_contribution or income is required", 400);
   }
+  const fields = body as Record<string, unknown>;
 
-  const raw = (body as Record<string, unknown>).net_contribution;
-  // Distinguish "key present and null" (clear) from invalid (reject). Signed
-  // numbers are allowed (negatives are withdrawals); reject only non-finite.
-  let netContribution: number | null;
-  if (raw === null) {
-    netContribution = null;
-  } else if (typeof raw === "number" && Number.isFinite(raw)) {
-    netContribution = raw;
-  } else {
-    return jsonError("VALIDATION_ERROR", "net_contribution must be a finite number or null", 400);
+  // Distinguish "key present and null" (clear) from invalid (reject), and an
+  // absent key (leave the column as it is) from both.
+  const update: { net_contribution?: number | null; income?: number | null } = {};
+  if ("net_contribution" in fields) {
+    const raw = fields.net_contribution;
+    if (raw !== null && !(typeof raw === "number" && Number.isFinite(raw))) {
+      return jsonError("VALIDATION_ERROR", "net_contribution must be a finite number or null", 400);
+    }
+    update.net_contribution = raw;
+  }
+  if ("income" in fields) {
+    const raw = fields.income;
+    if (raw !== null && !(typeof raw === "number" && Number.isFinite(raw) && raw >= 0)) {
+      return jsonError("VALIDATION_ERROR", "income must be a finite number >= 0, or null", 400);
+    }
+    update.income = raw;
+  }
+  if (Object.keys(update).length === 0) {
+    return jsonError("VALIDATION_ERROR", "net_contribution or income is required", 400);
   }
 
   // The update payload deliberately never includes user_id; the .eq("user_id")
@@ -64,7 +78,7 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
   // USING-only is not enough"). An unmatched row returns no data → 404.
   const { data, error }: { data: Tables<"snapshots"> | null; error: null | PostgrestError } = await supabase
     .from("snapshots")
-    .update({ net_contribution: netContribution })
+    .update(update)
     .eq("id", id)
     .eq("user_id", user.id)
     .select()

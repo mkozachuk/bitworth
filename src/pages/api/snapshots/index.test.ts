@@ -471,6 +471,67 @@ describe("POST /api/snapshots", () => {
     expect(snapshotInsertPayload(m)).not.toHaveProperty("net_contribution");
   });
 
+  it("persists income from the body into the insert payload (B2)", async () => {
+    const m = createSupabaseMock({
+      userId: userA,
+      tableResults: defaultTableResults,
+      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
+    });
+    mocks.factory = () => m;
+
+    const response = await POST({
+      request: makeJsonRequest({ net_contribution: 500, income: 4200.5 }),
+      cookies: createCookiesStub(),
+    } as never);
+    expect(response.status).toBe(201);
+    expect(snapshotInsertPayload(m).income).toBe(4200.5);
+    expect(snapshotInsertPayload(m).net_contribution).toBe(500);
+  });
+
+  it("income alone is accepted, and a body with neither key leaves both out (B2)", async () => {
+    const m = createSupabaseMock({
+      userId: userA,
+      tableResults: defaultTableResults,
+      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
+    });
+    mocks.factory = () => m;
+    const response = await POST({ request: makeJsonRequest({ income: 0 }), cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(201);
+    expect(snapshotInsertPayload(m).income).toBe(0);
+    expect(snapshotInsertPayload(m)).not.toHaveProperty("net_contribution");
+  });
+
+  it("explicit null income, and a bodyless POST, leave income out of the insert (column stays NULL) (B2)", async () => {
+    for (const request of [makeJsonRequest({ income: null }), makeRequest()]) {
+      const m = createSupabaseMock({
+        userId: userA,
+        tableResults: defaultTableResults,
+        tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
+      });
+      mocks.factory = () => m;
+      const response = await POST({ request, cookies: createCookiesStub() } as never);
+      expect(response.status).toBe(201);
+      expect(snapshotInsertPayload(m)).not.toHaveProperty("income");
+    }
+  });
+
+  it.each([
+    ["negative", -1],
+    ["non-numeric", "lots"],
+  ])("rejects a %s income with 400 VALIDATION_ERROR and inserts nothing (B2)", async (_case, income) => {
+    const m = createSupabaseMock({
+      userId: userA,
+      tableResults: defaultTableResults,
+      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
+    });
+    mocks.factory = () => m;
+    const response = await POST({ request: makeJsonRequest({ income }), cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(400);
+    const json = (await response.json()) as { error: { code: string } };
+    expect(json.error.code).toBe("VALIDATION_ERROR");
+    expect(m.builders.get("snapshots")?.__recorded.find((c) => c.method === "insert")).toBeUndefined();
+  });
+
   it("insert payload does NOT include created_at", async () => {
     // Structural-property pin for the DB-default contract. The handler
     // must never set `created_at` on the insert payload; the DB default

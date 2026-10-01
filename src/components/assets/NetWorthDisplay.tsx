@@ -74,6 +74,7 @@ function SaveButton({
 }) {
   const [state, setState] = useState<ButtonState>("idle");
   const [contribution, setContribution] = useState("");
+  const [income, setIncome] = useState("");
   const [stampDate, setStampDate] = useState<{ month: string; year: string } | null>(null);
   // Set when the server could not refresh one or more priced holdings; the
   // snapshot still saved (with stored values), so this is a notice, not an error.
@@ -83,6 +84,7 @@ function SaveButton({
   const openDialog = useCallback(() => {
     if (state === "loading") return;
     setContribution("");
+    setIncome("");
     setState("idle");
     const dialog = dialogRef.current;
     if (dialog && !dialog.open) dialog.showModal();
@@ -96,23 +98,37 @@ function SaveButton({
   const handleConfirm = useCallback(async () => {
     if (state === "loading") return;
 
-    // Build the request body: a blank field records an unknown split (no body),
-    // a filled field sends a parsed signed number. Guard NaN client-side.
+    // Build the request body: a blank field records an unknown value (key left
+    // out; no body at all when both are blank), a filled field sends a parsed
+    // number: signed for the contribution, >= 0 for income. Guard NaN client-side.
     const trimmed = contribution.trim();
+    const trimmedIncome = income.trim();
     let init: RequestInit = {
       method: "POST",
       credentials: "include",
     };
+    const payload: { net_contribution?: number; income?: number } = {};
     if (trimmed !== "") {
       const parsed = Number(trimmed);
       if (!Number.isFinite(parsed)) {
         onError("Net contribution must be a number");
         return;
       }
+      payload.net_contribution = parsed;
+    }
+    if (trimmedIncome !== "") {
+      const parsed = Number(trimmedIncome);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        onError("Income must be a number of 0 or more");
+        return;
+      }
+      payload.income = parsed;
+    }
+    if (Object.keys(payload).length > 0) {
       init = {
         ...init,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ net_contribution: parsed }),
+        body: JSON.stringify(payload),
       };
     }
 
@@ -155,7 +171,7 @@ function SaveButton({
         setState("idle");
       }, 3000);
     }
-  }, [state, contribution, closeDialog, onSuccess, onError]);
+  }, [state, contribution, income, closeDialog, onSuccess, onError]);
 
   const triggerLabel = state === "error" ? "Retry snapshot" : "Save snapshot — stamp the month";
   const triggerClass =
@@ -196,7 +212,7 @@ function SaveButton({
         <div className="border-border flex items-center justify-between border-b px-5 py-3">
           <h2 className="font-display text-base font-bold">Save snapshot</h2>
         </div>
-        <div className="px-5 py-5">
+        <div className="flex flex-col gap-4 px-5 py-5">
           <ContributionField
             id="save-net-contribution"
             value={contribution}
@@ -204,6 +220,31 @@ function SaveButton({
             currency={displayCurrency}
             disabled={state === "loading"}
           />
+          {/* Inline rather than <IncomeField>: this slice keeps the file's diff
+              inside SaveButton, imports included. Same markup and wording. */}
+          <div className="flex flex-col gap-1">
+            <label htmlFor="save-income" className="text-foreground/70 text-sm font-medium">
+              Income
+            </label>
+            <input
+              id="save-income"
+              type="number"
+              step="any"
+              min="0"
+              inputMode="decimal"
+              value={income}
+              disabled={state === "loading"}
+              onChange={(e) => {
+                setIncome(e.target.value);
+              }}
+              placeholder="e.g. 4000"
+              className="border-input bg-card text-foreground focus:border-primary tnum w-full rounded-sm border px-3 py-2 text-sm transition-colors focus:outline-none disabled:opacity-50"
+            />
+            <p className="text-muted-foreground text-xs">
+              Amount in {displayCurrency} earned since your previous snapshot. Used for your savings rate. Leave blank
+              if unknown.
+            </p>
+          </div>
         </div>
         <div className="border-border flex justify-end gap-2 border-t px-5 py-3">
           <button

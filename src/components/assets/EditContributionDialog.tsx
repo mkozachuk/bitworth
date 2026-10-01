@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ContributionField } from "./ContributionField";
+import { IncomeField } from "./IncomeField";
 import type { Currency } from "@/lib/net-worth";
 
 /**
@@ -16,6 +17,8 @@ import type { Currency } from "@/lib/net-worth";
  *                         passes `curr.id` here.
  *   - `netContribution` — the snapshot's current value to pre-fill (number) or
  *                         `null` (blank = unknown split).
+ *   - `income`          — the snapshot's recorded income (S-24) to pre-fill, or
+ *                         `null` (blank = unknown savings rate).
  *   - `displayCurrency` — currency shown in the field helper line.
  *   - `dateLabel`      — human-readable date of `curr`, used in the title so
  *                         the user knows which snapshot is being edited.
@@ -25,13 +28,15 @@ import type { Currency } from "@/lib/net-worth";
  *                         whether to reload or refetch.
  *
  * Native `<dialog>` + showModal()/close() (mirrors Phase 4's SaveButton — no
- * Radix). Blank field ↔ explicit `null` in the PATCH body; a filled field ↔ a
- * finite signed number. NaN is guarded client-side.
+ * Radix). Both fields are sent on every save. Blank field ↔ explicit `null` in
+ * the PATCH body; a filled field ↔ a finite number (signed for the
+ * contribution, >= 0 for income). NaN is guarded client-side.
  */
 export interface EditContributionDialogProps {
   open: boolean;
   id: string;
   netContribution: number | null;
+  income: number | null;
   displayCurrency: Currency;
   dateLabel: string;
   onClose: () => void;
@@ -40,8 +45,8 @@ export interface EditContributionDialogProps {
 
 type DialogState = "idle" | "loading" | "error";
 
-function toFieldValue(netContribution: number | null): string {
-  return netContribution === null ? "" : String(netContribution);
+function toFieldValue(value: number | null): string {
+  return value === null ? "" : String(value);
 }
 
 // The form is a child of the <dialog> and is only mounted while `open`. Because
@@ -51,6 +56,7 @@ function toFieldValue(netContribution: number | null): string {
 function EditContributionForm({
   id,
   netContribution,
+  income,
   displayCurrency,
   dateLabel,
   onClose,
@@ -58,6 +64,7 @@ function EditContributionForm({
 }: Omit<EditContributionDialogProps, "open">) {
   const [state, setState] = useState<DialogState>("idle");
   const [contribution, setContribution] = useState(() => toFieldValue(netContribution));
+  const [incomeValue, setIncomeValue] = useState(() => toFieldValue(income));
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleConfirm = useCallback(async () => {
@@ -80,6 +87,20 @@ function EditContributionForm({
       netContributionPayload = parsed;
     }
 
+    const trimmedIncome = incomeValue.trim();
+    let incomePayload: number | null;
+    if (trimmedIncome === "") {
+      incomePayload = null;
+    } else {
+      const parsed = Number(trimmedIncome);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        setState("error");
+        setErrorMessage("Income must be a number of 0 or more");
+        return;
+      }
+      incomePayload = parsed;
+    }
+
     setState("loading");
     setErrorMessage(null);
     try {
@@ -87,7 +108,7 @@ function EditContributionForm({
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ net_contribution: netContributionPayload }),
+        body: JSON.stringify({ net_contribution: netContributionPayload, income: incomePayload }),
       });
       if (!res.ok) {
         const json = (await res.json()) as { error?: { message?: string } };
@@ -99,16 +120,16 @@ function EditContributionForm({
       setState("error");
       setErrorMessage(msg);
     }
-  }, [state, contribution, id, onSaved]);
+  }, [state, contribution, incomeValue, id, onSaved]);
 
   return (
     <>
       <div className="border-border flex items-center justify-between border-b px-5 py-3">
-        <h2 className="font-display text-base font-bold">Edit contribution</h2>
+        <h2 className="font-display text-base font-bold">Edit contribution and income</h2>
       </div>
       <div className="px-5 py-5">
         <p className="text-foreground/70 mb-4 text-sm">
-          Contribution recorded for <span className="text-foreground font-medium">{dateLabel}</span>
+          Recorded for <span className="text-foreground font-medium">{dateLabel}</span>
         </p>
         <ContributionField
           id="edit-net-contribution"
@@ -117,6 +138,15 @@ function EditContributionForm({
           currency={displayCurrency}
           disabled={state === "loading"}
         />
+        <div className="mt-4">
+          <IncomeField
+            id="edit-income"
+            value={incomeValue}
+            onChange={setIncomeValue}
+            currency={displayCurrency}
+            disabled={state === "loading"}
+          />
+        </div>
         {state === "error" && errorMessage && <p className="text-destructive mt-3 text-xs">{errorMessage}</p>}
       </div>
       <div className="border-border flex justify-end gap-2 border-t px-5 py-3">

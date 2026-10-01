@@ -25,7 +25,7 @@ const VALID_CURRENCIES: Currency[] = ["USD", "EUR", "PLN"];
  * the bar is anchored on `curr`'s date. For a known split we populate
  * `contribution` + `growth` (diverging stack around y=0) and leave `unknownTotal`
  * undefined so Recharts skips that bar; for an unrecorded interval we populate
- * `unknownTotal` only. `currId`/`currNetContribution`/`currDate` thread the edit
+ * `unknownTotal` only. `currId`/`currNetContribution`/`currIncome`/`currDate` thread the edit
  * target through to the per-interval edit dialog.
  */
 interface ChartRow {
@@ -37,6 +37,7 @@ interface ChartRow {
   isUnknown: boolean;
   currId: string;
   currNetContribution: number | null;
+  currIncome: number | null;
   currDate: string;
 }
 
@@ -118,6 +119,7 @@ export function ContributionsChart({ snapshots, displayCurrency, rates }: Props)
       date: s.created_at,
       currId: s.id,
       currNetContribution: s.net_contribution,
+      currIncome: s.income,
     };
   });
 
@@ -132,6 +134,7 @@ export function ContributionsChart({ snapshots, displayCurrency, rates }: Props)
       totalChange: interval.totalChange,
       currId: curr.currId,
       currNetContribution: curr.currNetContribution,
+      currIncome: curr.currIncome,
       currDate: curr.date,
     };
     if (interval.kind === "split") {
@@ -268,6 +271,7 @@ export function ContributionsChart({ snapshots, displayCurrency, rates }: Props)
           open={selected !== null}
           id={selectedRow.currId}
           netContribution={selectedRow.currNetContribution}
+          income={selectedRow.currIncome}
           displayCurrency={displayCurrency}
           dateLabel={new Date(selectedRow.currDate).toLocaleDateString("en-US", {
             month: "long",
