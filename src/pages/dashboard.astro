@@ -10,6 +10,7 @@ import { NetWorthChart } from "@/components/NetWorthChart";
 import { ContributionsChart } from "@/components/ContributionsChart";
 import { TopMovers } from "@/components/assets/TopMovers";
 import { AssetTrendsChart, type SnapshotItemWithDate } from "@/components/AssetTrendsChart";
+import { TagTrendsChart, type DashboardTag } from "@/components/TagTrendsChart";
 import { FireProgress } from "@/components/fire/FireProgress";
 import { computeDrift, type AllocationAsset, type DriftCardInput } from "@/lib/allocation";
 import { DriftAlerts, type DriftAlertsProps } from "@/components/balancer/DriftAlerts";
@@ -69,6 +70,19 @@ interface SnapshotWithItems {
 }
 const trendSnapshotItems: SnapshotItemWithDate[] = ((snapshotsWithItems ?? []) as SnapshotWithItems[]).flatMap(
   (snapshot) => snapshot.snapshot_items.map((item) => ({ ...item, snapshotDate: snapshot.created_at })),
+);
+
+// Tag Trends card: the tags whose "show on dashboard" toggle is on (Settings →
+// Tags). Their lines are built in the island from `trendSnapshotItems`, which
+// already carry each item's recorded `tag_ids`. No tag on → no card. A failed
+// read costs this card only, not the page.
+const { data: dashboardTagRows } = await supabase
+  .from("tags")
+  .select("id, name")
+  .eq("user_id", user.id)
+  .eq("show_on_dashboard", true);
+const dashboardTags: DashboardTag[] = ((dashboardTagRows ?? []) as DashboardTag[]).sort((a, b) =>
+  a.name.localeCompare(b.name),
 );
 
 // FIRE-progress card. The toggle (`show_fire_dashboard`, default TRUE) gates the
@@ -378,6 +392,15 @@ if (showDriftAlerts) {
             rates={rates}
             client:load
           />
+          {dashboardTags.length > 0 && (
+            <TagTrendsChart
+              tags={dashboardTags}
+              snapshotItems={trendSnapshotItems}
+              displayCurrency={displayCurrency}
+              rates={rates}
+              client:load
+            />
+          )}
         </>
       )
     }
