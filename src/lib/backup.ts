@@ -81,6 +81,11 @@ export const SNAPSHOTS_COLUMNS = [
   "base_currency",
   "source",
   "note",
+  // Signed money in/out recorded with the snapshot (S-17). Nullable with no
+  // default: NULL means "not recorded" and is distinct from 0, so it round-trips
+  // as-is. A file exported before this column joined the whitelist has no key;
+  // `restore_backup` maps the missing key to NULL (no COALESCE).
+  "net_contribution",
   "created_at",
 ] as const satisfies readonly (keyof SnapshotRow)[];
 

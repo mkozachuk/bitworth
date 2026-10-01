@@ -417,3 +417,43 @@ describe("prepareForImport", () => {
     expect(goalKeys).toEqual(expectedGoalKeys);
   });
 });
+
+describe("snapshots.net_contribution round-trip", () => {
+  it("export carries a recorded net_contribution into the envelope", () => {
+    const input = makeInput();
+    input.snapshots[0] = { ...input.snapshots[0], net_contribution: 1234.5 };
+    const env = serialize(input, ISO);
+    expect(env.data.snapshots[0]).toHaveProperty("net_contribution", 1234.5);
+    // ...and it survives the JSON file and the import transform.
+    const validated = validateEnvelope(JSON.parse(JSON.stringify(env)), VALID_CATEGORIES);
+    if (!validated.ok) throw new Error("fixture should validate");
+    const prepared = prepareForImport(validated.data, () => "fresh");
+    expect(prepared.snapshots[0]).toHaveProperty("net_contribution", 1234.5);
+  });
+
+  it("export keeps an explicit null as null (not 0, not dropped)", () => {
+    const env = serialize(makeInput(), ISO);
+    expect(env.data.snapshots[0]).toHaveProperty("net_contribution", null);
+  });
+
+  it("an old backup with no net_contribution key validates and prepares unchanged", () => {
+    const env = serialize(makeInput(), ISO);
+    interface OldEnvelope {
+      data: { snapshots: Record<string, unknown>[] };
+    }
+    const old = JSON.parse(JSON.stringify(env)) as OldEnvelope;
+    for (const snap of old.data.snapshots) delete snap.net_contribution;
+    const before = JSON.parse(JSON.stringify(old)) as OldEnvelope;
+
+    const validated = validateEnvelope(old, VALID_CATEGORIES);
+    if (!validated.ok) throw new Error(`old backup should validate: ${validated.code}`);
+    expect(validated.data.snapshots).toEqual(before.data.snapshots);
+    for (const snap of validated.data.snapshots) expect(snap).not.toHaveProperty("net_contribution");
+
+    // No key is invented on the way to the RPC; restore_backup maps the
+    // absence to NULL (pinned in backup-rpc-parity.test.ts).
+    const prepared = prepareForImport(validated.data, () => "fresh");
+    for (const snap of prepared.snapshots) expect(snap).not.toHaveProperty("net_contribution");
+    expect(old).toEqual(before);
+  });
+});

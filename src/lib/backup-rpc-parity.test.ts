@@ -94,3 +94,42 @@ describe(`restore_backup import parity (${migrationName})`, () => {
     expect([...conflictUpdateColumns(sql)].sort()).toEqual([...inserted].sort());
   });
 });
+
+// `net_contribution` is nullable and NULL ("not recorded") differs from 0, so the
+// RPC must take it as-is. A pre-S-17-export backup has no such key at all, and
+// `jsonb_populate_recordset` leaves a missing key NULL — but only if the SELECT
+// does not wrap it in a COALESCE. There is no database here, so read the SQL.
+function snapshotsSelectExpressions(sql: string): string[] {
+  const block =
+    /INSERT INTO snapshots \([^)]*\)\s*SELECT([\s\S]*?)FROM jsonb_populate_recordset\(null::snapshots, p_data->'snapshots'\) AS r;/.exec(
+      sql,
+    );
+  if (!block) throw new Error("no snapshots INSERT ... SELECT ... FROM jsonb_populate_recordset block found");
+  // Split on top-level commas only: `COALESCE(r.base_currency, 'USD')` is one
+  // expression.
+  const exprs: string[] = [];
+  let depth = 0;
+  let current = "";
+  for (const ch of block[1]) {
+    if (ch === "(") depth++;
+    if (ch === ")") depth--;
+    if (ch === "," && depth === 0) {
+      exprs.push(current.trim());
+      current = "";
+    } else {
+      current += ch;
+    }
+  }
+  exprs.push(current.trim());
+  return exprs.filter(Boolean);
+}
+
+describe(`restore_backup snapshots.net_contribution (${migrationName})`, () => {
+  it("selects r.net_contribution bare, so a missing key or null stays NULL (never COALESCEd to 0)", () => {
+    const exprs = snapshotsSelectExpressions(sql);
+    const idx = inserts.snapshots.indexOf("net_contribution");
+    expect(idx).toBeGreaterThanOrEqual(0);
+    expect(exprs).toHaveLength(inserts.snapshots.length);
+    expect(exprs[idx]).toBe("r.net_contribution");
+  });
+});
