@@ -119,6 +119,42 @@ export interface Database {
         };
         Relationships: [];
       };
+      asset_tags: {
+        Row: {
+          asset_id: string;
+          created_at: string;
+          tag_id: string;
+          user_id: string;
+        };
+        Insert: {
+          asset_id: string;
+          created_at?: string;
+          tag_id: string;
+          user_id: string;
+        };
+        Update: {
+          asset_id?: string;
+          created_at?: string;
+          tag_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "asset_tags_asset_id_fkey";
+            columns: ["asset_id"];
+            isOneToOne: false;
+            referencedRelation: "assets";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "asset_tags_tag_id_fkey";
+            columns: ["tag_id"];
+            isOneToOne: false;
+            referencedRelation: "tags";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       assets: {
         Row: {
           amount: number;
@@ -383,6 +419,33 @@ export interface Database {
           note?: string | null;
           source?: string;
           total_net_worth?: number;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      tags: {
+        Row: {
+          created_at: string;
+          id: string;
+          name: string;
+          show_on_dashboard: boolean;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          name: string;
+          show_on_dashboard?: boolean;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          name?: string;
+          show_on_dashboard?: boolean;
+          updated_at?: string;
           user_id?: string;
         };
         Relationships: [];

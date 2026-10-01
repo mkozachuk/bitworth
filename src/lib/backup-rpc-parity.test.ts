@@ -3,10 +3,12 @@ import { describe, expect, it } from "vitest";
 import {
   ALLOCATION_CARDS_COLUMNS,
   ALLOCATION_TARGETS_COLUMNS,
+  ASSET_TAGS_COLUMNS,
   ASSETS_COLUMNS,
   GOALS_COLUMNS,
   SNAPSHOTS_COLUMNS,
   SNAPSHOT_ITEMS_COLUMNS,
+  TAGS_COLUMNS,
   USER_PREFERENCES_COLUMNS,
 } from "@/lib/backup";
 
@@ -28,7 +30,8 @@ const MIGRATIONS_DIR = new URL("../../supabase/migrations/", import.meta.url);
 // Columns the RPC deliberately omits: `prepareForImport` strips these ids and
 // the database generates them. Everything else must match. `assets.id` and
 // `allocation_cards.id` are NOT omitted: prepareForImport regenerates them so
-// targets can be remapped, and the RPC inserts them as given.
+// targets can be remapped, and the RPC inserts them as given. `tags.id` likewise
+// (links are remapped to it); `asset_tags` has no id of its own.
 const INTENTIONALLY_OMITTED: Record<string, readonly string[]> = {
   user_preferences: [],
   assets: [],
@@ -37,6 +40,8 @@ const INTENTIONALLY_OMITTED: Record<string, readonly string[]> = {
   goals: ["id"],
   allocation_cards: [],
   allocation_targets: ["id"],
+  tags: [],
+  asset_tags: [],
 };
 
 function latestRestoreBackupMigration(): { name: string; sql: string } {
@@ -85,6 +90,8 @@ const TABLES = [
   ["goals", GOALS_COLUMNS],
   ["allocation_cards", ALLOCATION_CARDS_COLUMNS],
   ["allocation_targets", ALLOCATION_TARGETS_COLUMNS],
+  ["tags", TAGS_COLUMNS],
+  ["asset_tags", ASSET_TAGS_COLUMNS],
 ] as const;
 
 describe(`restore_backup import parity (${migrationName})`, () => {
@@ -205,6 +212,8 @@ describe(`restore_backup allocation cards and targets (${migrationName})`, () =>
     if (!block) throw new Error("no replace-mode block found");
     const deletes = [...block[1].matchAll(/DELETE FROM (\w+)/g)].map((m) => m[1]);
     expect(deletes).toEqual([
+      "asset_tags",
+      "tags",
       "allocation_targets",
       "allocation_cards",
       "snapshot_items",
@@ -215,5 +224,102 @@ describe(`restore_backup allocation cards and targets (${migrationName})`, () =>
     // Merge mode must never touch the user's existing cards: every DELETE in
     // the function sits inside the replace block.
     expect([...body.matchAll(/DELETE FROM/g)]).toHaveLength(deletes.length);
+  });
+});
+
+// Slice B1a. The INSERT ... SELECT block for a table, up to its terminating
+// semicolon, with the column list and the SELECT expressions split out. The tag
+// inserts end in a WHERE or JOINs, so this does not assume `AS r;`.
+function insertBlock(table: string): { columns: string[]; exprs: string[]; tail: string } {
+  const block = new RegExp(`INSERT INTO ${table} \\(([^)]*)\\)\\s*SELECT([\\s\\S]*?)\\n\\s*FROM ([\\s\\S]*?);`).exec(
+    sql,
+  );
+  if (!block) throw new Error(`no ${table} INSERT ... SELECT ... FROM block found`);
+  const exprs: string[] = [];
+  let depth = 0;
+  let current = "";
+  for (const ch of block[2]) {
+    if (ch === "(") depth++;
+    if (ch === ")") depth--;
+    if (ch === "," && depth === 0) {
+      exprs.push(current.trim());
+      current = "";
+    } else {
+      current += ch;
+    }
+  }
+  exprs.push(current.trim());
+  return {
+    columns: block[1]
+      .split(",")
+      .map((c) => c.trim())
+      .filter(Boolean),
+    exprs: exprs.filter(Boolean),
+    tail: block[3].replace(/\s+/g, " ").trim(),
+  };
+}
+
+function tagExpr(table: string, column: string): string {
+  const { columns, exprs } = insertBlock(table);
+  expect(exprs).toHaveLength(columns.length);
+  const idx = columns.indexOf(column);
+  if (idx < 0) throw new Error(`${table}.${column} is not in the INSERT column list`);
+  return exprs[idx];
+}
+
+describe(`restore_backup tags and asset_tags (${migrationName})`, () => {
+  it("tags are inserted with their payload id and user_id stamped; show_on_dashboard defaults to false", () => {
+    expect(tagExpr("tags", "id")).toBe("r.id");
+    expect(tagExpr("tags", "user_id")).toBe("v_user");
+    expect(tagExpr("tags", "name")).toBe("r.name");
+    expect(tagExpr("tags", "show_on_dashboard")).toBe("COALESCE(r.show_on_dashboard, false)");
+    expect(tagExpr("asset_tags", "asset_id")).toBe("r.asset_id");
+    expect(tagExpr("asset_tags", "user_id")).toBe("v_user");
+  });
+
+  it("merge-mode name clash: a file tag whose name matches an existing tag, ignoring case, is not inserted", () => {
+    // The skip condition is the unique index's own key, (user_id, lower(name)),
+    // so whatever the index would reject as a duplicate is exactly what is
+    // merged instead of violating it.
+    expect(insertBlock("tags").tail).toBe(
+      "jsonb_populate_recordset(null::tags, p_data->'tags') AS r " +
+        "WHERE NOT EXISTS ( SELECT 1 FROM tags t WHERE t.user_id = v_user AND lower(t.name) = lower(r.name) )",
+    );
+  });
+
+  it("merge-mode name clash: a link is attached to the caller's tag of the file tag's name (the merged tag)", () => {
+    // tag_id is NOT the payload's r.tag_id: it is resolved through the file tag's
+    // name to the caller's tag, which is either the file tag inserted above or
+    // the existing tag it merged into. LEFT joins: an unresolvable link yields a
+    // NULL tag_id, which fails NOT NULL and rolls the restore back.
+    expect(tagExpr("asset_tags", "tag_id")).toBe("t.id");
+    expect(insertBlock("asset_tags").tail).toBe(
+      "jsonb_populate_recordset(null::asset_tags, p_data->'asset_tags') AS r " +
+        "LEFT JOIN jsonb_populate_recordset(null::tags, p_data->'tags') AS f ON f.id = r.tag_id " +
+        "LEFT JOIN tags t ON t.user_id = v_user AND lower(t.name) = lower(f.name)",
+    );
+  });
+
+  it("the name match is the same key as the tags unique index in the schema migration", () => {
+    const schema = readdirSync(MIGRATIONS_DIR)
+      .filter((n) => n.endsWith(".sql"))
+      .map((n) => readFileSync(new URL(n, MIGRATIONS_DIR), "utf8"))
+      .find((text) => text.includes("CREATE TABLE tags ("));
+    if (!schema) throw new Error("no migration creates the tags table");
+    expect(schema).toContain("CREATE UNIQUE INDEX tags_user_id_lower_name_key ON tags (user_id, lower(name));");
+  });
+
+  it("inserts assets before tags, and tags before asset_tags", () => {
+    const at = (t: string) => sql.indexOf(`INSERT INTO ${t} (`);
+    expect(at("tags")).toBeGreaterThan(at("assets"));
+    expect(at("asset_tags")).toBeGreaterThan(at("tags"));
+  });
+
+  it("merge mode never updates an existing tag: no UPDATE or upsert touches tags", () => {
+    const body = /AS \$\$([\s\S]*?)\$\$;/.exec(sql)?.[1];
+    if (!body) throw new Error("no function body found");
+    expect(body).not.toMatch(/UPDATE\s+tags\b/);
+    const tagsInsert = /INSERT INTO tags \([\s\S]*?;/.exec(body)?.[0] ?? "";
+    expect(tagsInsert).not.toContain("ON CONFLICT");
   });
 });

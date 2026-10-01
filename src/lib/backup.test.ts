@@ -11,6 +11,8 @@ import {
   GOALS_COLUMNS,
   ALLOCATION_CARDS_COLUMNS,
   ALLOCATION_TARGETS_COLUMNS,
+  TAGS_COLUMNS,
+  ASSET_TAGS_COLUMNS,
   validateEnvelope,
 } from "@/lib/backup";
 
@@ -162,6 +164,24 @@ function makeInput(): BackupInput {
         target_pct: 60,
         created_at: ISO,
         updated_at: ISO,
+      },
+    ],
+    tags: [
+      {
+        id: "tag-1",
+        user_id: "user-1",
+        name: "Long term",
+        show_on_dashboard: true,
+        created_at: ISO,
+        updated_at: ISO,
+      },
+    ],
+    asset_tags: [
+      {
+        asset_id: "asset-1",
+        tag_id: "tag-1",
+        user_id: "user-1",
+        created_at: ISO,
       },
     ],
   };
@@ -508,7 +528,7 @@ describe("allocation cards and targets (schemaVersion 3)", () => {
 
   it("serialize carries both tables with every whitelisted column", () => {
     const env = serialize(makeInput(), ISO);
-    expect(env.schemaVersion).toBe(3);
+    expect(env.schemaVersion).toBeGreaterThanOrEqual(3);
     const card = env.data.allocation_cards[0] as Record<string, unknown>;
     for (const col of ALLOCATION_CARDS_COLUMNS) expect(card).toHaveProperty(col);
     const target = env.data.allocation_targets[0] as Record<string, unknown>;
@@ -542,6 +562,8 @@ describe("allocation cards and targets (schemaVersion 3)", () => {
     env.schemaVersion = 2;
     delete env.data.allocation_cards;
     delete env.data.allocation_targets;
+    delete env.data.tags;
+    delete env.data.asset_tags;
     const data = validated(env);
     expect(data.goals).toHaveLength(2);
     expect(data.allocation_cards).toEqual([]);
@@ -645,6 +667,8 @@ describe("allocation cards and targets (schemaVersion 3)", () => {
       { ...input.assets[0], id: "a-etf", name: "World ETF", category_id: "cat-stocks" },
     ];
     input.allocation_cards = [{ ...input.allocation_cards[0], id: "c-core" }];
+    // The fixture's one tag link points at the asset this test replaces.
+    input.asset_tags = [];
     input.allocation_targets = [
       { ...input.allocation_targets[0], id: "t-cash", card_id: "c-core", asset_id: "a-cash", target_pct: 12.5 },
       { ...input.allocation_targets[0], id: "t-etf", card_id: "c-core", asset_id: "a-etf", target_pct: 87.5 },
@@ -666,6 +690,256 @@ describe("allocation cards and targets (schemaVersion 3)", () => {
       expect(newAssetName.get(after.asset_id as string)).toBe(originalAssetName.get(before.asset_id));
       expect(after.card_id).toBe(prepared.allocation_cards[0].id);
       expect(after.target_pct).toBe(before.target_pct);
+    });
+  });
+});
+
+// Slice B1a: asset tags join the envelope in schemaVersion 4.
+describe("asset tags (schemaVersion 4)", () => {
+  function validated(env: unknown) {
+    const result = validateEnvelope(env, VALID_CATEGORIES);
+    if (!result.ok) throw new Error(`fixture should validate: ${result.code} ${result.message}`);
+    return result.data;
+  }
+
+  function fileOf(input: BackupInput): { schemaVersion: number; data: Record<string, unknown[] | undefined> } {
+    return JSON.parse(JSON.stringify(serialize(input, ISO))) as {
+      schemaVersion: number;
+      data: Record<string, unknown[] | undefined>;
+    };
+  }
+
+  it("serialize carries both tables with every whitelisted column, at schemaVersion 4", () => {
+    const env = serialize(makeInput(), ISO);
+    expect(CURRENT_SCHEMA_VERSION).toBe(4);
+    expect(env.schemaVersion).toBe(4);
+    const tag = env.data.tags[0] as Record<string, unknown>;
+    for (const col of TAGS_COLUMNS) expect(tag).toHaveProperty(col);
+    expect(tag).toHaveProperty("show_on_dashboard", true);
+    const link = env.data.asset_tags[0] as Record<string, unknown>;
+    for (const col of ASSET_TAGS_COLUMNS) expect(link).toHaveProperty(col);
+  });
+
+  it.each([1, 2, 3])("a v%i file (no tag keys) validates and normalises both tag sections to []", (version) => {
+    const env = fileOf(makeInput());
+    env.schemaVersion = version;
+    delete env.data.tags;
+    delete env.data.asset_tags;
+    if (version < 3) {
+      delete env.data.allocation_cards;
+      delete env.data.allocation_targets;
+    }
+    if (version < 2) delete env.data.goals;
+    const data = validated(env);
+    expect(data.tags).toEqual([]);
+    expect(data.asset_tags).toEqual([]);
+    expect(data.assets).toHaveLength(1);
+    const prepared = prepareForImport(data, () => "x");
+    expect(prepared.tags).toEqual([]);
+    expect(prepared.asset_tags).toEqual([]);
+  });
+
+  it.each(["tags", "asset_tags"])("rejects a `%s` key that is present but not an array", (table) => {
+    const env = serialize(makeInput(), ISO);
+    const result = validateEnvelope({ ...env, data: { ...env.data, [table]: {} } }, VALID_CATEGORIES);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe("INVALID_ENVELOPE");
+      expect(result.context).toMatchObject({ table });
+    }
+  });
+
+  it.each([
+    ["tags", "name"],
+    ["asset_tags", "asset_id"],
+    ["asset_tags", "tag_id"],
+  ])("rejects a %s row missing %s", (table, field) => {
+    const env = fileOf(makeInput());
+    const rows = env.data[table] as Record<string, unknown>[];
+    rows[0] = Object.fromEntries(Object.entries(rows[0]).filter(([key]) => key !== field));
+    const result = validateEnvelope(env, VALID_CATEGORIES);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.context).toMatchObject({ table, index: 0, field });
+  });
+
+  it.each([
+    ["empty", ""],
+    ["untrimmed", " Long term"],
+    ["33 characters", "x".repeat(33)],
+    ["not a string", 7],
+  ])("rejects a tag whose name is %s", (_label, name) => {
+    const env = fileOf(makeInput());
+    (env.data.tags as Record<string, unknown>[])[0].name = name;
+    const result = validateEnvelope(env, VALID_CATEGORIES);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe("INVALID_ROW");
+      expect(result.context).toEqual({ table: "tags", index: 0, field: "name" });
+    }
+  });
+
+  it("rejects two tags whose names differ only in case, naming them", () => {
+    const input = makeInput();
+    input.tags.push({ ...input.tags[0], id: "tag-2", name: "LONG TERM" });
+    const result = validateEnvelope(fileOf(input), VALID_CATEGORIES);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe("DUPLICATE_TAG_NAME");
+    expect(result.context).toEqual({ table: "tags", duplicateNames: ["Long term"] });
+  });
+
+  it("rejects links whose asset or tag is not in the file, by name, and lists every offender", () => {
+    const input = makeInput();
+    input.asset_tags = [
+      { ...input.asset_tags[0], asset_id: "asset-gone" },
+      { ...input.asset_tags[0], tag_id: "tag-gone" },
+      { ...input.asset_tags[0], asset_id: "asset-gone", tag_id: "tag-gone" },
+      { ...input.asset_tags[0] },
+    ];
+    const result = validateEnvelope(fileOf(input), VALID_CATEGORIES);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe("ORPHAN_ASSET_TAG");
+    expect(result.context).toEqual({
+      table: "asset_tags",
+      orphanAssetTags: [
+        { index: 0, missing: ["asset_id"] },
+        { index: 1, missing: ["tag_id"] },
+        { index: 2, missing: ["asset_id", "tag_id"] },
+      ],
+    });
+  });
+
+  // The import remap, table-tested (T5). Every case carries two assets. Fresh
+  // ids are handed out in order: assets (id-1, id-2), snapshots (id-3, id-4),
+  // the card (id-5), then tags from id-6.
+  const remapCases: {
+    label: string;
+    tags: { id: string; name: string }[];
+    links: [string, string][];
+    expected: [string, string][];
+  }[] = [
+    { label: "no tags, no links", tags: [], links: [], expected: [] },
+    {
+      label: "one asset with one tag",
+      tags: [{ id: "t-a", name: "A" }],
+      links: [["asset-1", "t-a"]],
+      expected: [["id-1", "id-6"]],
+    },
+    {
+      label: "one asset with two tags",
+      tags: [
+        { id: "t-a", name: "A" },
+        { id: "t-b", name: "B" },
+      ],
+      links: [
+        ["asset-1", "t-a"],
+        ["asset-1", "t-b"],
+      ],
+      expected: [
+        ["id-1", "id-6"],
+        ["id-1", "id-7"],
+      ],
+    },
+    {
+      label: "one tag on two assets",
+      tags: [{ id: "t-a", name: "A" }],
+      links: [
+        ["asset-1", "t-a"],
+        ["asset-2", "t-a"],
+      ],
+      expected: [
+        ["id-1", "id-6"],
+        ["id-2", "id-6"],
+      ],
+    },
+    {
+      label: "links listed out of order keep their order",
+      tags: [
+        { id: "t-a", name: "A" },
+        { id: "t-b", name: "B" },
+      ],
+      links: [
+        ["asset-2", "t-b"],
+        ["asset-1", "t-a"],
+      ],
+      expected: [
+        ["id-2", "id-7"],
+        ["id-1", "id-6"],
+      ],
+    },
+    {
+      label: "a tag with no links still gets a fresh id",
+      tags: [
+        { id: "t-a", name: "A" },
+        { id: "t-unused", name: "Unused" },
+      ],
+      links: [["asset-1", "t-a"]],
+      expected: [["id-1", "id-6"]],
+    },
+  ];
+
+  it.each(remapCases)("prepareForImport remaps links: $label", ({ tags, links, expected }) => {
+    const input = makeInput();
+    input.assets.push({ ...input.assets[0], id: "asset-2", name: "Brokerage" });
+    input.tags = tags.map((t) => ({ ...input.tags[0], ...t }));
+    input.asset_tags = links.map(([asset_id, tag_id]) => ({ ...input.asset_tags[0], asset_id, tag_id }));
+    let n = 0;
+    const prepared = prepareForImport(validated(fileOf(input)), () => `id-${++n}`);
+
+    expect(prepared.tags.map((t) => t.id)).toEqual(tags.map((_, i) => `id-${6 + i}`));
+    expect(prepared.tags.map((t) => t.name)).toEqual(tags.map((t) => t.name));
+    expect(prepared.asset_tags.map((l) => [l.asset_id, l.tag_id])).toEqual(expected);
+    for (const tag of prepared.tags) expect(tag).not.toHaveProperty("user_id");
+    for (const link of prepared.asset_tags) {
+      expect(Object.keys(link).sort()).toEqual(ASSET_TAGS_COLUMNS.filter((c) => c !== "user_id").sort());
+    }
+    // No original id survives anywhere in the tag payload.
+    const payload = JSON.stringify([prepared.tags, prepared.asset_tags]);
+    for (const old of ["asset-1", "asset-2", ...tags.map((t) => t.id)]) expect(payload).not.toContain(`"${old}"`);
+  });
+
+  it("prepareForImport keeps show_on_dashboard and the timestamps of each tag", () => {
+    const prepared = prepareForImport(validated(fileOf(makeInput())), () => "fresh");
+    expect(prepared.tags).toEqual([
+      { id: "fresh", name: "Long term", show_on_dashboard: true, created_at: ISO, updated_at: ISO },
+    ]);
+  });
+
+  it("round trip: 2 assets, 2 tags, 3 links → each link points at the new ids of the same asset and tag", () => {
+    const input = makeInput();
+    input.assets = [
+      { ...input.assets[0], id: "a-cash", name: "Checking" },
+      { ...input.assets[0], id: "a-etf", name: "World ETF", category_id: "cat-stocks" },
+    ];
+    input.allocation_targets = [];
+    input.tags = [
+      { ...input.tags[0], id: "t-safe", name: "Safe" },
+      { ...input.tags[0], id: "t-growth", name: "Growth", show_on_dashboard: false },
+    ];
+    input.asset_tags = [
+      { ...input.asset_tags[0], asset_id: "a-cash", tag_id: "t-safe" },
+      { ...input.asset_tags[0], asset_id: "a-etf", tag_id: "t-growth" },
+      { ...input.asset_tags[0], asset_id: "a-etf", tag_id: "t-safe" },
+    ];
+    const assetName = new Map(input.assets.map((a) => [a.id, a.name]));
+    const tagName = new Map(input.tags.map((t) => [t.id, t.name]));
+
+    let n = 0;
+    const prepared = prepareForImport(
+      validated(fileOf(input)),
+      () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`,
+    );
+
+    const newAssetName = new Map(prepared.assets.map((a) => [a.id as string, a.name as string]));
+    const newTagName = new Map(prepared.tags.map((t) => [t.id as string, t.name as string]));
+    expect(prepared.asset_tags).toHaveLength(3);
+    input.asset_tags.forEach((before, i) => {
+      const after = prepared.asset_tags[i];
+      expect(after.asset_id).not.toBe(before.asset_id);
+      expect(after.tag_id).not.toBe(before.tag_id);
+      expect(newAssetName.get(after.asset_id as string)).toBe(assetName.get(before.asset_id));
+      expect(newTagName.get(after.tag_id as string)).toBe(tagName.get(before.tag_id));
     });
   });
 });

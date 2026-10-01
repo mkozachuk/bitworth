@@ -228,4 +228,44 @@ describe("POST /api/backup/import", () => {
     expect(json.error.code).toBe("ORPHAN_ALLOCATION_TARGET");
     expect(rpcCall(m)).toBeUndefined();
   });
+
+  it("remaps asset tags to the fresh asset and tag ids in the RPC payload (schemaVersion 4)", async () => {
+    const m = authedMock();
+    mocks.factory = () => m;
+
+    const body = validBody("merge", { schemaVersion: 4 });
+    const data = body.data as Record<string, unknown[]>;
+    data.tags = [{ id: "tag-1", user_id: userA, name: "Core", show_on_dashboard: true }];
+    data.asset_tags = [{ asset_id: "asset-a", tag_id: "tag-1", user_id: userA }];
+
+    const response = await POST({ request: makeRequest(body), cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(200);
+    const [, args] = (rpcCall(m)?.args ?? []) as [string, { p_mode: string; p_data: Record<string, unknown[]> }];
+    const asset = args.p_data.assets[0] as { id: string };
+    const tag = args.p_data.tags[0] as Record<string, unknown>;
+    expect(tag).toEqual({
+      id: expect.stringMatching(/^[0-9a-f-]{36}$/) as unknown,
+      name: "Core",
+      show_on_dashboard: true,
+    });
+    expect(tag.id).not.toBe("tag-1");
+    expect(args.p_data.asset_tags).toEqual([{ asset_id: asset.id, tag_id: tag.id }]);
+  });
+
+  it("returns 400 ORPHAN_ASSET_TAG for a link whose tag is not in the file, without calling the RPC", async () => {
+    const m = authedMock();
+    mocks.factory = () => m;
+
+    const body = validBody("merge", { schemaVersion: 4 });
+    const data = body.data as Record<string, unknown[]>;
+    data.tags = [];
+    data.asset_tags = [{ asset_id: "asset-a", tag_id: "tag-elsewhere" }];
+
+    const response = await POST({ request: makeRequest(body), cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(400);
+    const json = (await response.json()) as { error: { code: string; context: unknown } };
+    expect(json.error.code).toBe("ORPHAN_ASSET_TAG");
+    expect(json.error.context).toEqual({ table: "asset_tags", orphanAssetTags: [{ index: 0, missing: ["tag_id"] }] });
+    expect(rpcCall(m)).toBeUndefined();
+  });
 });

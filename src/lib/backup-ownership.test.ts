@@ -55,7 +55,8 @@ describe("backup ownership guard (database.types.ts)", () => {
     // Sanity anchors: if the generator's layout changes and parsing silently
     // returns [], the guard below would pass against nothing.
     expect(owned).toEqual(expect.arrayContaining(["assets", "snapshots", "user_preferences", "snapshot_items"]));
-    expect(owned.length).toBeGreaterThanOrEqual(7);
+    expect(owned.length).toBeGreaterThanOrEqual(9);
+    expect(owned).toEqual(expect.arrayContaining(["tags", "asset_tags"]));
     // Tables with no user_id (global reference data and caches) are not swept in.
     expect(allTables(source)).toContain("asset_categories");
     expect(owned).not.toContain("asset_categories");

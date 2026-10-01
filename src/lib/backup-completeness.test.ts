@@ -3,10 +3,12 @@ import { describe, expect, it } from "vitest";
 import {
   ALLOCATION_CARDS_COLUMNS,
   ALLOCATION_TARGETS_COLUMNS,
+  ASSET_TAGS_COLUMNS,
   ASSETS_COLUMNS,
   GOALS_COLUMNS,
   SNAPSHOTS_COLUMNS,
   SNAPSHOT_ITEMS_COLUMNS,
+  TAGS_COLUMNS,
   USER_PREFERENCES_COLUMNS,
 } from "@/lib/backup";
 
@@ -36,6 +38,8 @@ const NOT_BACKED_UP: Record<string, readonly string[]> = {
   goals: [],
   allocation_cards: [],
   allocation_targets: [],
+  tags: [],
+  asset_tags: [],
 };
 
 // The generator emits each table as
@@ -61,6 +65,8 @@ const TABLES = [
   ["goals", GOALS_COLUMNS],
   ["allocation_cards", ALLOCATION_CARDS_COLUMNS],
   ["allocation_targets", ALLOCATION_TARGETS_COLUMNS],
+  ["tags", TAGS_COLUMNS],
+  ["asset_tags", ASSET_TAGS_COLUMNS],
 ] as const;
 
 describe("backup export completeness (database.types.ts)", () => {
@@ -72,9 +78,11 @@ describe("backup export completeness (database.types.ts)", () => {
   it.each(TABLES)("%s: the Row parser reads the table, not an empty block", (table) => {
     // Without this, a change in the generator's layout could make every table
     // parse as [] and the guard above would compare against nothing useful.
+    // asset_tags is a pure link table with 4 columns (asset_id, tag_id,
+    // user_id, created_at), so 4 is the floor; every other table has more.
     const cols = rowColumns(source, table);
     expect(cols).toContain("created_at");
-    expect(cols.length).toBeGreaterThanOrEqual(5);
+    expect(cols.length).toBeGreaterThanOrEqual(4);
   });
 
   it("every exclusion names a real column", () => {

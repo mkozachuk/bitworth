@@ -1,4 +1,5 @@
 import type { Tables } from "./database.types";
+import { duplicateTagNames, validateTagName } from "./tags";
 
 // Pure, synchronous backup (de)serialization module. No Supabase imports, no
 // `Date.now()`/`crypto.randomUUID()` — every non-deterministic input is injected
@@ -19,7 +20,9 @@ import type { Tables } from "./database.types";
 // Bumped to 3 when `allocation_cards` and `allocation_targets` (the balancer)
 // joined. Version 1 and 2 files carry neither key; both normalise to `[]` the
 // same way `goals` does for version 1.
-export const CURRENT_SCHEMA_VERSION = 3;
+// Bumped to 4 when `tags` and `asset_tags` (asset tags, B1a) joined. Version
+// 1–3 files carry neither key; both normalise to `[]` by the same rule.
+export const CURRENT_SCHEMA_VERSION = 4;
 
 type UserPreferencesRow = Tables<"user_preferences">;
 type AssetRow = Tables<"assets">;
@@ -28,6 +31,8 @@ type SnapshotItemRow = Tables<"snapshot_items">;
 type GoalRow = Tables<"goals">;
 type AllocationCardRow = Tables<"allocation_cards">;
 type AllocationTargetRow = Tables<"allocation_targets">;
+type TagRow = Tables<"tags">;
+type AssetTagRow = Tables<"asset_tags">;
 
 // Column-explicit whitelists. Typed as `(keyof Row)[]` so a typo or a dropped
 // column fails `tsc` rather than silently shrinking the backup. Whole-row by
@@ -144,6 +149,28 @@ export const ALLOCATION_TARGETS_COLUMNS = [
   "updated_at",
 ] as const satisfies readonly (keyof AllocationTargetRow)[];
 
+// User-defined asset tags. `id` is exported because asset_tags references it;
+// `prepareForImport` gives each tag a fresh id and remaps the links. In merge
+// mode `restore_backup` folds a tag into the user's existing tag of the same
+// name (ignoring case) instead of inserting a second one.
+export const TAGS_COLUMNS = [
+  "id",
+  "user_id",
+  "name",
+  "show_on_dashboard",
+  "created_at",
+  "updated_at",
+] as const satisfies readonly (keyof TagRow)[];
+
+// Asset↔tag links. No id of their own (the key is the pair); both halves point
+// at rows whose ids are regenerated on import, so `prepareForImport` remaps both.
+export const ASSET_TAGS_COLUMNS = [
+  "asset_id",
+  "tag_id",
+  "user_id",
+  "created_at",
+] as const satisfies readonly (keyof AssetTagRow)[];
+
 type UserPreferencesBackup = Pick<UserPreferencesRow, (typeof USER_PREFERENCES_COLUMNS)[number]>;
 type AssetBackup = Pick<AssetRow, (typeof ASSETS_COLUMNS)[number]>;
 type SnapshotBackup = Pick<SnapshotRow, (typeof SNAPSHOTS_COLUMNS)[number]>;
@@ -151,6 +178,8 @@ type SnapshotItemBackup = Pick<SnapshotItemRow, (typeof SNAPSHOT_ITEMS_COLUMNS)[
 type GoalBackup = Pick<GoalRow, (typeof GOALS_COLUMNS)[number]>;
 type AllocationCardBackup = Pick<AllocationCardRow, (typeof ALLOCATION_CARDS_COLUMNS)[number]>;
 type AllocationTargetBackup = Pick<AllocationTargetRow, (typeof ALLOCATION_TARGETS_COLUMNS)[number]>;
+type TagBackup = Pick<TagRow, (typeof TAGS_COLUMNS)[number]>;
+type AssetTagBackup = Pick<AssetTagRow, (typeof ASSET_TAGS_COLUMNS)[number]>;
 
 export interface BackupData {
   user_preferences: UserPreferencesBackup[];
@@ -160,6 +189,8 @@ export interface BackupData {
   goals: GoalBackup[];
   allocation_cards: AllocationCardBackup[];
   allocation_targets: AllocationTargetBackup[];
+  tags: TagBackup[];
+  asset_tags: AssetTagBackup[];
 }
 
 export interface BackupEnvelope {
@@ -179,6 +210,8 @@ export interface BackupInput {
   goals: GoalRow[];
   allocation_cards: AllocationCardRow[];
   allocation_targets: AllocationTargetRow[];
+  tags: TagRow[];
+  asset_tags: AssetTagRow[];
 }
 
 // Required NOT-NULL-no-default fields per table (ownership `user_id` and
@@ -200,6 +233,8 @@ const REQUIRED_FIELDS = {
   goals: ["name", "kind", "target_amount", "target_currency"] as const,
   allocation_cards: ["name"] as const,
   allocation_targets: ["card_id", "asset_id", "target_pct"] as const,
+  tags: ["name"] as const,
+  asset_tags: ["asset_id", "tag_id"] as const,
 };
 
 // Timestamp columns to validate (ISO-8601 if present). `goals.target_date` is a
@@ -213,6 +248,8 @@ const TIMESTAMP_FIELDS = {
   goals: ["created_at", "updated_at"] as const,
   allocation_cards: ["created_at", "updated_at"] as const,
   allocation_targets: ["created_at", "updated_at"] as const,
+  tags: ["created_at", "updated_at"] as const,
+  asset_tags: ["created_at"] as const,
 };
 
 function pick(row: Record<string, unknown>, columns: readonly string[]): Record<string, unknown> {
@@ -261,6 +298,8 @@ export function serialize(data: BackupInput, exportedAt: string): BackupEnvelope
       allocation_targets: data.allocation_targets.map((r) =>
         pick(r, ALLOCATION_TARGETS_COLUMNS),
       ) as AllocationTargetBackup[],
+      tags: data.tags.map((r) => pick(r, TAGS_COLUMNS)) as TagBackup[],
+      asset_tags: data.asset_tags.map((r) => pick(r, ASSET_TAGS_COLUMNS)) as AssetTagBackup[],
     },
   };
 }
@@ -318,7 +357,8 @@ export function validateEnvelope(parsed: unknown, validCategoryIds: ReadonlySet<
   // still an error.
   // The allocation tables joined in schemaVersion 3 and follow the same rule:
   // absent (v1/v2 file) normalises to `[]`, present-but-not-an-array fails.
-  const optionalTables = ["goals", "allocation_cards", "allocation_targets"] as const;
+  // The tag tables joined in schemaVersion 4, same rule again.
+  const optionalTables = ["goals", "allocation_cards", "allocation_targets", "tags", "asset_tags"] as const;
   for (const table of optionalTables) {
     if (data[table] !== undefined && data[table] !== null && !Array.isArray(data[table])) {
       return fail("INVALID_ENVELOPE", `Backup \`${table}\` section is not an array.`, { table });
@@ -416,6 +456,50 @@ export function validateEnvelope(parsed: unknown, validCategoryIds: ReadonlySet<
     });
   }
 
+  // Tag names follow the API's rule (trimmed, 1–32 characters). A file name
+  // that is not already in stored form is rejected rather than silently
+  // rewritten, so what is restored is exactly what the file says.
+  const tagRows = normalised.tags as Record<string, unknown>[];
+  for (let i = 0; i < tagRows.length; i++) {
+    const checked = validateTagName(tagRows[i].name);
+    if (!checked.ok || checked.name !== tagRows[i].name) {
+      return fail("INVALID_ROW", `Row ${i} in \`tags\` has an invalid \`name\`.`, {
+        table: "tags",
+        index: i,
+        field: "name",
+      });
+    }
+  }
+
+  // Names are unique per user regardless of case. Two such tags in one file
+  // could never have been exported together, and the restore could not keep
+  // both (the unique index on lower(name) would roll it back), so say so here.
+  const duplicateNames = duplicateTagNames(tagRows.map((r) => r.name as string));
+  if (duplicateNames.length > 0) {
+    return fail("DUPLICATE_TAG_NAME", "Backup has tags whose names differ only in case.", {
+      table: "tags",
+      duplicateNames,
+    });
+  }
+
+  // Every asset↔tag link must point at an asset AND a tag carried in this file,
+  // for the same reason as allocation targets above: an original id can still
+  // exist in the database in merge mode and would be silently accepted.
+  const fileTagIds = new Set<unknown>(tagRows.map((r) => r.id).filter((id) => typeof id === "string"));
+  const orphanAssetTags: { index: number; missing: ("asset_id" | "tag_id")[] }[] = [];
+  (normalised.asset_tags as Record<string, unknown>[]).forEach((row, index) => {
+    const missing: ("asset_id" | "tag_id")[] = [];
+    if (!fileAssetIds.has(row.asset_id)) missing.push("asset_id");
+    if (!fileTagIds.has(row.tag_id)) missing.push("tag_id");
+    if (missing.length > 0) orphanAssetTags.push({ index, missing });
+  });
+  if (orphanAssetTags.length > 0) {
+    return fail("ORPHAN_ASSET_TAG", "Backup has asset tags whose asset or tag is not in the file.", {
+      table: "asset_tags",
+      orphanAssetTags,
+    });
+  }
+
   return { ok: true, data: normalised as unknown as BackupData };
 }
 
@@ -427,14 +511,16 @@ export interface PreparedBackup {
   goals: Record<string, unknown>[];
   allocation_cards: Record<string, unknown>[];
   allocation_targets: Record<string, unknown>[];
+  tags: Record<string, unknown>[];
+  asset_tags: Record<string, unknown>[];
 }
 
 /**
  * Transform validated data into an RPC-ready, internally-consistent payload:
  * drop ownership fields (`user_id`) and auto-generated `id`s, regenerate each
- * parent id (`snapshots`, `assets`, `allocation_cards`), and remap every child
- * FK (`snapshot_items.snapshot_id`, `allocation_targets.asset_id`/`card_id`) to
- * its new parent. `newId` is injected for deterministic tests (no `crypto.randomUUID()`
+ * parent id (`snapshots`, `assets`, `allocation_cards`, `tags`), and remap every
+ * child FK (`snapshot_items.snapshot_id`, `allocation_targets.asset_id`/`card_id`,
+ * `asset_tags.asset_id`/`tag_id`) to its new parent. `newId` is injected for deterministic tests (no `crypto.randomUUID()`
  * here). `user_preferences` stays keyed on the user (the RPC upserts it and
  * stamps `user_id` itself), so its `user_id` is dropped too.
  */
@@ -498,5 +584,39 @@ export function prepareForImport(data: BackupData, newId: () => string): Prepare
     };
   });
 
-  return { user_preferences, assets, snapshots, snapshot_items, goals, allocation_cards, allocation_targets };
+  // Tags get a fresh id so the links can be remapped to it. In merge mode the
+  // RPC may fold a tag into the user's existing one of the same name; it then
+  // resolves the link through this fresh id to that tag (see the migration).
+  const tagIdMap = new Map<string, string>();
+  const tags = data.tags.map((r) => {
+    const row = r as Record<string, unknown>;
+    const fresh = newId();
+    if (typeof row.id === "string") tagIdMap.set(row.id, fresh);
+    return { ...omit(row, ["user_id"]), id: fresh };
+  });
+
+  // Links have no id and no children: shed ownership, remap both halves. The
+  // `??` fallback is the same backstop as for allocation targets.
+  const asset_tags = data.asset_tags.map((r) => {
+    const row = omit(r, ["user_id"]);
+    const oldAssetId = row.asset_id as string;
+    const oldTagId = row.tag_id as string;
+    return {
+      ...row,
+      asset_id: assetIdMap.get(oldAssetId) ?? oldAssetId,
+      tag_id: tagIdMap.get(oldTagId) ?? oldTagId,
+    };
+  });
+
+  return {
+    user_preferences,
+    assets,
+    snapshots,
+    snapshot_items,
+    goals,
+    allocation_cards,
+    allocation_targets,
+    tags,
+    asset_tags,
+  };
 }
