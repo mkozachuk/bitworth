@@ -8,6 +8,7 @@ import { NetWorthDisplay } from "@/components/assets/NetWorthDisplay";
 import { AssetsSummary } from "@/components/assets/AssetsSummary";
 import { NetWorthChart } from "@/components/NetWorthChart";
 import { ContributionsChart } from "@/components/ContributionsChart";
+import { SavingsRateCard } from "@/components/SavingsRateCard";
 import { TopMovers } from "@/components/assets/TopMovers";
 import { AssetTrendsChart, type SnapshotItemWithDate } from "@/components/AssetTrendsChart";
 import { TagTrendsChart, type DashboardTag } from "@/components/TagTrendsChart";
@@ -376,6 +377,12 @@ if (showDriftAlerts) {
             onSaveSnapshot={() => {
               window.location.reload();
             }}
+            client:load
+          />
+          <SavingsRateCard
+            snapshots={snapshots as Tables<"snapshots">[]}
+            displayCurrency={displayCurrency}
+            rates={rates}
             client:load
           />
           <ContributionsChart

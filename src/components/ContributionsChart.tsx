@@ -15,6 +15,8 @@ import type { Tables } from "@/lib/database.types";
 import type { Currency } from "@/lib/net-worth";
 import { buildContributionSplits } from "@/lib/contributions";
 import { EditContributionDialog } from "@/components/assets/EditContributionDialog";
+import { buildSavingsRates, type RateLabel } from "@/lib/savings-rate";
+import { formatRate } from "@/components/SavingsRateCard";
 
 type SnapshotRow = Tables<"snapshots">;
 
@@ -39,6 +41,9 @@ interface ChartRow {
   currNetContribution: number | null;
   currIncome: number | null;
   currDate: string;
+  /** Savings rate for the interval (S-24), or null when unknown. */
+  rate: number | null;
+  rateLabel: RateLabel | null;
 }
 
 interface Props {
@@ -96,6 +101,17 @@ function CustomTooltip({
             <span className="text-foreground/70">Total change</span>
             <span className="ml-auto font-semibold">{formatAmount(row.totalChange, displayCurrency)}</span>
           </p>
+          <p className="flex items-center gap-2">
+            <span className="text-foreground/70">Savings rate</span>
+            {row.rate !== null ? (
+              <span className="ml-auto font-semibold">
+                {formatRate(row.rate)}
+                {row.rateLabel && <span className="text-foreground/70 ml-1 font-normal">({row.rateLabel})</span>}
+              </span>
+            ) : (
+              <span className="text-muted-foreground ml-auto text-xs">add income to see it</span>
+            )}
+          </p>
         </div>
       )}
     </div>
@@ -119,11 +135,17 @@ export function ContributionsChart({ snapshots, displayCurrency, rates }: Props)
       date: s.created_at,
       currId: s.id,
       currNetContribution: s.net_contribution,
-      currIncome: s.income,
+      // `?? null`: a row read before the income migration has no key at all.
+      income: s.income ?? null,
+      currIncome: s.income ?? null,
     };
   });
 
   const intervals = buildContributionSplits(splitInput, displayCurrency, rates);
+  // Same pairs, same order (the rows arrive sorted by created_at and the
+  // module's sort is stable); the date check keeps a mismatch from ever showing
+  // another interval's rate.
+  const savingsRates = buildSavingsRates(splitInput, displayCurrency, rates);
 
   // Each interval N maps to snapshot N (the `curr` of the pair); the first
   // snapshot has no predecessor, so splits start at index 1.
@@ -136,6 +158,8 @@ export function ContributionsChart({ snapshots, displayCurrency, rates }: Props)
       currNetContribution: curr.currNetContribution,
       currIncome: curr.currIncome,
       currDate: curr.date,
+      rate: savingsRates[i]?.date === interval.date ? savingsRates[i].rate : null,
+      rateLabel: savingsRates[i]?.date === interval.date ? savingsRates[i].label : null,
     };
     if (interval.kind === "split") {
       return { ...base, contribution: interval.contribution, growth: interval.growth, isUnknown: false };
@@ -248,6 +272,12 @@ export function ContributionsChart({ snapshots, displayCurrency, rates }: Props)
                     year: "numeric",
                   })}
                   {row.isUnknown && <span className="text-muted-foreground ml-2">unknown split</span>}
+                  {row.rate !== null && (
+                    <span className="text-foreground/70 ml-2" data-testid="interval-savings-rate">
+                      saved {formatRate(row.rate)} of income
+                      {row.rateLabel && ` · ${row.rateLabel}`}
+                    </span>
+                  )}
                 </span>
                 <button
                   type="button"
