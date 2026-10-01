@@ -174,7 +174,8 @@ describe("POST /api/backup/import", () => {
     // prepareForImport strips ownership/id and remaps snapshot_items.snapshot_id
     // to the freshly-generated snapshots.id.
     expect(args.p_data.assets[0]).not.toHaveProperty("user_id");
-    expect(args.p_data.assets[0]).not.toHaveProperty("id");
+    // assets carry a freshly generated id (allocation targets are remapped to it).
+    expect((args.p_data.assets[0] as { id: string }).id).toMatch(/^[0-9a-f-]{36}$/);
     const newSnapshotId = (args.p_data.snapshots[0] as { id: string }).id;
     expect((args.p_data.snapshot_items[0] as { snapshot_id: string }).snapshot_id).toBe(newSnapshotId);
   });
@@ -189,5 +190,42 @@ describe("POST /api/backup/import", () => {
     const json = (await response.json()) as { error: { code: string; context?: unknown } };
     expect(json.error.code).toBe("RESTORE_FAILED");
     expect(json.error.context).toBe("boom");
+  });
+
+  it("remaps allocation targets to the fresh asset and card ids in the RPC payload", async () => {
+    const m = authedMock();
+    mocks.factory = () => m;
+
+    const body = validBody("merge", { schemaVersion: 3 });
+    const data = body.data as Record<string, unknown[]>;
+    data.allocation_cards = [{ id: "card-1", user_id: userA, name: "Core", position: 0 }];
+    data.allocation_targets = [{ id: "t-1", user_id: userA, card_id: "card-1", asset_id: "asset-a", target_pct: 100 }];
+
+    const response = await POST({ request: makeRequest(body), cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(200);
+    const [, args] = (rpcCall(m)?.args ?? []) as [string, { p_mode: string; p_data: Record<string, unknown[]> }];
+    expect(args.p_mode).toBe("merge");
+    const asset = args.p_data.assets[0] as { id: string };
+    const card = args.p_data.allocation_cards[0] as { id: string };
+    const target = args.p_data.allocation_targets[0] as Record<string, unknown>;
+    expect(asset.id).not.toBe("asset-a");
+    expect(card.id).not.toBe("card-1");
+    expect(target).toEqual({ card_id: card.id, asset_id: asset.id, target_pct: 100 });
+  });
+
+  it("returns 400 ORPHAN_ALLOCATION_TARGET for a target whose asset is not in the file, without calling the RPC", async () => {
+    const m = authedMock();
+    mocks.factory = () => m;
+
+    const body = validBody("replace", { schemaVersion: 3 });
+    const data = body.data as Record<string, unknown[]>;
+    data.allocation_cards = [{ id: "card-1", name: "Core" }];
+    data.allocation_targets = [{ card_id: "card-1", asset_id: "asset-elsewhere", target_pct: 50 }];
+
+    const response = await POST({ request: makeRequest(body), cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(400);
+    const json = (await response.json()) as { error: { code: string } };
+    expect(json.error.code).toBe("ORPHAN_ALLOCATION_TARGET");
+    expect(rpcCall(m)).toBeUndefined();
   });
 });

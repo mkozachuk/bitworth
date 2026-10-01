@@ -1,6 +1,8 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  ALLOCATION_CARDS_COLUMNS,
+  ALLOCATION_TARGETS_COLUMNS,
   ASSETS_COLUMNS,
   GOALS_COLUMNS,
   SNAPSHOTS_COLUMNS,
@@ -23,14 +25,18 @@ import {
 
 const MIGRATIONS_DIR = new URL("../../supabase/migrations/", import.meta.url);
 
-// Columns the RPC deliberately omits: `prepareForImport` strips these parent ids
-// and the function regenerates or remaps them. Everything else must match.
+// Columns the RPC deliberately omits: `prepareForImport` strips these ids and
+// the database generates them. Everything else must match. `assets.id` and
+// `allocation_cards.id` are NOT omitted: prepareForImport regenerates them so
+// targets can be remapped, and the RPC inserts them as given.
 const INTENTIONALLY_OMITTED: Record<string, readonly string[]> = {
   user_preferences: [],
-  assets: ["id"],
+  assets: [],
   snapshots: [],
   snapshot_items: ["id"],
   goals: ["id"],
+  allocation_cards: [],
+  allocation_targets: ["id"],
 };
 
 function latestRestoreBackupMigration(): { name: string; sql: string } {
@@ -77,6 +83,8 @@ const TABLES = [
   ["snapshots", SNAPSHOTS_COLUMNS],
   ["snapshot_items", SNAPSHOT_ITEMS_COLUMNS],
   ["goals", GOALS_COLUMNS],
+  ["allocation_cards", ALLOCATION_CARDS_COLUMNS],
+  ["allocation_targets", ALLOCATION_TARGETS_COLUMNS],
 ] as const;
 
 describe(`restore_backup import parity (${migrationName})`, () => {
@@ -131,5 +139,81 @@ describe(`restore_backup snapshots.net_contribution (${migrationName})`, () => {
     expect(idx).toBeGreaterThanOrEqual(0);
     expect(exprs).toHaveLength(inserts.snapshots.length);
     expect(exprs[idx]).toBe("r.net_contribution");
+  });
+});
+
+// Slice C2. `INSERT ... SELECT` expressions for any table, split on top-level
+// commas, so a test can read what the RPC actually writes into a column.
+function selectExpressions(sql: string, table: string): string[] {
+  const block = new RegExp(
+    `INSERT INTO ${table} \\([^)]*\\)\\s*SELECT([\\s\\S]*?)FROM jsonb_populate_recordset\\(null::${table}, p_data->'${table}'\\) AS r;`,
+  ).exec(sql);
+  if (!block) throw new Error(`no ${table} INSERT ... SELECT ... FROM jsonb_populate_recordset block found`);
+  const exprs: string[] = [];
+  let depth = 0;
+  let current = "";
+  for (const ch of block[1]) {
+    if (ch === "(") depth++;
+    if (ch === ")") depth--;
+    if (ch === "," && depth === 0) {
+      exprs.push(current.trim());
+      current = "";
+    } else {
+      current += ch;
+    }
+  }
+  exprs.push(current.trim());
+  return exprs.filter(Boolean);
+}
+
+function expressionFor(table: string, column: string): string {
+  const idx = inserts[table].indexOf(column);
+  if (idx < 0) throw new Error(`${table}.${column} is not in the INSERT column list`);
+  const exprs = selectExpressions(sql, table);
+  expect(exprs).toHaveLength(inserts[table].length);
+  return exprs[idx];
+}
+
+describe(`restore_backup allocation cards and targets (${migrationName})`, () => {
+  it("assets are inserted with the id from the payload, so the target remap holds", () => {
+    // The fallback only serves a payload with no asset ids (a pre-v3 client).
+    expect(expressionFor("assets", "id")).toBe("COALESCE(r.id, gen_random_uuid())");
+  });
+
+  it("cards are inserted with their payload id; targets with the remapped card_id and asset_id", () => {
+    expect(expressionFor("allocation_cards", "id")).toBe("r.id");
+    expect(expressionFor("allocation_targets", "card_id")).toBe("r.card_id");
+    expect(expressionFor("allocation_targets", "asset_id")).toBe("r.asset_id");
+    expect(expressionFor("allocation_targets", "target_pct")).toBe("r.target_pct");
+    for (const table of ["allocation_cards", "allocation_targets"]) {
+      expect(expressionFor(table, "user_id")).toBe("v_user");
+    }
+  });
+
+  it("inserts assets and cards before targets", () => {
+    const at = (t: string) => sql.indexOf(`INSERT INTO ${t} (`);
+    expect(at("assets")).toBeGreaterThan(0);
+    expect(at("allocation_cards")).toBeGreaterThan(at("assets"));
+    expect(at("allocation_targets")).toBeGreaterThan(at("allocation_cards"));
+  });
+
+  it("replace mode deletes targets, then cards, before assets; no DELETE runs outside replace mode", () => {
+    // Read the function body only: the migration header prose mentions DELETEs.
+    const body = /AS \$\$([\s\S]*?)\$\$;/.exec(sql)?.[1];
+    if (!body) throw new Error("no function body found");
+    const block = /IF p_mode = 'replace' THEN([\s\S]*?)END IF;/.exec(body);
+    if (!block) throw new Error("no replace-mode block found");
+    const deletes = [...block[1].matchAll(/DELETE FROM (\w+)/g)].map((m) => m[1]);
+    expect(deletes).toEqual([
+      "allocation_targets",
+      "allocation_cards",
+      "snapshot_items",
+      "snapshots",
+      "assets",
+      "goals",
+    ]);
+    // Merge mode must never touch the user's existing cards: every DELETE in
+    // the function sits inside the replace block.
+    expect([...body.matchAll(/DELETE FROM/g)]).toHaveLength(deletes.length);
   });
 });

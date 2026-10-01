@@ -90,6 +90,25 @@ const goalRow = {
   updated_at: "2026-01-01T00:00:00.000Z",
 };
 
+const cardRow = {
+  id: "card-1",
+  user_id: userA,
+  name: "Core",
+  position: 0,
+  created_at: "2026-01-01T00:00:00.000Z",
+  updated_at: "2026-01-01T00:00:00.000Z",
+};
+
+const targetRow = {
+  id: "target-1",
+  user_id: userA,
+  card_id: "card-1",
+  asset_id: "asset-a",
+  target_pct: 100,
+  created_at: "2026-01-01T00:00:00.000Z",
+  updated_at: "2026-01-01T00:00:00.000Z",
+};
+
 function populatedMock() {
   return createSupabaseMock({
     userId: userA,
@@ -99,6 +118,8 @@ function populatedMock() {
       snapshots: { data: [snapshotRow], error: null },
       snapshot_items: { data: [snapshotItemRow], error: null },
       goals: { data: [goalRow], error: null },
+      allocation_cards: { data: [cardRow], error: null },
+      allocation_targets: { data: [targetRow], error: null },
     },
   });
 }
@@ -152,6 +173,8 @@ describe("GET /api/backup/export", () => {
     expect(findCall(m.builders.get("assets")?.__recorded ?? [], "eq", ["user_id", userA])).toBeDefined();
     expect(findCall(m.builders.get("snapshots")?.__recorded ?? [], "eq", ["user_id", userA])).toBeDefined();
     expect(findCall(m.builders.get("goals")?.__recorded ?? [], "eq", ["user_id", userA])).toBeDefined();
+    expect(findCall(m.builders.get("allocation_cards")?.__recorded ?? [], "eq", ["user_id", userA])).toBeDefined();
+    expect(findCall(m.builders.get("allocation_targets")?.__recorded ?? [], "eq", ["user_id", userA])).toBeDefined();
     expect(findCall(m.recorded, "in", ["snapshot_id", ["snap-1"]])).toBeDefined();
   });
 
@@ -167,13 +190,15 @@ describe("GET /api/backup/export", () => {
       data: Record<string, unknown[]>;
     };
     expect(body.app).toBe("bitworth");
-    expect(body.schemaVersion).toBe(2);
+    expect(body.schemaVersion).toBe(3);
     expect(typeof body.exportedAt).toBe("string");
     expect(body.data.user_preferences).toHaveLength(1);
     expect(body.data.assets).toHaveLength(1);
     expect(body.data.snapshots).toHaveLength(1);
     expect(body.data.snapshot_items).toHaveLength(1);
     expect(body.data.goals).toHaveLength(1);
+    expect(body.data.allocation_cards).toEqual([cardRow]);
+    expect(body.data.allocation_targets).toEqual([targetRow]);
   });
 
   it("does not fetch snapshot_items when the user has no snapshots", async () => {
@@ -184,6 +209,8 @@ describe("GET /api/backup/export", () => {
         assets: { data: [], error: null },
         snapshots: { data: [], error: null },
         goals: { data: [], error: null },
+        allocation_cards: { data: [], error: null },
+        allocation_targets: { data: [], error: null },
       },
     });
     mocks.factory = () => m;
@@ -230,5 +257,26 @@ describe("GET /api/backup/export", () => {
     const body = (await response.json()) as { error: { code: string; message: string } };
     expect(body.error.code).toBe("FETCH_FAILED");
     expect(body.error.message).toBe("goals boom");
+  });
+
+  it("returns 500 FETCH_FAILED when an allocation table fetch errors", async () => {
+    const m = createSupabaseMock({
+      userId: userA,
+      tableResults: {
+        user_preferences: { data: [prefsRow], error: null },
+        assets: { data: [assetRow], error: null },
+        snapshots: { data: [], error: null },
+        goals: { data: [], error: null },
+        allocation_cards: { data: [cardRow], error: null },
+        allocation_targets: { data: null, error: { message: "targets boom" } },
+      },
+    });
+    mocks.factory = () => m;
+
+    const response = await GET({ request: makeRequest(), cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(500);
+    const body = (await response.json()) as { error: { code: string; message: string } };
+    expect(body.error.code).toBe("FETCH_FAILED");
+    expect(body.error.message).toBe("targets boom");
   });
 });

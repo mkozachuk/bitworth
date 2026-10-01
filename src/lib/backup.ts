@@ -16,13 +16,18 @@ import type { Tables } from "./database.types";
 // `goals` key at all, so that table is OPTIONAL on read (see `validateEnvelope`)
 // — the version policy below only rejects NEWER files, and treating a missing
 // `goals` array as `[]` is what makes that acceptance real rather than nominal.
-export const CURRENT_SCHEMA_VERSION = 2;
+// Bumped to 3 when `allocation_cards` and `allocation_targets` (the balancer)
+// joined. Version 1 and 2 files carry neither key; both normalise to `[]` the
+// same way `goals` does for version 1.
+export const CURRENT_SCHEMA_VERSION = 3;
 
 type UserPreferencesRow = Tables<"user_preferences">;
 type AssetRow = Tables<"assets">;
 type SnapshotRow = Tables<"snapshots">;
 type SnapshotItemRow = Tables<"snapshot_items">;
 type GoalRow = Tables<"goals">;
+type AllocationCardRow = Tables<"allocation_cards">;
+type AllocationTargetRow = Tables<"allocation_targets">;
 
 // Column-explicit whitelists. Typed as `(keyof Row)[]` so a typo or a dropped
 // column fails `tsc` rather than silently shrinking the backup. Whole-row by
@@ -116,11 +121,36 @@ export const GOALS_COLUMNS = [
   "updated_at",
 ] as const satisfies readonly (keyof GoalRow)[];
 
+// Balancer portfolio cards. `id` is exported because targets reference it;
+// `prepareForImport` gives each card a fresh id and remaps the targets.
+export const ALLOCATION_CARDS_COLUMNS = [
+  "id",
+  "user_id",
+  "name",
+  "position",
+  "created_at",
+  "updated_at",
+] as const satisfies readonly (keyof AllocationCardRow)[];
+
+// Balancer targets: one (card, asset) → target_pct row. Both FKs point at rows
+// whose ids are regenerated on import, so `prepareForImport` remaps both.
+export const ALLOCATION_TARGETS_COLUMNS = [
+  "id",
+  "user_id",
+  "card_id",
+  "asset_id",
+  "target_pct",
+  "created_at",
+  "updated_at",
+] as const satisfies readonly (keyof AllocationTargetRow)[];
+
 type UserPreferencesBackup = Pick<UserPreferencesRow, (typeof USER_PREFERENCES_COLUMNS)[number]>;
 type AssetBackup = Pick<AssetRow, (typeof ASSETS_COLUMNS)[number]>;
 type SnapshotBackup = Pick<SnapshotRow, (typeof SNAPSHOTS_COLUMNS)[number]>;
 type SnapshotItemBackup = Pick<SnapshotItemRow, (typeof SNAPSHOT_ITEMS_COLUMNS)[number]>;
 type GoalBackup = Pick<GoalRow, (typeof GOALS_COLUMNS)[number]>;
+type AllocationCardBackup = Pick<AllocationCardRow, (typeof ALLOCATION_CARDS_COLUMNS)[number]>;
+type AllocationTargetBackup = Pick<AllocationTargetRow, (typeof ALLOCATION_TARGETS_COLUMNS)[number]>;
 
 export interface BackupData {
   user_preferences: UserPreferencesBackup[];
@@ -128,6 +158,8 @@ export interface BackupData {
   snapshots: SnapshotBackup[];
   snapshot_items: SnapshotItemBackup[];
   goals: GoalBackup[];
+  allocation_cards: AllocationCardBackup[];
+  allocation_targets: AllocationTargetBackup[];
 }
 
 export interface BackupEnvelope {
@@ -145,6 +177,8 @@ export interface BackupInput {
   snapshots: SnapshotRow[];
   snapshot_items: SnapshotItemRow[];
   goals: GoalRow[];
+  allocation_cards: AllocationCardRow[];
+  allocation_targets: AllocationTargetRow[];
 }
 
 // Required NOT-NULL-no-default fields per table (ownership `user_id` and
@@ -164,6 +198,8 @@ const REQUIRED_FIELDS = {
     "display_currency",
   ] as const,
   goals: ["name", "kind", "target_amount", "target_currency"] as const,
+  allocation_cards: ["name"] as const,
+  allocation_targets: ["card_id", "asset_id", "target_pct"] as const,
 };
 
 // Timestamp columns to validate (ISO-8601 if present). `goals.target_date` is a
@@ -175,6 +211,8 @@ const TIMESTAMP_FIELDS = {
   snapshots: ["created_at"] as const,
   snapshot_items: ["created_at"] as const,
   goals: ["created_at", "updated_at"] as const,
+  allocation_cards: ["created_at", "updated_at"] as const,
+  allocation_targets: ["created_at", "updated_at"] as const,
 };
 
 function pick(row: Record<string, unknown>, columns: readonly string[]): Record<string, unknown> {
@@ -219,6 +257,10 @@ export function serialize(data: BackupInput, exportedAt: string): BackupEnvelope
       snapshots: data.snapshots.map((r) => pick(r, SNAPSHOTS_COLUMNS)) as SnapshotBackup[],
       snapshot_items: data.snapshot_items.map((r) => pick(r, SNAPSHOT_ITEMS_COLUMNS)) as SnapshotItemBackup[],
       goals: data.goals.map((r) => pick(r, GOALS_COLUMNS)) as GoalBackup[],
+      allocation_cards: data.allocation_cards.map((r) => pick(r, ALLOCATION_CARDS_COLUMNS)) as AllocationCardBackup[],
+      allocation_targets: data.allocation_targets.map((r) =>
+        pick(r, ALLOCATION_TARGETS_COLUMNS),
+      ) as AllocationTargetBackup[],
     },
   };
 }
@@ -274,15 +316,20 @@ export function validateEnvelope(parsed: unknown, validCategoryIds: ReadonlySet<
   // ABSENT `goals` normalises to `[]` instead of failing, which is what keeps
   // every previously-exported file importable. A present-but-malformed one is
   // still an error.
-  if (data.goals !== undefined && data.goals !== null && !Array.isArray(data.goals)) {
-    return fail("INVALID_ENVELOPE", "Backup `goals` section is not an array.", { table: "goals" });
+  // The allocation tables joined in schemaVersion 3 and follow the same rule:
+  // absent (v1/v2 file) normalises to `[]`, present-but-not-an-array fails.
+  const optionalTables = ["goals", "allocation_cards", "allocation_targets"] as const;
+  for (const table of optionalTables) {
+    if (data[table] !== undefined && data[table] !== null && !Array.isArray(data[table])) {
+      return fail("INVALID_ENVELOPE", `Backup \`${table}\` section is not an array.`, { table });
+    }
   }
-  const normalised: Record<string, unknown> = {
-    ...data,
-    goals: Array.isArray(data.goals) ? data.goals : [],
-  };
+  const normalised: Record<string, unknown> = { ...data };
+  for (const table of optionalTables) {
+    normalised[table] = Array.isArray(data[table]) ? data[table] : [];
+  }
 
-  const tables = [...requiredTables, "goals"] as const;
+  const tables = [...requiredTables, ...optionalTables] as const;
 
   // Per-row structural validation + timestamp shape.
   for (const table of tables) {
@@ -344,6 +391,31 @@ export function validateEnvelope(parsed: unknown, validCategoryIds: ReadonlySet<
     });
   }
 
+  // Every allocation target must point at an asset AND a card carried in this
+  // same file, because `prepareForImport` regenerates both parents' ids and can
+  // only remap a reference it can see. An orphan fails here, by name, rather
+  // than carrying its original id to the RPC: in merge mode that original id
+  // can still exist in the database (the user's own live asset or card), so the
+  // FK would accept it and the target would silently attach to a row the file
+  // never described.
+  const idsOf = (table: "assets" | "allocation_cards"): Set<unknown> =>
+    new Set((normalised[table] as Record<string, unknown>[]).map((r) => r.id).filter((id) => typeof id === "string"));
+  const fileAssetIds = idsOf("assets");
+  const fileCardIds = idsOf("allocation_cards");
+  const orphanTargets: { index: number; missing: ("asset_id" | "card_id")[] }[] = [];
+  (normalised.allocation_targets as Record<string, unknown>[]).forEach((row, index) => {
+    const missing: ("asset_id" | "card_id")[] = [];
+    if (!fileAssetIds.has(row.asset_id)) missing.push("asset_id");
+    if (!fileCardIds.has(row.card_id)) missing.push("card_id");
+    if (missing.length > 0) orphanTargets.push({ index, missing });
+  });
+  if (orphanTargets.length > 0) {
+    return fail("ORPHAN_ALLOCATION_TARGET", "Backup has allocation targets whose asset or card is not in the file.", {
+      table: "allocation_targets",
+      orphanTargets,
+    });
+  }
+
   return { ok: true, data: normalised as unknown as BackupData };
 }
 
@@ -353,20 +425,32 @@ export interface PreparedBackup {
   snapshots: Record<string, unknown>[];
   snapshot_items: Record<string, unknown>[];
   goals: Record<string, unknown>[];
+  allocation_cards: Record<string, unknown>[];
+  allocation_targets: Record<string, unknown>[];
 }
 
 /**
  * Transform validated data into an RPC-ready, internally-consistent payload:
  * drop ownership fields (`user_id`) and auto-generated `id`s, regenerate each
- * parent `snapshots.id`, and remap every `snapshot_items.snapshot_id` to its new
- * parent. `newId` is injected for deterministic tests (no `crypto.randomUUID()`
+ * parent id (`snapshots`, `assets`, `allocation_cards`), and remap every child
+ * FK (`snapshot_items.snapshot_id`, `allocation_targets.asset_id`/`card_id`) to
+ * its new parent. `newId` is injected for deterministic tests (no `crypto.randomUUID()`
  * here). `user_preferences` stays keyed on the user (the RPC upserts it and
  * stamps `user_id` itself), so its `user_id` is dropped too.
  */
 export function prepareForImport(data: BackupData, newId: () => string): PreparedBackup {
   const user_preferences = data.user_preferences.map((r) => omit(r as Record<string, unknown>, ["user_id"]));
 
-  const assets = data.assets.map((r) => omit(r as Record<string, unknown>, ["id", "user_id"]));
+  // Assets get a fresh id (inserted as-is by the RPC) so allocation targets can
+  // be remapped to them. An asset row with no id in the file still gets one; it
+  // simply cannot be referenced by a target (validation rejects that case).
+  const assetIdMap = new Map<string, string>();
+  const assets = data.assets.map((r) => {
+    const row = r as Record<string, unknown>;
+    const fresh = newId();
+    if (typeof row.id === "string") assetIdMap.set(row.id, fresh);
+    return { ...omit(row, ["user_id"]), id: fresh };
+  });
 
   const idMap = new Map<string, string>();
   const snapshots = data.snapshots.map((r) => {
@@ -390,5 +474,29 @@ export function prepareForImport(data: BackupData, newId: () => string): Prepare
   // shed ownership — the RPC stamps `user_id` and lets `id` default.
   const goals = data.goals.map((r) => omit(r as Record<string, unknown>, ["id", "user_id"]));
 
-  return { user_preferences, assets, snapshots, snapshot_items, goals };
+  const cardIdMap = new Map<string, string>();
+  const allocation_cards = data.allocation_cards.map((r) => {
+    const row = r as Record<string, unknown>;
+    const fresh = newId();
+    if (typeof row.id === "string") cardIdMap.set(row.id, fresh);
+    return { ...omit(row, ["user_id"]), id: fresh };
+  });
+
+  // Targets have no children, so they only shed ownership and their own id
+  // (the RPC lets it default), and both parent references are remapped.
+  // `validateEnvelope` has already rejected any target whose asset or card is
+  // not in the file; the `??` fallback is only a backstop for callers that skip
+  // validation, and an unmapped id then meets the FK instead of vanishing.
+  const allocation_targets = data.allocation_targets.map((r) => {
+    const row = omit(r, ["id", "user_id"]);
+    const oldAssetId = row.asset_id as string;
+    const oldCardId = row.card_id as string;
+    return {
+      ...row,
+      asset_id: assetIdMap.get(oldAssetId) ?? oldAssetId,
+      card_id: cardIdMap.get(oldCardId) ?? oldCardId,
+    };
+  });
+
+  return { user_preferences, assets, snapshots, snapshot_items, goals, allocation_cards, allocation_targets };
 }

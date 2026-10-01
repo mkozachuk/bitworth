@@ -9,6 +9,8 @@ import {
   SNAPSHOTS_COLUMNS,
   SNAPSHOT_ITEMS_COLUMNS,
   GOALS_COLUMNS,
+  ALLOCATION_CARDS_COLUMNS,
+  ALLOCATION_TARGETS_COLUMNS,
   validateEnvelope,
 } from "@/lib/backup";
 
@@ -137,6 +139,27 @@ function makeInput(): BackupInput {
         // A DATE column, not a timestamptz — deliberately not `T`-separated, to
         // pin that `target_date` is NOT validated as an ISO-8601 timestamp.
         target_date: "2027-12-31",
+        created_at: ISO,
+        updated_at: ISO,
+      },
+    ],
+    allocation_cards: [
+      {
+        id: "card-1",
+        user_id: "user-1",
+        name: "Core",
+        position: 0,
+        created_at: ISO,
+        updated_at: ISO,
+      },
+    ],
+    allocation_targets: [
+      {
+        id: "target-1",
+        user_id: "user-1",
+        card_id: "card-1",
+        asset_id: "asset-1",
+        target_pct: 60,
         created_at: ISO,
         updated_at: ISO,
       },
@@ -361,20 +384,29 @@ describe("prepareForImport", () => {
     expect(prepared.user_preferences[0]).not.toHaveProperty("user_id");
     expect(prepared.user_preferences[0]).toHaveProperty("display_currency", "USD");
 
-    // assets drop both id and user_id.
-    expect(prepared.assets[0]).not.toHaveProperty("id");
+    // assets get a fresh id (allocation targets are remapped to it); user_id
+    // dropped.
+    expect(prepared.assets[0].id).toBe("new-1");
     expect(prepared.assets[0]).not.toHaveProperty("user_id");
     expect(prepared.assets[0]).toHaveProperty("amount", 1500);
 
     // snapshots get fresh ids in order; user_id dropped.
-    expect(prepared.snapshots[0].id).toBe("new-1");
-    expect(prepared.snapshots[1].id).toBe("new-2");
+    expect(prepared.snapshots[0].id).toBe("new-2");
+    expect(prepared.snapshots[1].id).toBe("new-3");
     expect(prepared.snapshots[0]).not.toHaveProperty("user_id");
 
     // every snapshot_item.snapshot_id is remapped to its new parent; id dropped.
     expect(prepared.snapshot_items[0]).not.toHaveProperty("id");
-    expect(prepared.snapshot_items[0].snapshot_id).toBe("new-1");
-    expect(prepared.snapshot_items[1].snapshot_id).toBe("new-2");
+    expect(prepared.snapshot_items[0].snapshot_id).toBe("new-2");
+    expect(prepared.snapshot_items[1].snapshot_id).toBe("new-3");
+
+    // cards get a fresh id; targets drop id/user_id and point at both new parents.
+    expect(prepared.allocation_cards[0].id).toBe("new-4");
+    expect(prepared.allocation_cards[0]).not.toHaveProperty("user_id");
+    expect(prepared.allocation_targets[0]).not.toHaveProperty("id");
+    expect(prepared.allocation_targets[0]).not.toHaveProperty("user_id");
+    expect(prepared.allocation_targets[0].asset_id).toBe("new-1");
+    expect(prepared.allocation_targets[0].card_id).toBe("new-4");
 
     // goals drop both id and user_id — the RPC stamps ownership and lets the
     // primary key default — but keep every other field.
@@ -393,7 +425,7 @@ describe("prepareForImport", () => {
     const prepared = prepareForImport(validated.data, () => "x");
 
     const assetKeys = Object.keys(prepared.assets[0]).sort();
-    const expectedAssetKeys = ASSETS_COLUMNS.filter((c) => c !== "id" && c !== "user_id")
+    const expectedAssetKeys = ASSETS_COLUMNS.filter((c) => c !== "user_id")
       .slice()
       .sort();
     expect(assetKeys).toEqual(expectedAssetKeys);
@@ -415,6 +447,12 @@ describe("prepareForImport", () => {
       .slice()
       .sort();
     expect(goalKeys).toEqual(expectedGoalKeys);
+
+    const cardKeys = Object.keys(prepared.allocation_cards[0]).sort();
+    expect(cardKeys).toEqual(ALLOCATION_CARDS_COLUMNS.filter((c) => c !== "user_id").sort());
+
+    const targetKeys = Object.keys(prepared.allocation_targets[0]).sort();
+    expect(targetKeys).toEqual(ALLOCATION_TARGETS_COLUMNS.filter((c) => c !== "id" && c !== "user_id").sort());
   });
 });
 
@@ -455,5 +493,179 @@ describe("snapshots.net_contribution round-trip", () => {
     const prepared = prepareForImport(validated.data, () => "fresh");
     for (const snap of prepared.snapshots) expect(snap).not.toHaveProperty("net_contribution");
     expect(old).toEqual(before);
+  });
+});
+
+// Slice C2: the balancer (allocation cards + targets) joins the envelope in
+// schemaVersion 3. Before this, neither table was exported and replace-mode
+// restore cascaded every target away.
+describe("allocation cards and targets (schemaVersion 3)", () => {
+  function validated(env: unknown) {
+    const result = validateEnvelope(env, VALID_CATEGORIES);
+    if (!result.ok) throw new Error(`fixture should validate: ${result.code} ${result.message}`);
+    return result.data;
+  }
+
+  it("serialize carries both tables with every whitelisted column", () => {
+    const env = serialize(makeInput(), ISO);
+    expect(env.schemaVersion).toBe(3);
+    const card = env.data.allocation_cards[0] as Record<string, unknown>;
+    for (const col of ALLOCATION_CARDS_COLUMNS) expect(card).toHaveProperty(col);
+    const target = env.data.allocation_targets[0] as Record<string, unknown>;
+    for (const col of ALLOCATION_TARGETS_COLUMNS) expect(target).toHaveProperty(col);
+    expect(target).toHaveProperty("target_pct", 60);
+  });
+
+  it("a v1 file (no goals, no allocation keys) normalises all three to []", () => {
+    const v1 = {
+      app: "bitworth",
+      schemaVersion: 1,
+      exportedAt: ISO,
+      data: { user_preferences: [], assets: [], snapshots: [], snapshot_items: [] },
+    };
+    const data = validated(v1);
+    expect(data.goals).toEqual([]);
+    expect(data.allocation_cards).toEqual([]);
+    expect(data.allocation_targets).toEqual([]);
+    const prepared = prepareForImport(data, () => "x");
+    expect(prepared.allocation_cards).toEqual([]);
+    expect(prepared.allocation_targets).toEqual([]);
+  });
+
+  it("a v2 file (goals, no allocation keys) validates and normalises the allocation sections to []", () => {
+    // Built from a real v3 envelope with the two keys removed, the exact shape
+    // of every export made before this change (e.g. the 2026-09-27 one).
+    const env = JSON.parse(JSON.stringify(serialize(makeInput(), ISO))) as {
+      schemaVersion: number;
+      data: Record<string, unknown>;
+    };
+    env.schemaVersion = 2;
+    delete env.data.allocation_cards;
+    delete env.data.allocation_targets;
+    const data = validated(env);
+    expect(data.goals).toHaveLength(2);
+    expect(data.allocation_cards).toEqual([]);
+    expect(data.allocation_targets).toEqual([]);
+    const prepared = prepareForImport(data, () => "x");
+    expect(prepared.assets).toHaveLength(1);
+    expect(prepared.allocation_cards).toEqual([]);
+    expect(prepared.allocation_targets).toEqual([]);
+  });
+
+  it("a v3 file keeps its allocation sections through validation", () => {
+    const data = validated(JSON.parse(JSON.stringify(serialize(makeInput(), ISO))));
+    expect(data.allocation_cards).toHaveLength(1);
+    expect(data.allocation_targets).toHaveLength(1);
+    expect(data.allocation_targets[0]).toMatchObject({ card_id: "card-1", asset_id: "asset-1", target_pct: 60 });
+  });
+
+  it.each(["allocation_cards", "allocation_targets"])(
+    "rejects a `%s` key that is present but not an array",
+    (table) => {
+      const env = serialize(makeInput(), ISO);
+      const result = validateEnvelope({ ...env, data: { ...env.data, [table]: {} } }, VALID_CATEGORIES);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.code).toBe("INVALID_ENVELOPE");
+        expect(result.context).toMatchObject({ table });
+      }
+    },
+  );
+
+  it("rejects a target missing target_pct", () => {
+    const env = serialize(makeInput(), ISO);
+    delete (env.data.allocation_targets[0] as Record<string, unknown>).target_pct;
+    const result = validateEnvelope(env, VALID_CATEGORIES);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.context).toMatchObject({ table: "allocation_targets", field: "target_pct" });
+  });
+
+  it("rejects a target whose asset is not in the file, by name, instead of dropping it", () => {
+    const env = serialize(makeInput(), ISO);
+    (env.data.allocation_targets[0] as Record<string, unknown>).asset_id = "asset-not-in-file";
+    const result = validateEnvelope(env, VALID_CATEGORIES);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe("ORPHAN_ALLOCATION_TARGET");
+    expect(result.context).toEqual({
+      table: "allocation_targets",
+      orphanTargets: [{ index: 0, missing: ["asset_id"] }],
+    });
+  });
+
+  it("rejects a target whose card is not in the file, and names both missing parents when both are", () => {
+    const env = serialize(makeInput(), ISO);
+    const second = { ...env.data.allocation_targets[0], card_id: "card-gone", asset_id: "asset-gone" };
+    (env.data.allocation_targets[0] as Record<string, unknown>).card_id = "card-gone";
+    env.data.allocation_targets.push(second);
+    const result = validateEnvelope(env, VALID_CATEGORIES);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe("ORPHAN_ALLOCATION_TARGET");
+    expect(result.context).toEqual({
+      table: "allocation_targets",
+      orphanTargets: [
+        { index: 0, missing: ["card_id"] },
+        { index: 1, missing: ["asset_id", "card_id"] },
+      ],
+    });
+  });
+
+  it("prepareForImport remaps every target to the fresh asset and card ids (the same asset in two cards)", () => {
+    const input = makeInput();
+    input.assets.push({ ...input.assets[0], id: "asset-2", name: "Brokerage", category_id: "cat-stocks" });
+    input.allocation_cards.push({ ...input.allocation_cards[0], id: "card-2", name: "Satellite", position: 1 });
+    input.allocation_targets = [
+      { ...input.allocation_targets[0], id: "t-1", card_id: "card-1", asset_id: "asset-1", target_pct: 60 },
+      { ...input.allocation_targets[0], id: "t-2", card_id: "card-1", asset_id: "asset-2", target_pct: 40 },
+      { ...input.allocation_targets[0], id: "t-3", card_id: "card-2", asset_id: "asset-2", target_pct: 100 },
+    ];
+    let n = 0;
+    const prepared = prepareForImport(validated(serialize(input, ISO)), () => `id-${++n}`);
+
+    // Assets are mapped first, then snapshots (2), then cards.
+    expect(prepared.assets.map((a) => a.id)).toEqual(["id-1", "id-2"]);
+    expect(prepared.allocation_cards.map((c) => c.id)).toEqual(["id-5", "id-6"]);
+    expect(prepared.allocation_targets.map((t) => [t.card_id, t.asset_id, t.target_pct])).toEqual([
+      ["id-5", "id-1", 60],
+      ["id-5", "id-2", 40],
+      ["id-6", "id-2", 100],
+    ]);
+    // No original id survives anywhere in the balancer payload.
+    const payload = JSON.stringify([prepared.assets, prepared.allocation_cards, prepared.allocation_targets]);
+    for (const old of ["asset-1", "asset-2", "card-1", "card-2", "t-1", "t-2", "t-3"]) {
+      expect(payload).not.toContain(`"${old}"`);
+    }
+  });
+
+  it("round trip: 2 assets, 1 card, 2 targets → each target points at the new id of the same asset", () => {
+    const input = makeInput();
+    input.assets = [
+      { ...input.assets[0], id: "a-cash", name: "Checking" },
+      { ...input.assets[0], id: "a-etf", name: "World ETF", category_id: "cat-stocks" },
+    ];
+    input.allocation_cards = [{ ...input.allocation_cards[0], id: "c-core" }];
+    input.allocation_targets = [
+      { ...input.allocation_targets[0], id: "t-cash", card_id: "c-core", asset_id: "a-cash", target_pct: 12.5 },
+      { ...input.allocation_targets[0], id: "t-etf", card_id: "c-core", asset_id: "a-etf", target_pct: 87.5 },
+    ];
+    const originalAssetName = new Map(input.assets.map((a) => [a.id, a.name]));
+
+    const file = JSON.parse(JSON.stringify(serialize(input, ISO))) as unknown;
+    let n = 0;
+    const prepared = prepareForImport(
+      validated(file),
+      () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`,
+    );
+
+    const newAssetName = new Map(prepared.assets.map((a) => [a.id as string, a.name as string]));
+    expect(prepared.allocation_targets).toHaveLength(2);
+    input.allocation_targets.forEach((before, i) => {
+      const after = prepared.allocation_targets[i];
+      expect(after.asset_id).not.toBe(before.asset_id);
+      expect(newAssetName.get(after.asset_id as string)).toBe(originalAssetName.get(before.asset_id));
+      expect(after.card_id).toBe(prepared.allocation_cards[0].id);
+      expect(after.target_pct).toBe(before.target_pct);
+    });
   });
 });

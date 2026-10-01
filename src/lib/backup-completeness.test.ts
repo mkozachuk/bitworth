@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  ALLOCATION_CARDS_COLUMNS,
+  ALLOCATION_TARGETS_COLUMNS,
   ASSETS_COLUMNS,
   GOALS_COLUMNS,
   SNAPSHOTS_COLUMNS,
@@ -32,6 +34,8 @@ const NOT_BACKED_UP: Record<string, readonly string[]> = {
   snapshots: [],
   snapshot_items: [],
   goals: [],
+  allocation_cards: [],
+  allocation_targets: [],
 };
 
 // The generator emits each table as
@@ -55,6 +59,8 @@ const TABLES = [
   ["snapshots", SNAPSHOTS_COLUMNS],
   ["snapshot_items", SNAPSHOT_ITEMS_COLUMNS],
   ["goals", GOALS_COLUMNS],
+  ["allocation_cards", ALLOCATION_CARDS_COLUMNS],
+  ["allocation_targets", ALLOCATION_TARGETS_COLUMNS],
 ] as const;
 
 describe("backup export completeness (database.types.ts)", () => {
