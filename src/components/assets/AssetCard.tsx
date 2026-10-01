@@ -3,6 +3,8 @@ import { GripVertical, Pencil, Trash2 } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CurrencyBadge } from "./CurrencyBadge";
+import { TagChips } from "./TagChips";
+import type { TagChip } from "@/lib/tags";
 import type { Tables } from "@/lib/database.types";
 import { convertAmount, type Currency } from "@/lib/net-worth";
 import { CategoryIcon } from "@/lib/category-icons";
@@ -17,9 +19,10 @@ interface Props {
   rates: Record<Currency, number>;
   totalAssets: number;
   editing: boolean;
+  tags?: readonly TagChip[];
 }
 
-export function AssetCard({ asset, onDelete, displayCurrency, rates, totalAssets, editing }: Props) {
+export function AssetCard({ asset, onDelete, displayCurrency, rates, totalAssets, editing, tags }: Props) {
   const converted = convertAmount(asset.amount, asset.currency as Currency, displayCurrency, rates);
   const sharePct = asset.category.is_liability ? null : assetSharePct(converted, totalAssets);
   const priceSymbol = asset.crypto_symbol ?? asset.metal_symbol;
@@ -61,6 +64,7 @@ export function AssetCard({ asset, onDelete, displayCurrency, rates, totalAssets
         )}
         <div className="min-w-0 flex-1">
           <span className="text-foreground min-w-0 truncate font-medium">{asset.name}</span>
+          <TagChips tags={tags} className="mt-1" />
           {asset.notes && <p className="text-muted-foreground mt-0.5 line-clamp-1 text-xs">{asset.notes}</p>}
         </div>
         <div className="flex shrink-0 items-center gap-2">

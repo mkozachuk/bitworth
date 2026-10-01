@@ -19,6 +19,7 @@ import { AssetCard } from "./AssetCard";
 import type { Tables } from "@/lib/database.types";
 import { totalAssetPool } from "@/lib/allocation";
 import { moveId } from "@/lib/asset-order";
+import type { TagChip } from "@/lib/tags";
 
 type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
 type Currency = "USD" | "EUR" | "PLN";
@@ -29,9 +30,11 @@ interface Props {
   assets: AssetWithCategory[];
   displayCurrency: Currency;
   rates: Record<Currency, number>;
+  // Each asset's tags, keyed by asset id. Absent or missing key = no chips.
+  tagsByAsset?: Record<string, TagChip[]>;
 }
 
-export function AssetList({ assets, displayCurrency, rates }: Props) {
+export function AssetList({ assets, displayCurrency, rates, tagsByAsset }: Props) {
   const [filter, setFilter] = useState<FilterTab>("all");
   const [_deletingId, setDeletingId] = useState<string | null>(null);
   // One banner for every list-level failure (delete and reorder alike) — the
@@ -221,6 +224,7 @@ export function AssetList({ assets, displayCurrency, rates }: Props) {
                 rates={rates}
                 totalAssets={totalAssets}
                 editing={editing}
+                tags={tagsByAsset?.[asset.id]}
               />
             ))}
           </tbody>
@@ -241,6 +245,7 @@ export function AssetList({ assets, displayCurrency, rates }: Props) {
             rates={rates}
             totalAssets={totalAssets}
             editing={editing}
+            tags={tagsByAsset?.[asset.id]}
           />
         ))}
       </ul>

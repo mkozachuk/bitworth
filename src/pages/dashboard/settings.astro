@@ -2,6 +2,7 @@
 import Layout from "@/layouts/DashboardLayout.astro";
 import { SettingsForm } from "@/components/settings/SettingsForm";
 import { BackupRestore } from "@/components/settings/BackupRestore";
+import { TagsManager, type ManagedTag } from "@/components/settings/TagsManager";
 import { createClient } from "@/lib/supabase";
 
 type Currency = "USD" | "EUR" | "PLN";
@@ -39,6 +40,15 @@ const initialShowFireDashboard: boolean = rawShowFireDashboard ?? true;
 const initialShowDriftAlerts: boolean = rawShowDriftAlerts ?? true;
 const initialShowTrajectory: boolean = rawShowTrajectory ?? true;
 const initialShowGoals: boolean = rawShowGoals ?? true;
+
+// A failed read (e.g. the tags migration not applied yet) shows an empty list
+// rather than breaking the page.
+const { data: tagRows } = await supabase
+  .from("tags")
+  .select("id, name, show_on_dashboard")
+  .eq("user_id", user.id)
+  .order("name", { ascending: true });
+const initialTags = (tagRows ?? []) as ManagedTag[];
 ---
 
 <Layout title="Settings">
@@ -55,6 +65,15 @@ const initialShowGoals: boolean = rawShowGoals ?? true;
         initialShowGoals={initialShowGoals}
         client:load
       />
+    </div>
+
+    <h2 class="font-display text-foreground mt-8 mb-4 text-xl font-bold">Tags</h2>
+
+    <div class="bg-card border-border rounded-md border p-8">
+      <p class="text-muted-foreground mb-4 text-sm">
+        Group assets with your own tags. Tag names are unique, ignoring case, and at most 32 characters.
+      </p>
+      <TagsManager initialTags={initialTags} client:load />
     </div>
 
     <h2 class="font-display text-foreground mt-8 mb-4 text-xl font-bold">Backup &amp; Restore</h2>

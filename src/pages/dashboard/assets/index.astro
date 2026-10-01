@@ -5,6 +5,7 @@ import { getRates } from "@/lib/exchange-rates";
 import { AssetList } from "@/components/assets/AssetList";
 import { NetWorthDisplay } from "@/components/assets/NetWorthDisplay";
 import type { Tables } from "@/lib/database.types";
+import { tagsByAsset } from "@/lib/tags";
 
 type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
 type Currency = "USD" | "EUR" | "PLN";
@@ -26,6 +27,16 @@ const { data: assets } = await supabase
   .order("created_at", { ascending: false });
 
 const rates = await getRates(supabase);
+
+// Tag chips per asset. Read separately from the assets query, so a failed tag
+// read (e.g. the tags migration not applied yet) costs the chips, not the list.
+const [{ data: tagRows }, { data: linkRows }] = await Promise.all([
+  supabase.from("tags").select("id, name").eq("user_id", user.id),
+  supabase.from("asset_tags").select("asset_id, tag_id").eq("user_id", user.id),
+]);
+// The client is untyped, so the rows arrive as `any`; tagsByAsset's signature
+// is the shape check.
+const assetTags = tagsByAsset(tagRows ?? [], linkRows ?? []);
 ---
 
 <Layout title="Assets">
@@ -54,6 +65,7 @@ const rates = await getRates(supabase);
               assets={assets as AssetWithCategory[]}
               displayCurrency={displayCurrency}
               rates={rates}
+              tagsByAsset={assetTags}
               client:load
             />
           </div>

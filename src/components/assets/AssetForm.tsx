@@ -4,13 +4,22 @@ import { Button } from "@/components/ui/button";
 import { ServerError } from "@/components/auth/ServerError";
 import { CategorySelect } from "./CategorySelect";
 import { PricedQuantityFields } from "./PricedQuantityFields";
+import { TagPicker } from "./TagPicker";
 import type { Tables } from "@/lib/database.types";
+import type { TagChip } from "@/lib/tags";
 
 interface Props {
   asset?: Tables<"assets">;
   mode: "create" | "edit";
   onCancel?: () => void;
   serverError?: string | null;
+  // Every tag the user has, for the picker, and the ones this asset carries now.
+  tags?: TagChip[];
+  initialTagIds?: string[];
+}
+
+function sameSet(a: readonly string[], b: readonly string[]): boolean {
+  return a.length === b.length && a.every((id) => b.includes(id));
 }
 
 interface FormErrors {
@@ -20,7 +29,7 @@ interface FormErrors {
   category_id?: string;
 }
 
-export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
+export function AssetForm({ asset, mode, onCancel, serverError, tags = [], initialTagIds = [] }: Props) {
   const [name, setName] = useState(asset ? asset.name : "");
   const [amount, setAmount] = useState(asset ? String(asset.amount) : "");
   const [currency, setCurrency] = useState<"USD" | "EUR" | "PLN">(
@@ -31,6 +40,11 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
   const [showOnChart, setShowOnChart] = useState(asset?.show_on_chart ?? false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [pending, setPending] = useState(false);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialTagIds);
+  const [tagError, setTagError] = useState<string | null>(null);
+  // Set once a create has succeeded but its tags have not, so a retry updates
+  // that asset instead of creating a second one.
+  const [savedAssetId, setSavedAssetId] = useState<string | null>(null);
 
   const isPriced = categoryId === "crypto" || categoryId === "precious_metals";
 
@@ -67,18 +81,39 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
     setPending(true);
 
     const form = e.currentTarget;
-    const endpoint = mode === "create" ? "/api/assets" : `/api/assets/${asset ? asset.id : ""}`;
-    const method = mode === "create" ? "POST" : "PUT";
+    const existingId = asset?.id ?? savedAssetId;
+    const endpoint = existingId ? `/api/assets/${existingId}` : "/api/assets";
+    const method = existingId ? "PUT" : "POST";
+    setTagError(null);
 
     try {
       const formData = new FormData(form);
       const res = await fetch(endpoint, { method, body: formData });
-      const json = (await res.json()) as { data?: unknown; error?: { code: string; message: string } };
+      const json = (await res.json()) as { data?: { id?: string }; error?: { code: string; message: string } };
 
       if (json.error) {
         e.preventDefault();
         setPending(false);
         return;
+      }
+
+      // The tag set is saved separately, after the asset, and only when it
+      // changed. A failure here leaves the asset saved: say so and stay on the
+      // page so the tags can be retried.
+      const assetId = existingId ?? json.data?.id;
+      if (assetId && !sameSet(selectedTagIds, initialTagIds)) {
+        const tagRes = await fetch(`/api/assets/${assetId}/tags`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tag_ids: selectedTagIds }),
+        });
+        if (!tagRes.ok) {
+          const tagJson = (await tagRes.json()) as { error?: { message?: string } };
+          setSavedAssetId(assetId);
+          setTagError(`Asset saved, but its tags were not: ${tagJson.error?.message ?? "unknown error"}`);
+          setPending(false);
+          return;
+        }
       }
 
       if (mode === "create") {
@@ -94,7 +129,7 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-4">
-      <ServerError message={serverError} />
+      <ServerError message={serverError ?? tagError} />
 
       <div>
         <label htmlFor="name" className="text-foreground/70 mb-1 block text-sm">
@@ -227,6 +262,8 @@ export function AssetForm({ asset, mode, onCancel, serverError }: Props) {
           className="border-input bg-card text-foreground placeholder:text-muted-foreground focus:border-primary w-full resize-none rounded-sm border px-3 py-2 transition-colors focus:outline-none"
         />
       </div>
+
+      <TagPicker tags={tags} selected={selectedTagIds} onChange={setSelectedTagIds} />
 
       <div>
         <label htmlFor="show_on_chart" className="text-foreground/70 flex items-center gap-2 text-sm">

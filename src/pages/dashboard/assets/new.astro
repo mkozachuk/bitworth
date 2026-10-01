@@ -1,12 +1,18 @@
 ---
 import Layout from "@/layouts/DashboardLayout.astro";
 import { AssetForm } from "@/components/assets/AssetForm";
+import { createClient } from "@/lib/supabase";
+import { compareTagNames, type TagChip } from "@/lib/tags";
 
 const { user } = Astro.locals;
 
 if (!user) {
   return Astro.redirect("/auth/signin");
 }
+
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+const { data: tagRows } = await supabase.from("tags").select("id, name").eq("user_id", user.id);
+const tags = ((tagRows ?? []) as TagChip[]).sort(compareTagNames);
 ---
 
 <Layout title="Add Asset">
@@ -19,7 +25,7 @@ if (!user) {
 
     <div class="bg-card border-border rounded-md border p-8">
       <h1 class="font-display text-foreground mb-6 text-2xl font-bold">Add Asset</h1>
-      <AssetForm mode="create" client:load />
+      <AssetForm mode="create" tags={tags} client:load />
     </div>
   </div>
 </Layout>

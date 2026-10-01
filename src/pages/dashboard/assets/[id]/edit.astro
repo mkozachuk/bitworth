@@ -3,6 +3,7 @@ import Layout from "@/layouts/DashboardLayout.astro";
 import { createClient } from "@/lib/supabase";
 import { AssetForm } from "@/components/assets/AssetForm";
 import type { Tables } from "@/lib/database.types";
+import { compareTagNames, type TagChip } from "@/lib/tags";
 
 const { user } = Astro.locals;
 
@@ -27,6 +28,13 @@ const { data: asset } = (await supabase
 if (!asset) {
   return new Response(null, { status: 404 });
 }
+
+const [{ data: tagRows }, { data: linkRows }] = await Promise.all([
+  supabase.from("tags").select("id, name").eq("user_id", user.id),
+  supabase.from("asset_tags").select("tag_id").eq("asset_id", asset.id).eq("user_id", user.id),
+]);
+const tags = ((tagRows ?? []) as TagChip[]).sort(compareTagNames);
+const initialTagIds = ((linkRows ?? []) as { tag_id: string }[]).map((l) => l.tag_id);
 ---
 
 <Layout title="Edit Asset">
@@ -42,6 +50,8 @@ if (!asset) {
       <AssetForm
         asset={asset}
         mode="edit"
+        tags={tags}
+        initialTagIds={initialTagIds}
         onCancel={() => {
           window.history.back();
         }}

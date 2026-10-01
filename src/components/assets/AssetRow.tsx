@@ -3,6 +3,8 @@ import { GripVertical, Pencil, Trash2 } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CurrencyBadge } from "./CurrencyBadge";
+import { TagChips } from "./TagChips";
+import type { TagChip } from "@/lib/tags";
 import type { Tables } from "@/lib/database.types";
 import { CategoryIcon } from "@/lib/category-icons";
 import { convertAmount, type Currency } from "@/lib/net-worth";
@@ -17,9 +19,10 @@ interface Props {
   rates: Record<Currency, number>;
   totalAssets: number;
   editing: boolean;
+  tags?: readonly TagChip[];
 }
 
-export function AssetRow({ asset, onDelete, displayCurrency, rates, totalAssets, editing }: Props) {
+export function AssetRow({ asset, onDelete, displayCurrency, rates, totalAssets, editing, tags }: Props) {
   const converted = convertAmount(asset.amount, asset.currency as Currency, displayCurrency, rates);
   const sharePct = asset.category.is_liability ? null : assetSharePct(converted, totalAssets);
   const priceSymbol = asset.crypto_symbol ?? asset.metal_symbol;
@@ -57,6 +60,7 @@ export function AssetRow({ asset, onDelete, displayCurrency, rates, totalAssets,
       )}
       <td className="py-3 pr-4">
         <span className="text-foreground font-medium">{asset.name}</span>
+        <TagChips tags={tags} className="mt-1" />
         {asset.notes && <p className="text-muted-foreground mt-0.5 max-w-[200px] truncate text-xs">{asset.notes}</p>}
         {sharePct != null && (
           <p className="text-muted-foreground tnum mt-0.5 text-xs">{sharePct.toFixed(1)}% of all assets</p>
