@@ -96,6 +96,11 @@ export const SNAPSHOTS_COLUMNS = [
   // as-is. A file exported before this column joined the whitelist has no key;
   // `restore_backup` maps the missing key to NULL (no COALESCE).
   "net_contribution",
+  // Income earned in the interval ending at this snapshot (B2, S-24), in the
+  // snapshot's display_currency. Same rule as net_contribution: nullable, no
+  // default, NULL ("not recorded") round-trips as-is, and a file from before
+  // B2 has no key, which `restore_backup` maps to NULL.
+  "income",
   "created_at",
 ] as const satisfies readonly (keyof SnapshotRow)[];
 

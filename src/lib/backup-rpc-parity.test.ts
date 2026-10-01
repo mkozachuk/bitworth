@@ -149,6 +149,31 @@ describe(`restore_backup snapshots.net_contribution (${migrationName})`, () => {
   });
 });
 
+// B2 (R6): `income` follows net_contribution's rule. NULL ("not recorded") is
+// not 0, and a savings rate over a coalesced 0 would read as "unknown" for the
+// wrong reason, so the RPC must take it bare. A pre-B2 file has no key, which
+// jsonb_populate_recordset leaves NULL only without a COALESCE.
+describe(`restore_backup snapshots.income (${migrationName})`, () => {
+  it("selects r.income bare, so a missing key or null stays NULL (never COALESCEd)", () => {
+    const exprs = snapshotsSelectExpressions(sql);
+    const idx = inserts.snapshots.indexOf("income");
+    expect(idx).toBeGreaterThanOrEqual(0);
+    expect(exprs).toHaveLength(inserts.snapshots.length);
+    expect(exprs[idx]).toBe("r.income");
+  });
+
+  it("the schema migration declares income nullable NUMERIC(18,2) with no default and a non-negative CHECK", () => {
+    const schema = readdirSync(MIGRATIONS_DIR)
+      .filter((n) => n.endsWith(".sql"))
+      .map((n) => readFileSync(new URL(n, MIGRATIONS_DIR), "utf8"))
+      .find((text) => text.includes("ADD COLUMN income"));
+    expect(schema).toBeDefined();
+    expect(schema).toMatch(/ALTER TABLE snapshots ADD COLUMN income NUMERIC\(18,2\);/);
+    expect(schema).not.toMatch(/ADD COLUMN income[^;]*(DEFAULT|NOT NULL)/);
+    expect(schema).toMatch(/CHECK \(income IS NULL OR income >= 0\)/);
+  });
+});
+
 // Slice C2. `INSERT ... SELECT` expressions for any table, split on top-level
 // commas, so a test can read what the RPC actually writes into a column.
 function selectExpressions(sql: string, table: string): string[] {

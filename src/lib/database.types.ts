@@ -396,6 +396,7 @@ export interface Database {
           created_at: string;
           display_currency: string;
           id: string;
+          income: number | null;
           net_contribution: number | null;
           note: string | null;
           source: string;
@@ -407,6 +408,7 @@ export interface Database {
           created_at?: string;
           display_currency: string;
           id?: string;
+          income?: number | null;
           net_contribution?: number | null;
           note?: string | null;
           source: string;
@@ -418,6 +420,7 @@ export interface Database {
           created_at?: string;
           display_currency?: string;
           id?: string;
+          income?: number | null;
           net_contribution?: number | null;
           note?: string | null;
           source?: string;

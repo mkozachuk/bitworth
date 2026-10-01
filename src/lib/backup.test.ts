@@ -76,6 +76,7 @@ function makeInput(): BackupInput {
         source: "manual",
         note: null,
         net_contribution: null,
+        income: null,
         created_at: ISO,
       },
       {
@@ -87,6 +88,7 @@ function makeInput(): BackupInput {
         source: "manual",
         note: null,
         net_contribution: null,
+        income: null,
         created_at: ISO,
       },
     ],
@@ -1048,5 +1050,41 @@ describe("snapshot_items.tag_ids (B1b)", () => {
       expect(result.code).toBe("INVALID_ROW");
       expect(result.context).toEqual({ table: "snapshot_items", index: 1, field: "tag_ids" });
     }
+  });
+});
+
+describe("snapshots.income round-trip (B2, R6)", () => {
+  it("export carries a recorded income into the envelope, and it survives validate and prepare", () => {
+    const input = makeInput();
+    input.snapshots[1] = { ...input.snapshots[1], income: 6400.25 };
+    const env = serialize(input, ISO);
+    expect(env.data.snapshots[1]).toHaveProperty("income", 6400.25);
+    const validated = validateEnvelope(JSON.parse(JSON.stringify(env)), VALID_CATEGORIES);
+    if (!validated.ok) throw new Error("fixture should validate");
+    const prepared = prepareForImport(validated.data, () => "fresh");
+    expect(prepared.snapshots[1]).toHaveProperty("income", 6400.25);
+  });
+
+  it("export keeps an explicit null income as null (not 0, not dropped)", () => {
+    const env = serialize(makeInput(), ISO);
+    for (const snap of env.data.snapshots) expect(snap).toHaveProperty("income", null);
+  });
+
+  it("a backup from before B2 (no income key) validates and prepares unchanged, with no key invented", () => {
+    const env = serialize(makeInput(), ISO);
+    interface OldEnvelope {
+      data: { snapshots: Record<string, unknown>[] };
+    }
+    const old = JSON.parse(JSON.stringify(env)) as OldEnvelope;
+    for (const snap of old.data.snapshots) delete snap.income;
+    const before = JSON.parse(JSON.stringify(old)) as OldEnvelope;
+
+    const validated = validateEnvelope(old, VALID_CATEGORIES);
+    if (!validated.ok) throw new Error(`old backup should validate: ${validated.code}`);
+    expect(validated.data.snapshots).toEqual(before.data.snapshots);
+    // restore_backup maps the absent key to NULL (pinned in backup-rpc-parity.test.ts).
+    const prepared = prepareForImport(validated.data, () => "fresh");
+    for (const snap of prepared.snapshots) expect(snap).not.toHaveProperty("income");
+    expect(old).toEqual(before);
   });
 });
