@@ -3,6 +3,7 @@ import { CurrencyBadge } from "./CurrencyBadge";
 import { ContributionField } from "./ContributionField";
 import type { Tables } from "@/lib/database.types";
 import { convertAmount, type Currency } from "@/lib/net-worth";
+import { computeNetWorthDeltas, type SnapshotDelta } from "@/lib/net-worth-deltas";
 
 type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
 type SnapshotRow = Tables<"snapshots">;
@@ -17,21 +18,47 @@ interface Props {
 
 type ButtonState = "idle" | "loading" | "saved" | "error";
 
-function DeltaIndicator({ label, value, percentage }: { label: string; value: number; percentage: number }) {
+function DeltaIndicator({ label, delta }: { label: string; delta: SnapshotDelta | null }) {
+  const heading = <p className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">{label}</p>;
+  if (!delta) {
+    return (
+      <div>
+        {heading}
+        <p className="text-muted-foreground mt-1 text-sm">No baseline yet</p>
+      </div>
+    );
+  }
+  if (delta.kind === "currency-changed") {
+    // Snapshot totals carry no save-time FX rate, so a baseline stored in another
+    // currency cannot be compared honestly: say so instead of showing a number.
+    return (
+      <div>
+        {heading}
+        <p className="text-muted-foreground mt-1 text-sm">Currency changed</p>
+      </div>
+    );
+  }
+  const { value, pct, baselineLabel } = delta;
   const isPositive = value >= 0;
   const absValue = Math.abs(value);
-  const absPct = Math.abs(percentage);
   const colorClass = isPositive ? "text-gain" : "text-loss";
   const sign = isPositive ? "+" : "−";
   const arrow = isPositive ? "▲" : "▼";
   return (
     <div>
-      <p className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">{label}</p>
+      {heading}
       <p className={`tnum mt-1 text-sm font-bold ${colorClass}`}>
         {arrow} {sign}
-        {absValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({sign}
-        {absPct.toFixed(1)}%)
+        {absValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        {pct !== null && (
+          <>
+            {" "}
+            ({sign}
+            {Math.abs(pct).toFixed(1)}%)
+          </>
+        )}
       </p>
+      <p className="text-muted-foreground mt-0.5 text-xs">since {baselineLabel}</p>
     </div>
   );
 }
@@ -255,37 +282,8 @@ export function NetWorthDisplay({ assets, displayCurrency, rates, snapshots = []
     return totalAssets - totalLiabilities;
   })();
 
-  // Delta computation from snapshots
-  const { deltaLastMonth, deltaJan } = (() => {
-    if (snapshots.length === 0) return { deltaLastMonth: null, deltaJan: null };
-
-    const sorted = [...snapshots].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-    const current = sorted[sorted.length - 1]; // newest
-    // eslint-disable-next-line react-hooks/purity -- Date.now() is intentionally called at render time to determine the current date boundary
-    const now = Date.now();
-    const MS_25_DAYS = 25 * 24 * 60 * 60 * 1000;
-
-    const lastMonthSnap = sorted.find((s) => now - new Date(s.created_at).getTime() >= MS_25_DAYS);
-    const yearStart = new Date(`${new Date().getFullYear()}-01-01T00:00:00Z`);
-    const janSnap = sorted.find((s) => new Date(s.created_at) <= yearStart);
-
-    const deltaLM = lastMonthSnap ? current.total_net_worth - lastMonthSnap.total_net_worth : null;
-    const deltaJ = janSnap ? current.total_net_worth - janSnap.total_net_worth : null;
-
-    const pctLM =
-      lastMonthSnap && lastMonthSnap.total_net_worth !== 0 && deltaLM !== null
-        ? (deltaLM / Math.abs(lastMonthSnap.total_net_worth)) * 100
-        : null;
-    const pctJ =
-      janSnap && janSnap.total_net_worth !== 0 && deltaJ !== null
-        ? (deltaJ / Math.abs(janSnap.total_net_worth)) * 100
-        : null;
-
-    return {
-      deltaLastMonth: deltaLM !== null && pctLM !== null ? { value: deltaLM, pct: pctLM } : null,
-      deltaJan: deltaJ !== null && pctJ !== null ? { value: deltaJ, pct: pctJ } : null,
-    };
-  })();
+  // Baselines are anchored on the newest snapshot, never on the wall clock.
+  const { lastMonth, jan } = computeNetWorthDeltas(snapshots);
 
   return (
     <div className="bg-card border-primary/60 rounded-md border-[1.5px] p-6">
@@ -345,22 +343,8 @@ export function NetWorthDisplay({ assets, displayCurrency, rates, snapshots = []
 
       {snapshots.length > 0 && (
         <div className="border-border mb-4 grid grid-cols-1 gap-4 border-t pt-4 sm:grid-cols-2">
-          {deltaLastMonth ? (
-            <DeltaIndicator label="vs Last Month" value={deltaLastMonth.value} percentage={deltaLastMonth.pct} />
-          ) : (
-            <div>
-              <p className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">vs Last Month</p>
-              <p className="text-muted-foreground mt-1 text-sm">No baseline yet</p>
-            </div>
-          )}
-          {deltaJan ? (
-            <DeltaIndicator label="vs Jan 1st" value={deltaJan.value} percentage={deltaJan.pct} />
-          ) : (
-            <div>
-              <p className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">vs Jan 1st</p>
-              <p className="text-muted-foreground mt-1 text-sm">No baseline yet</p>
-            </div>
-          )}
+          <DeltaIndicator label="vs Last Month" delta={lastMonth} />
+          <DeltaIndicator label="vs Jan 1st" delta={jan} />
         </div>
       )}
 
