@@ -1,0 +1,336 @@
+-- Extend restore_backup to carry snapshot_items.tag_ids (slice B1b, T7;
+-- column added in 20261002140000_snapshot_item_tag_ids.sql, which must be
+-- applied first). Backups stay schemaVersion 4: the column is optional on read.
+--
+-- Changes from 20261002130000_restore_backup_tags.sql, and nothing else:
+--   1. the tags INSERT moves up, from after allocation_targets to right after
+--      assets, unchanged. snapshot_items now need the caller's tags to exist.
+--      Tags reference nothing but the user, so the earlier slot is safe, and
+--      asset_tags still comes after both assets and tags.
+--      The merge-mode name-clash rule it carries is described in
+--      20261002130000's header.
+--   2. snapshot_items carries tag_ids. prepareForImport has already remapped
+--      each element to its file tag's fresh id and dropped (and counted) the
+--      elements whose tag is not in the file: a tag deleted after the snapshot.
+--      Each remaining element is resolved here the way asset_tags.tag_id is:
+--      through the file tag's name to the caller's tag of that name, which is
+--      the file tag itself or, in merge mode, the existing tag it merged into.
+--      Order is kept. LEFT joins: an element that cannot be resolved becomes a
+--      NULL element, which the column's CHECK rejects, rolling the restore
+--      back; it is never dropped silently here.
+--      NULL stays NULL ("not recorded", never []); a missing key (a file from
+--      before B1b) is NULL too. An empty array stays empty.
+--
+-- Search_path, the SECURITY DEFINER ownership boundary, the deletes, the other
+-- inserts and the user_preferences upsert are unchanged.
+--
+-- Rollback: re-apply 20261002130000_restore_backup_tags.sql, which redeclares
+-- the previous function body.
+
+BEGIN;
+
+CREATE OR REPLACE FUNCTION restore_backup(p_mode text, p_data jsonb)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_user uuid := auth.uid();
+BEGIN
+  IF v_user IS NULL THEN
+    RAISE EXCEPTION 'restore_backup: no authenticated user';
+  END IF;
+
+  IF p_mode NOT IN ('replace', 'merge') THEN
+    RAISE EXCEPTION 'restore_backup: invalid mode %', p_mode;
+  END IF;
+
+  -- replace: clear the caller's rows, children first. user_preferences is the
+  -- 1:1 PK-on-user row (upserted below), never deleted.
+  IF p_mode = 'replace' THEN
+    -- Tag links first (they reference assets and tags), then the tags.
+    DELETE FROM asset_tags WHERE user_id = v_user;
+    DELETE FROM tags WHERE user_id = v_user;
+    -- Balancer rows first: targets reference both cards and assets, then the
+    -- cards themselves (the assets DELETE below would cascade the targets but
+    -- leave the cards behind, empty).
+    DELETE FROM allocation_targets WHERE user_id = v_user;
+    DELETE FROM allocation_cards WHERE user_id = v_user;
+    DELETE FROM snapshot_items
+      WHERE snapshot_id IN (SELECT id FROM snapshots WHERE user_id = v_user);
+    DELETE FROM snapshots WHERE user_id = v_user;
+    DELETE FROM assets WHERE user_id = v_user;
+    DELETE FROM goals WHERE user_id = v_user;
+  END IF;
+
+  -- user_preferences: upsert the single row on its PK (user_id). Both modes.
+  INSERT INTO user_preferences (
+    user_id,
+    display_currency,
+    theme,
+    fire_annual_expenses,
+    fire_annual_income,
+    fire_barista_income,
+    fire_current_age,
+    fire_expected_return,
+    fire_inflation_rate,
+    fire_safe_withdrawal_rate,
+    fire_starting_principal_override,
+    fire_traditional_retirement_age,
+    show_fire_dashboard,
+    show_drift_alerts,
+    show_goals,
+    show_trajectory,
+    created_at,
+    updated_at
+  )
+  SELECT
+    v_user,
+    COALESCE(r.display_currency, 'USD'),
+    COALESCE(r.theme, 'system'),
+    r.fire_annual_expenses,
+    r.fire_annual_income,
+    r.fire_barista_income,
+    r.fire_current_age,
+    r.fire_expected_return,
+    r.fire_inflation_rate,
+    COALESCE(r.fire_safe_withdrawal_rate, 0.04),
+    r.fire_starting_principal_override,
+    COALESCE(r.fire_traditional_retirement_age, 65),
+    COALESCE(r.show_fire_dashboard, true),
+    COALESCE(r.show_drift_alerts, true),
+    COALESCE(r.show_goals, true),
+    COALESCE(r.show_trajectory, true),
+    COALESCE(r.created_at, now()),
+    COALESCE(r.updated_at, now())
+  FROM jsonb_populate_recordset(null::user_preferences, p_data->'user_preferences') AS r
+  ON CONFLICT (user_id) DO UPDATE SET
+    display_currency = EXCLUDED.display_currency,
+    theme = EXCLUDED.theme,
+    fire_annual_expenses = EXCLUDED.fire_annual_expenses,
+    fire_annual_income = EXCLUDED.fire_annual_income,
+    fire_barista_income = EXCLUDED.fire_barista_income,
+    fire_current_age = EXCLUDED.fire_current_age,
+    fire_expected_return = EXCLUDED.fire_expected_return,
+    fire_inflation_rate = EXCLUDED.fire_inflation_rate,
+    fire_safe_withdrawal_rate = EXCLUDED.fire_safe_withdrawal_rate,
+    fire_starting_principal_override = EXCLUDED.fire_starting_principal_override,
+    fire_traditional_retirement_age = EXCLUDED.fire_traditional_retirement_age,
+    show_fire_dashboard = EXCLUDED.show_fire_dashboard,
+    show_drift_alerts = EXCLUDED.show_drift_alerts,
+    show_goals = EXCLUDED.show_goals,
+    show_trajectory = EXCLUDED.show_trajectory,
+    created_at = EXCLUDED.created_at,
+    updated_at = EXCLUDED.updated_at;
+
+  -- assets: id already regenerated by prepareForImport (allocation targets are
+  -- remapped to it); user_id stamped here. The id falls back to a generated one
+  -- for a payload from a client that predates this migration (see header).
+  -- sort_order COALESCEs to 0 for pre-S-25 files.
+  INSERT INTO assets (
+    id,
+    user_id,
+    category_id,
+    name,
+    amount,
+    currency,
+    crypto_symbol,
+    metal_symbol,
+    notes,
+    quantity,
+    show_on_chart,
+    sort_order,
+    created_at,
+    updated_at
+  )
+  SELECT
+    COALESCE(r.id, gen_random_uuid()),
+    v_user,
+    r.category_id,
+    r.name,
+    r.amount,
+    r.currency,
+    r.crypto_symbol,
+    r.metal_symbol,
+    r.notes,
+    r.quantity,
+    COALESCE(r.show_on_chart, false),
+    COALESCE(r.sort_order, 0),
+    COALESCE(r.created_at, now()),
+    COALESCE(r.updated_at, now())
+  FROM jsonb_populate_recordset(null::assets, p_data->'assets') AS r;
+
+  -- tags: id already regenerated by prepareForImport (links are remapped to
+  -- it); user_id stamped here. Merge-mode name clash: a file tag whose name
+  -- matches an existing tag of the caller, ignoring case, is skipped here and
+  -- its links attach to the existing tag below (see header).
+  INSERT INTO tags (
+    id,
+    user_id,
+    name,
+    show_on_dashboard,
+    created_at,
+    updated_at
+  )
+  SELECT
+    r.id,
+    v_user,
+    r.name,
+    COALESCE(r.show_on_dashboard, false),
+    COALESCE(r.created_at, now()),
+    COALESCE(r.updated_at, now())
+  FROM jsonb_populate_recordset(null::tags, p_data->'tags') AS r
+  WHERE NOT EXISTS (
+    SELECT 1 FROM tags t WHERE t.user_id = v_user AND lower(t.name) = lower(r.name)
+  );
+
+  -- snapshots: id already regenerated by prepareForImport; user_id stamped here.
+  INSERT INTO snapshots (
+    id,
+    user_id,
+    total_net_worth,
+    display_currency,
+    base_currency,
+    source,
+    note,
+    net_contribution,
+    created_at
+  )
+  SELECT
+    r.id,
+    v_user,
+    r.total_net_worth,
+    r.display_currency,
+    COALESCE(r.base_currency, 'USD'),
+    r.source,
+    r.note,
+    r.net_contribution,
+    COALESCE(r.created_at, now())
+  FROM jsonb_populate_recordset(null::snapshots, p_data->'snapshots') AS r;
+
+  -- snapshot_items last: snapshot_id already remapped to the new parents by
+  -- prepareForImport. Owned transitively via snapshot_id; no user_id column.
+  INSERT INTO snapshot_items (
+    snapshot_id,
+    category_id,
+    name,
+    original_amount,
+    original_currency,
+    converted_amount,
+    display_currency,
+    exchange_rate_usd,
+    display_order,
+    tag_ids,
+    created_at
+  )
+  SELECT
+    r.snapshot_id,
+    r.category_id,
+    r.name,
+    r.original_amount,
+    r.original_currency,
+    r.converted_amount,
+    r.display_currency,
+    r.exchange_rate_usd,
+    COALESCE(r.display_order, 0),
+    CASE
+      WHEN r.tag_ids IS NULL THEN NULL
+      ELSE ARRAY(
+        SELECT t.id
+        FROM unnest(r.tag_ids) WITH ORDINALITY AS e(tag_id, ord)
+        LEFT JOIN jsonb_populate_recordset(null::tags, p_data->'tags') AS f ON f.id = e.tag_id
+        LEFT JOIN tags t ON t.user_id = v_user AND lower(t.name) = lower(f.name)
+        ORDER BY e.ord
+      )
+    END,
+    COALESCE(r.created_at, now())
+  FROM jsonb_populate_recordset(null::snapshot_items, p_data->'snapshot_items') AS r;
+
+  -- goals: id/user_id dropped by prepareForImport; user_id stamped here. No FK
+  -- to any other backed-up table, so ordering against the inserts above is free.
+  INSERT INTO goals (
+    user_id,
+    name,
+    kind,
+    category_id,
+    target_amount,
+    target_currency,
+    target_date,
+    created_at,
+    updated_at
+  )
+  SELECT
+    v_user,
+    r.name,
+    r.kind,
+    r.category_id,
+    r.target_amount,
+    r.target_currency,
+    r.target_date,
+    COALESCE(r.created_at, now()),
+    COALESCE(r.updated_at, now())
+  FROM jsonb_populate_recordset(null::goals, p_data->'goals') AS r;
+
+  -- allocation_cards: id already regenerated by prepareForImport (targets are
+  -- remapped to it); user_id stamped here. In merge mode these are appended as
+  -- new cards; the caller's existing cards are never read or modified.
+  INSERT INTO allocation_cards (
+    id,
+    user_id,
+    name,
+    position,
+    created_at,
+    updated_at
+  )
+  SELECT
+    r.id,
+    v_user,
+    r.name,
+    COALESCE(r.position, 0),
+    COALESCE(r.created_at, now()),
+    COALESCE(r.updated_at, now())
+  FROM jsonb_populate_recordset(null::allocation_cards, p_data->'allocation_cards') AS r;
+
+  -- allocation_targets last: asset_id and card_id already remapped to the new
+  -- parents by prepareForImport, and both parents are inserted above. id/user_id
+  -- dropped by prepareForImport; user_id stamped here, id defaults.
+  INSERT INTO allocation_targets (
+    user_id,
+    card_id,
+    asset_id,
+    target_pct,
+    created_at,
+    updated_at
+  )
+  SELECT
+    v_user,
+    r.card_id,
+    r.asset_id,
+    r.target_pct,
+    COALESCE(r.created_at, now()),
+    COALESCE(r.updated_at, now())
+  FROM jsonb_populate_recordset(null::allocation_targets, p_data->'allocation_targets') AS r;
+
+  -- asset_tags last: asset_id already remapped to the new asset by
+  -- prepareForImport. tag_id is resolved by name to the caller's tag: the file
+  -- tag inserted above, or the existing tag it merged into. LEFT joins, so an
+  -- unresolvable link fails NOT NULL instead of vanishing.
+  INSERT INTO asset_tags (
+    asset_id,
+    tag_id,
+    user_id,
+    created_at
+  )
+  SELECT
+    r.asset_id,
+    t.id,
+    v_user,
+    COALESCE(r.created_at, now())
+  FROM jsonb_populate_recordset(null::asset_tags, p_data->'asset_tags') AS r
+  LEFT JOIN jsonb_populate_recordset(null::tags, p_data->'tags') AS f ON f.id = r.tag_id
+  LEFT JOIN tags t ON t.user_id = v_user AND lower(t.name) = lower(f.name);
+END;
+$$;
+
+COMMIT;

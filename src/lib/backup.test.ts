@@ -3,6 +3,7 @@ import type { BackupInput } from "@/lib/backup";
 import {
   CURRENT_SCHEMA_VERSION,
   prepareForImport,
+  prepareImport,
   serialize,
   USER_PREFERENCES_COLUMNS,
   ASSETS_COLUMNS,
@@ -101,6 +102,7 @@ function makeInput(): BackupInput {
         display_currency: "USD",
         display_order: 0,
         exchange_rate_usd: 1,
+        tag_ids: null,
         created_at: ISO,
       },
       {
@@ -114,6 +116,7 @@ function makeInput(): BackupInput {
         display_currency: "USD",
         display_order: 1,
         exchange_rate_usd: 1,
+        tag_ids: ["tag-1"],
         created_at: ISO,
       },
     ],
@@ -941,5 +944,109 @@ describe("asset tags (schemaVersion 4)", () => {
       expect(newAssetName.get(after.asset_id as string)).toBe(assetName.get(before.asset_id));
       expect(newTagName.get(after.tag_id as string)).toBe(tagName.get(before.tag_id));
     });
+  });
+});
+
+// Slice B1b: snapshot_items.tag_ids, the tags an asset carried at save time.
+describe("snapshot_items.tag_ids (B1b)", () => {
+  type Item = Record<string, unknown>;
+
+  function fileWithItems(tagIdsPerItem: (string[] | null | "absent")[]): unknown {
+    const env = JSON.parse(JSON.stringify(serialize(makeInput(), ISO))) as {
+      data: { tags: Item[]; asset_tags: Item[]; snapshot_items: Item[] };
+    };
+    // Two fresh tags; the fixture's link pointed at the tag it replaced.
+    env.data.asset_tags = [];
+    env.data.tags = [
+      { id: "tag-a", name: "Alpha", show_on_dashboard: true },
+      { id: "tag-b", name: "Beta", show_on_dashboard: false },
+    ];
+    env.data.snapshot_items = tagIdsPerItem.map((tagIds, i) => {
+      const item: Item = { ...env.data.snapshot_items[0], id: `item-${i}` };
+      if (tagIds === "absent") delete item.tag_ids;
+      else item.tag_ids = tagIds;
+      return item;
+    });
+    return env;
+  }
+
+  function prepare(tagIdsPerItem: (string[] | null | "absent")[]) {
+    const result = validateEnvelope(fileWithItems(tagIdsPerItem), VALID_CATEGORIES);
+    if (!result.ok) throw new Error(`fixture should validate: ${result.code}`);
+    let n = 0;
+    return prepareImport(result.data, () => `fresh-${++n}`);
+  }
+
+  it("is in the export whitelist and serialize carries it as-is (null and an array)", () => {
+    expect(SNAPSHOT_ITEMS_COLUMNS).toContain("tag_ids");
+    const env = serialize(makeInput(), ISO);
+    expect(env.data.snapshot_items.map((i) => i.tag_ids)).toEqual([null, ["tag-1"]]);
+  });
+
+  // makeInput's assets/snapshots/cards/tags take fresh ids in that order:
+  // asset → fresh-1, snapshots → fresh-2/3, card → fresh-4, tag-a → fresh-5,
+  // tag-b → fresh-6. The tag_ids remap is a post-pass, so that order holds.
+  it.each([
+    ["NULL stays NULL (not recorded, never [])", [null], [null], 0],
+    ["an absent key stays absent (a file from before B1b)", ["absent"], ["absent"], 0],
+    ["[] stays [] (recorded, no tags)", [[]], [[]], 0],
+    ["each id is remapped to its tag's fresh id, in order", [["tag-b", "tag-a"]], [["fresh-6", "fresh-5"]], 0],
+    ["an id whose tag is not in the file (deleted later) is dropped and counted", [["tag-gone"]], [[]], 1],
+    ["a dropped id leaves the others in order", [["tag-a", "tag-gone", "tag-b"]], [["fresh-5", "fresh-6"]], 1],
+    [
+      "the count is summed across items; NULL items count nothing",
+      [["tag-gone", "tag-also-gone"], null, ["tag-a", "tag-gone"]],
+      [[], null, ["fresh-5"]],
+      3,
+    ],
+  ] as const)("%s", (_label, input, expected, dropped) => {
+    const { payload, droppedTagIds } = prepare(input as unknown as (string[] | null | "absent")[]);
+    const got = payload.snapshot_items.map((i) => ("tag_ids" in i ? i.tag_ids : "absent"));
+    expect(got).toEqual(expected);
+    expect(droppedTagIds).toBe(dropped);
+  });
+
+  it("prepareForImport returns exactly prepareImport's payload", () => {
+    const result = validateEnvelope(fileWithItems([["tag-a", "tag-gone"], null]), VALID_CATEGORIES);
+    if (!result.ok) throw new Error("fixture should validate");
+    let a = 0;
+    let b = 0;
+    expect(prepareForImport(result.data, () => `id-${++a}`)).toEqual(
+      prepareImport(result.data, () => `id-${++b}`).payload,
+    );
+  });
+
+  it("a round trip keeps each item's tags, matched by name", () => {
+    const input = makeInput();
+    input.tags.push({ ...input.tags[0], id: "tag-2", name: "Income" });
+    input.snapshot_items[1].tag_ids = ["tag-2", "tag-1"];
+    const env = JSON.parse(JSON.stringify(serialize(input, ISO))) as unknown;
+    const result = validateEnvelope(env, VALID_CATEGORIES);
+    if (!result.ok) throw new Error("fixture should validate");
+    let n = 0;
+    const { payload, droppedTagIds } = prepareImport(result.data, () => `id-${++n}`);
+    const nameOf = new Map(payload.tags.map((t) => [t.id as string, t.name as string]));
+    expect(droppedTagIds).toBe(0);
+    expect(payload.snapshot_items[0].tag_ids).toBeNull();
+    expect((payload.snapshot_items[1].tag_ids as string[]).map((id) => nameOf.get(id))).toEqual([
+      "Income",
+      "Long term",
+    ]);
+  });
+
+  it.each([
+    ["a string", "tag-a"],
+    ["an object", { 0: "tag-a" }],
+    ["an array holding a number", ["tag-a", 7]],
+    ["an array holding null", [null]],
+  ])("rejects tag_ids that is %s as INVALID_ROW (field tag_ids)", (_label, bad) => {
+    const env = fileWithItems([["tag-a"], []]) as { data: { snapshot_items: Item[] } };
+    env.data.snapshot_items[1].tag_ids = bad;
+    const result = validateEnvelope(env, VALID_CATEGORIES);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe("INVALID_ROW");
+      expect(result.context).toEqual({ table: "snapshot_items", index: 1, field: "tag_ids" });
+    }
   });
 });

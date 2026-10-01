@@ -493,4 +493,73 @@ describe("POST /api/snapshots", () => {
     const payload = snapshotInsert?.args[0] as Record<string, unknown>;
     expect(payload).not.toHaveProperty("created_at");
   });
+
+  // Slice B1b, T6: the tags each asset carries are recorded on its item.
+  it("records each asset's current tag ids on its item, read in the same assets query", async () => {
+    const tagged = { ...assetA, asset_tags: [{ tag_id: "tag-z" }, { tag_id: "tag-a" }] };
+    const untagged = { ...assetB, asset_tags: [] };
+    const m = createSupabaseMock({
+      userId: userA,
+      tableResults: { assets: { data: [tagged, untagged], error: null } },
+      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
+    });
+    mocks.factory = () => m;
+
+    const response = await POST({ request: makeRequest(), cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(201);
+    const assetsSelect = m.builders.get("assets")?.__recorded.find((c) => c.method === "select");
+    expect(assetsSelect?.args[0]).toBe("*, category:asset_categories(*), asset_tags(tag_id)");
+    const itemsInsert = m.builders.get("snapshot_items")?.__recorded.find((c) => c.method === "insert");
+    const items = itemsInsert?.args[0] as { name: string; tag_ids: string[] | null }[];
+    // Sorted, so the same tag set always records the same array. An untagged
+    // asset records [] ("recorded, no tags"), not NULL ("not recorded").
+    expect(items.map((i) => [i.name, i.tag_ids])).toEqual([
+      ["Checking", ["tag-a", "tag-z"]],
+      ["Savings", []],
+    ]);
+  });
+
+  it("records NULL (not recorded), never [], when the tag embed is absent from the row", async () => {
+    const m = createSupabaseMock({
+      userId: userA,
+      tableResults: defaultTableResults,
+      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
+    });
+    mocks.factory = () => m;
+
+    const response = await POST({ request: makeRequest(), cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(201);
+    const itemsInsert = m.builders.get("snapshot_items")?.__recorded.find((c) => c.method === "insert");
+    const items = itemsInsert?.args[0] as { tag_ids: string[] | null }[];
+    expect(items.map((i) => i.tag_ids)).toEqual([null, null]);
+  });
+
+  it("a repriced holding keeps its tags on the recorded item", async () => {
+    priceMocks.crypto.mockImplementation(() =>
+      Promise.resolve({ price: 80000, isCached: false, fetchedAt: "2026-08-30T00:00:00.000Z" }),
+    );
+    const btc = {
+      ...assetA,
+      id: "asset-btc",
+      name: "Bitcoin",
+      category_id: "crypto",
+      amount: 59941,
+      quantity: 0.5,
+      crypto_symbol: "BTC",
+      category: { ...assetA.category, id: "crypto", name: "Crypto" },
+      asset_tags: [{ tag_id: "tag-risk" }],
+    };
+    const m = createSupabaseMock({
+      userId: userA,
+      tableResults: { assets: { data: [btc], error: null } },
+      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
+    });
+    mocks.factory = () => m;
+
+    const response = await POST({ request: makeRequest(), cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(201);
+    const itemsInsert = m.builders.get("snapshot_items")?.__recorded.find((c) => c.method === "insert");
+    const items = itemsInsert?.args[0] as { original_amount: number; tag_ids: string[] | null }[];
+    expect(items).toEqual([expect.objectContaining({ original_amount: 40000, tag_ids: ["tag-risk"] })]);
+  });
 });

@@ -268,4 +268,36 @@ describe("POST /api/backup/import", () => {
     expect(json.error.context).toEqual({ table: "asset_tags", orphanAssetTags: [{ index: 0, missing: ["tag_id"] }] });
     expect(rpcCall(m)).toBeUndefined();
   });
+
+  it("B1b: remaps snapshot tag_ids, drops a deleted tag's id and reports the count in the result", async () => {
+    const m = authedMock();
+    mocks.factory = () => m;
+
+    const body = validBody("merge", { schemaVersion: 4 });
+    const data = body.data as Record<string, unknown[]>;
+    data.tags = [{ id: "tag-1", user_id: userA, name: "Core", show_on_dashboard: true }];
+    const item = data.snapshot_items[0] as Record<string, unknown>;
+    item.tag_ids = ["tag-deleted", "tag-1", "tag-also-deleted"];
+    data.snapshot_items.push({ ...item, id: "item-2", tag_ids: null });
+
+    const response = await POST({ request: makeRequest(body), cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(200);
+    const json = (await response.json()) as { data: { mode: string; droppedTagIds: number } };
+    expect(json.data).toEqual({ mode: "merge", droppedTagIds: 2 });
+
+    const [, args] = (rpcCall(m)?.args ?? []) as [string, { p_data: Record<string, Record<string, unknown>[]> }];
+    const tagId = args.p_data.tags[0].id;
+    expect(args.p_data.snapshot_items.map((i) => i.tag_ids)).toEqual([[tagId], null]);
+    // The payload carries table sections only: the count never reaches the RPC.
+    expect(Object.keys(args.p_data)).not.toContain("droppedTagIds");
+  });
+
+  it("B1b: a file with no tag_ids anywhere reports droppedTagIds 0", async () => {
+    const m = authedMock();
+    mocks.factory = () => m;
+    const response = await POST({ request: makeRequest(validBody("replace")), cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(200);
+    const json = (await response.json()) as { data: { droppedTagIds: number } };
+    expect(json.data.droppedTagIds).toBe(0);
+  });
 });

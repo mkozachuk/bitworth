@@ -343,6 +343,7 @@ export interface Database {
           original_amount: number;
           original_currency: string;
           snapshot_id: string;
+          tag_ids: string[] | null;
         };
         Insert: {
           category_id: string;
@@ -356,6 +357,7 @@ export interface Database {
           original_amount: number;
           original_currency: string;
           snapshot_id: string;
+          tag_ids?: string[] | null;
         };
         Update: {
           category_id?: string;
@@ -369,6 +371,7 @@ export interface Database {
           original_amount?: number;
           original_currency?: string;
           snapshot_id?: string;
+          tag_ids?: string[] | null;
         };
         Relationships: [
           {

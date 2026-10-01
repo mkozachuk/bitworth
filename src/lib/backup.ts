@@ -110,6 +110,12 @@ export const SNAPSHOT_ITEMS_COLUMNS = [
   "display_currency",
   "display_order",
   "exchange_rate_usd",
+  // The ids of the tags the asset carried when the snapshot was saved (B1b).
+  // Nullable: NULL means "not recorded" (every row saved before B1b) and is
+  // distinct from [] ("recorded, no tags"), so it round-trips as-is. A file from
+  // before B1b has no key; `restore_backup` maps it to NULL. On import each
+  // element is remapped to its tag's fresh id; see `prepareImport`.
+  "tag_ids",
   "created_at",
 ] as const satisfies readonly (keyof SnapshotItemRow)[];
 
@@ -482,6 +488,23 @@ export function validateEnvelope(parsed: unknown, validCategoryIds: ReadonlySet<
     });
   }
 
+  // `snapshot_items.tag_ids` is optional (absent in a file from before B1b) and
+  // nullable ("not recorded"). When present it must be an array of strings. An
+  // element that names no tag in the file is NOT an error: it is a tag deleted
+  // after the snapshot was taken, and `prepareImport` drops and counts it.
+  const itemRows = normalised.snapshot_items as Record<string, unknown>[];
+  for (let i = 0; i < itemRows.length; i++) {
+    const tagIds = itemRows[i].tag_ids;
+    if (tagIds === undefined || tagIds === null) continue;
+    if (!Array.isArray(tagIds) || !tagIds.every((id) => typeof id === "string")) {
+      return fail("INVALID_ROW", `Row ${i} in \`snapshot_items\` has an invalid \`tag_ids\`.`, {
+        table: "snapshot_items",
+        index: i,
+        field: "tag_ids",
+      });
+    }
+  }
+
   // Every asset↔tag link must point at an asset AND a tag carried in this file,
   // for the same reason as allocation targets above: an original id can still
   // exist in the database in merge mode and would be silently accepted.
@@ -525,6 +548,30 @@ export interface PreparedBackup {
  * stamps `user_id` itself), so its `user_id` is dropped too.
  */
 export function prepareForImport(data: BackupData, newId: () => string): PreparedBackup {
+  return prepareImport(data, newId).payload;
+}
+
+export interface PreparedImport {
+  /** The RPC-ready payload (exactly what `prepareForImport` returns). */
+  payload: PreparedBackup;
+  /**
+   * How many `snapshot_items.tag_ids` elements were dropped because their tag is
+   * not in the file. That is the one legitimate dangling tag id: a tag deleted
+   * after the snapshot was taken (an array carries no foreign key, so the id
+   * outlives its tag). The import result reports this count.
+   */
+  droppedTagIds: number;
+}
+
+/**
+ * `prepareForImport`, plus the count of dropped `tag_ids` elements. Each
+ * `snapshot_items.tag_ids` element is remapped through the tag id map, in
+ * order; an element missing from the map is dropped and counted. NULL stays
+ * NULL and an absent key stays absent (both mean "not recorded"); `[]` stays
+ * `[]`. The RPC then resolves each remaining id by its tag's name, so a tag
+ * merged into an existing one in merge mode is followed (see the migration).
+ */
+export function prepareImport(data: BackupData, newId: () => string): PreparedImport {
   const user_preferences = data.user_preferences.map((r) => omit(r as Record<string, unknown>, ["user_id"]));
 
   // Assets get a fresh id (inserted as-is by the RPC) so allocation targets can
@@ -608,15 +655,31 @@ export function prepareForImport(data: BackupData, newId: () => string): Prepare
     };
   });
 
-  return {
+  // tag_ids are remapped after the tags have their fresh ids. A post-pass, so
+  // the order in which `newId` is called (parents first) is unchanged.
+  let droppedTagIds = 0;
+  const remappedItems = snapshot_items.map((item): Record<string, unknown> => {
+    const tagIds = (item as Record<string, unknown>).tag_ids;
+    if (!Array.isArray(tagIds)) return item;
+    const kept: string[] = [];
+    for (const oldTagId of tagIds as string[]) {
+      const fresh = tagIdMap.get(oldTagId);
+      if (fresh === undefined) droppedTagIds++;
+      else kept.push(fresh);
+    }
+    return { ...item, tag_ids: kept };
+  });
+
+  const payload: PreparedBackup = {
     user_preferences,
     assets,
     snapshots,
-    snapshot_items,
+    snapshot_items: remappedItems,
     goals,
     allocation_cards,
     allocation_targets,
     tags,
     asset_tags,
   };
+  return { payload, droppedTagIds };
 }

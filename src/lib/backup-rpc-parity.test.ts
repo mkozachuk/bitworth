@@ -323,3 +323,47 @@ describe(`restore_backup tags and asset_tags (${migrationName})`, () => {
     expect(tagsInsert).not.toContain("ON CONFLICT");
   });
 });
+
+// Slice B1b. snapshot_items.tag_ids: the ids of the tags an asset carried at
+// save time. prepareForImport remaps each element to its file tag's fresh id
+// (dropping, and counting, an id whose tag is not in the file). The RPC then
+// resolves each element by name, the same way asset_tags.tag_id is resolved, so
+// a tag merged into an existing one in merge mode is followed.
+describe(`restore_backup snapshot_items.tag_ids (${migrationName})`, () => {
+  it("NULL stays NULL (never []); each element is resolved through its file tag's name, in order", () => {
+    expect(expressionFor("snapshot_items", "tag_ids").replace(/\s+/g, " ")).toBe(
+      "CASE WHEN r.tag_ids IS NULL THEN NULL ELSE ARRAY( SELECT t.id " +
+        "FROM unnest(r.tag_ids) WITH ORDINALITY AS e(tag_id, ord) " +
+        "LEFT JOIN jsonb_populate_recordset(null::tags, p_data->'tags') AS f ON f.id = e.tag_id " +
+        "LEFT JOIN tags t ON t.user_id = v_user AND lower(t.name) = lower(f.name) " +
+        "ORDER BY e.ord ) END",
+    );
+  });
+
+  it("the element match uses the same name key as asset_tags.tag_id (and so as the unique index)", () => {
+    expect(expressionFor("snapshot_items", "tag_ids")).toContain(
+      "LEFT JOIN tags t ON t.user_id = v_user AND lower(t.name) = lower(f.name)",
+    );
+    expect(insertBlock("asset_tags").tail).toContain(
+      "LEFT JOIN tags t ON t.user_id = v_user AND lower(t.name) = lower(f.name)",
+    );
+  });
+
+  it("tags are inserted before snapshot_items, so the caller's tags exist when tag_ids are resolved", () => {
+    const at = (t: string) => sql.indexOf(`INSERT INTO ${t} (`);
+    expect(at("tags")).toBeGreaterThan(at("assets"));
+    expect(at("snapshot_items")).toBeGreaterThan(at("tags"));
+  });
+
+  it("the schema migration adds a nullable uuid[] with no default, and a CHECK that rejects NULL elements", () => {
+    // The CHECK is what makes an unresolvable element roll the restore back: the
+    // LEFT JOIN turns it into a NULL element instead of shrinking the array.
+    const schema = readdirSync(MIGRATIONS_DIR)
+      .filter((n) => n.endsWith(".sql"))
+      .map((n) => readFileSync(new URL(n, MIGRATIONS_DIR), "utf8"))
+      .find((text) => text.includes("ADD COLUMN tag_ids"));
+    if (!schema) throw new Error("no migration adds snapshot_items.tag_ids");
+    expect(schema).toContain("ALTER TABLE snapshot_items ADD COLUMN tag_ids uuid[];");
+    expect(schema).toContain("CHECK (tag_ids IS NULL OR array_position(tag_ids, NULL) IS NULL)");
+  });
+});

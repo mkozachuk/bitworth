@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@/lib/supabase";
-import { validateEnvelope, prepareForImport } from "@/lib/backup";
+import { validateEnvelope, prepareImport } from "@/lib/backup";
 
 interface ErrorShape {
   error: { code: string; message: string; context?: unknown };
@@ -63,14 +63,16 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     return jsonError(validated.code, validated.message, 400, validated.context);
   }
 
-  const prepared = prepareForImport(validated.data, () => crypto.randomUUID());
+  // `droppedTagIds`: snapshot tag references whose tag is not in the file (a
+  // tag deleted after the snapshot was taken). Dropped, and reported back.
+  const { payload: prepared, droppedTagIds } = prepareImport(validated.data, () => crypto.randomUUID());
 
   const { error } = await supabase.rpc("restore_backup", { p_mode: mode, p_data: prepared });
   if (error) {
     return jsonError("RESTORE_FAILED", "Failed to restore backup", 500, error.message);
   }
 
-  return new Response(JSON.stringify({ data: { mode } }), {
+  return new Response(JSON.stringify({ data: { mode, droppedTagIds } }), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });

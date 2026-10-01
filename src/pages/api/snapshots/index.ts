@@ -89,10 +89,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // No body / invalid JSON → treat as no contribution (legacy bodyless call).
   }
 
-  // Fetch current assets
+  // Fetch current assets, with each asset's tag links embedded in the same read
+  // so the tags recorded below are the ones the asset had at this moment.
   const { data: storedAssets, error: assetsError } = await supabase
     .from("assets")
-    .select("*, category:asset_categories(*)")
+    .select("*, category:asset_categories(*), asset_tags(tag_id)")
     .eq("user_id", user.id);
 
   if (assetsError) {
@@ -102,7 +103,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     );
   }
 
-  type AssetRow = Tables<"assets"> & { category: Tables<"asset_categories"> };
+  type AssetRow = Tables<"assets"> & {
+    category: Tables<"asset_categories">;
+    asset_tags?: Pick<Tables<"asset_tags">, "tag_id">[] | null;
+  };
 
   // Refresh priced holdings (crypto / metals) from live prices before recording
   // anything — their stored `amount` is frozen at the last edit. A price that
@@ -181,6 +185,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       display_currency: displayCurrency,
       exchange_rate_usd: rates[asset.currency as Currency],
       display_order: idx,
+      // Tags recorded at save time (B1b). [] = recorded, no tags. If the embed
+      // is somehow absent, record NULL ("not recorded") rather than a false [].
+      tag_ids: Array.isArray(asset.asset_tags) ? asset.asset_tags.map((t) => t.tag_id).sort() : null,
     }));
 
     const { error: itemsError } = await supabase.from("snapshot_items").insert(items);
