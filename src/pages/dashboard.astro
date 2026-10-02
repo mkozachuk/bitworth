@@ -12,6 +12,7 @@ import { SavingsRateCard } from "@/components/SavingsRateCard";
 import { TopMovers } from "@/components/assets/TopMovers";
 import { AssetTrendsChart, type SnapshotItemWithDate } from "@/components/AssetTrendsChart";
 import { TagTrendsChart, type DashboardTag } from "@/components/TagTrendsChart";
+import { CategoryMixChart } from "@/components/CategoryMixChart";
 import { FireProgress } from "@/components/fire/FireProgress";
 import { computeDrift, type AllocationAsset, type DriftCardInput } from "@/lib/allocation";
 import { DriftAlerts, type DriftAlertsProps } from "@/components/balancer/DriftAlerts";
@@ -394,6 +395,12 @@ if (showDriftAlerts) {
           <AssetTrendsChart
             assets={assets as AssetWithCategory[]}
             snapshots={snapshots as Tables<"snapshots">[]}
+            snapshotItems={trendSnapshotItems}
+            displayCurrency={displayCurrency}
+            rates={rates}
+            client:load
+          />
+          <CategoryMixChart
             snapshotItems={trendSnapshotItems}
             displayCurrency={displayCurrency}
             rates={rates}
