@@ -75,6 +75,15 @@ function legendTexts(container: HTMLElement): string[] {
   return [...container.querySelectorAll(".recharts-legend-item-text")].map((n) => n.textContent).sort();
 }
 
+// The rightmost x any drawn area reaches. Relative, not a pixel pin: it only
+// compares the share view with the absolute view of the same history.
+function maxAreaX(container: HTMLElement): number {
+  const xs = [...container.querySelectorAll(".recharts-area-area")].flatMap((path) =>
+    [...(path.getAttribute("d") ?? "").matchAll(/[MLC]\s*(-?[\d.]+),/g)].map((m) => Number(m[1])),
+  );
+  return Math.max(...xs);
+}
+
 describe("CategoryMixChart rendered states", () => {
   it("state 1, the chart: stacked areas per category, names as text, the toggle switches views", async () => {
     const { container } = renderChart(HISTORY);
@@ -141,5 +150,22 @@ describe("CategoryMixChart rendered states", () => {
     });
     expect(screen.queryByText(LIABILITIES_EXCLUDED)).toBeNull();
     expect(container.textContent).not.toMatch(BAD_TEXT);
+  });
+
+  it("a snapshot with no assets is a gap in the share view, never a drawn 0%", async () => {
+    // HISTORY's snapshot 3 holds only the loan: its share row is null.
+    const { container } = renderChart(HISTORY);
+    await waitFor(() => {
+      expect(container.querySelectorAll(".recharts-area")).toHaveLength(3);
+    });
+    const shareReach = maxAreaX(container);
+    fireEvent.click(screen.getByLabelText("USD"));
+    await waitFor(() => {
+      expect(container.querySelectorAll(".recharts-area")).toHaveLength(4);
+    });
+    const absoluteReach = maxAreaX(container);
+    expect(Number.isFinite(shareReach)).toBe(true);
+    // The absolute view draws snapshot 3; the share view stops before it.
+    expect(shareReach).toBeLessThan(absoluteReach);
   });
 });
