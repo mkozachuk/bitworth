@@ -442,6 +442,26 @@ export function validateEnvelope(parsed: unknown, validCategoryIds: ReadonlySet<
     });
   }
 
+  // Every snapshot item must point at a snapshot carried in this same file, for
+  // the reason given for allocation targets below: `prepareForImport` can only
+  // remap a parent it can see. An orphan's original id would otherwise reach
+  // the RPC, which is SECURITY DEFINER, so the FK is checked without RLS and
+  // would accept any existing snapshot with that UUID (the caller's own live
+  // one in merge mode, or another user's). A real export never has such a row.
+  const fileSnapshotIds = new Set<unknown>(
+    (normalised.snapshots as Record<string, unknown>[]).map((r) => r.id).filter((id) => typeof id === "string"),
+  );
+  const orphanSnapshotItems: { index: number }[] = [];
+  (normalised.snapshot_items as Record<string, unknown>[]).forEach((row, index) => {
+    if (!fileSnapshotIds.has(row.snapshot_id)) orphanSnapshotItems.push({ index });
+  });
+  if (orphanSnapshotItems.length > 0) {
+    return fail("ORPHAN_SNAPSHOT_ITEM", "Backup has snapshot items whose snapshot is not in the file.", {
+      table: "snapshot_items",
+      orphanSnapshotItems,
+    });
+  }
+
   // Every allocation target must point at an asset AND a card carried in this
   // same file, because `prepareForImport` regenerates both parents' ids and can
   // only remap a reference it can see. An orphan fails here, by name, rather
@@ -602,9 +622,10 @@ export function prepareImport(data: BackupData, newId: () => string): PreparedIm
   const snapshot_items = data.snapshot_items.map((r) => {
     const row = omit(r, ["id"]);
     const oldSnapshotId = row.snapshot_id as string;
-    // Fallback to the original id keeps the payload honest: an orphan item
-    // (no matching parent in the file) carries an id the RPC's FK will reject,
-    // rolling the whole restore back rather than silently dropping the row.
+    // `validateEnvelope` has already rejected any item whose snapshot is not in
+    // the file (ORPHAN_SNAPSHOT_ITEM). The `??` fallback is only a backstop for
+    // callers that skip validation: the unmapped id then meets the FK instead
+    // of the row vanishing silently. Keep it.
     return { ...row, snapshot_id: idMap.get(oldSnapshotId) ?? oldSnapshotId };
   });
 

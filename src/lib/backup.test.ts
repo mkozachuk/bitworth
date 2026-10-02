@@ -1088,3 +1088,56 @@ describe("snapshots.income round-trip (B2, R6)", () => {
     expect(old).toEqual(before);
   });
 });
+
+describe("orphan snapshot items (C3)", () => {
+  // An item whose snapshot is not in the file must fail by name: its original
+  // snapshot id would otherwise reach the SECURITY DEFINER restore and attach
+  // to whatever existing snapshot carries that UUID.
+  it("rejects one item whose snapshot is not in the file, by name", () => {
+    const env = serialize(makeInput(), ISO);
+    (env.data.snapshot_items[1] as Record<string, unknown>).snapshot_id = "snap-not-in-file";
+    const result = validateEnvelope(env, VALID_CATEGORIES);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe("ORPHAN_SNAPSHOT_ITEM");
+    expect(result.context).toEqual({ table: "snapshot_items", orphanSnapshotItems: [{ index: 1 }] });
+  });
+
+  it("lists every orphan item, in file order, and none of the valid ones", () => {
+    const env = serialize(makeInput(), ISO);
+    const [first, second] = env.data.snapshot_items;
+    env.data.snapshot_items = [
+      { ...first, snapshot_id: "snap-gone" },
+      { ...second },
+      { ...second, snapshot_id: "snap-also-gone" },
+      { ...first },
+      { ...first, snapshot_id: "snap-gone" },
+    ];
+    const result = validateEnvelope(env, VALID_CATEGORIES);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe("ORPHAN_SNAPSHOT_ITEM");
+    expect(result.context).toEqual({
+      table: "snapshot_items",
+      orphanSnapshotItems: [{ index: 0 }, { index: 2 }, { index: 4 }],
+    });
+  });
+
+  it("accepts a valid file: every item points at a snapshot in it, and a snapshot may have none", () => {
+    const input = makeInput();
+    input.snapshots.push({ ...input.snapshots[0], id: "snap-empty" });
+    input.snapshot_items.push({ ...input.snapshot_items[0], id: "item-3", snapshot_id: "snap-2" });
+    const result = validateEnvelope(serialize(input, ISO), VALID_CATEGORIES);
+    expect(result.ok).toBe(true);
+  });
+
+  it("keeps the backstop: without validation, an orphan item keeps its original snapshot id for the FK", () => {
+    const input = makeInput();
+    input.snapshot_items[1] = { ...input.snapshot_items[1], snapshot_id: "snap-not-in-file" };
+    let n = 0;
+    const prepared = prepareForImport(serialize(input, ISO).data, () => `new-${++n}`);
+    expect(prepared.snapshot_items).toHaveLength(2);
+    expect(prepared.snapshot_items[1].snapshot_id).toBe("snap-not-in-file");
+    expect(prepared.snapshot_items[0].snapshot_id).not.toBe("snap-1");
+  });
+});

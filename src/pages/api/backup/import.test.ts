@@ -229,6 +229,23 @@ describe("POST /api/backup/import", () => {
     expect(rpcCall(m)).toBeUndefined();
   });
 
+  it("returns 400 ORPHAN_SNAPSHOT_ITEM for an item whose snapshot is not in the file, without calling the RPC", async () => {
+    const m = authedMock();
+    mocks.factory = () => m;
+
+    // Merge mode is the dangerous one: the foreign id could be a live snapshot.
+    const body = validBody("merge", { schemaVersion: 4 });
+    const data = body.data as Record<string, unknown[]>;
+    data.snapshot_items.push({ ...(data.snapshot_items[0] as Record<string, unknown>), snapshot_id: "snap-elsewhere" });
+
+    const response = await POST({ request: makeRequest(body), cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(400);
+    const json = (await response.json()) as { error: { code: string; context: unknown } };
+    expect(json.error.code).toBe("ORPHAN_SNAPSHOT_ITEM");
+    expect(json.error.context).toEqual({ table: "snapshot_items", orphanSnapshotItems: [{ index: 1 }] });
+    expect(m.recorded.filter((c) => c.method === "rpc")).toHaveLength(0);
+  });
+
   it("remaps asset tags to the fresh asset and tag ids in the RPC payload (schemaVersion 4)", async () => {
     const m = authedMock();
     mocks.factory = () => m;
