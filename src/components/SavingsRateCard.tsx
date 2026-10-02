@@ -6,6 +6,9 @@ type SnapshotRow = Tables<"snapshots">;
 
 const VALID_CURRENCIES: Currency[] = ["USD", "EUR", "PLN"];
 
+/** Under the heading in every state: income is net take-home pay (B2.1 N4). */
+export const SUBTITLE = "Share of after-tax income saved";
+
 /** Shown, verbatim, when no interval has a known rate. The card itself is never absent. */
 export const NOTHING_KNOWN = "Add income to a snapshot to see your savings rate";
 
@@ -59,9 +62,10 @@ export function SavingsRateCard({ snapshots, displayCurrency, rates }: Props) {
 
   return (
     <section aria-labelledby="savings-rate-heading" className="bg-card border-border mt-6 rounded-md border p-6">
-      <h2 id="savings-rate-heading" className="text-foreground/60 mb-4 text-xs font-bold tracking-[0.12em] uppercase">
+      <h2 id="savings-rate-heading" className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">
         Savings rate
       </h2>
+      <p className="text-muted-foreground mb-4 text-xs">{SUBTITLE}</p>
 
       {average === null ? (
         <p className="text-foreground/70 text-sm">{NOTHING_KNOWN}</p>

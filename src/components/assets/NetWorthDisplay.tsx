@@ -224,7 +224,7 @@ function SaveButton({
               inside SaveButton, imports included. Same markup and wording. */}
           <div className="flex flex-col gap-1">
             <label htmlFor="save-income" className="text-foreground/70 text-sm font-medium">
-              Income
+              Income (after tax)
             </label>
             <input
               id="save-income"

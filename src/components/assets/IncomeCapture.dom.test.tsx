@@ -44,7 +44,7 @@ function openSave() {
 describe("save flow: income next to the contribution", () => {
   it("shows an Income field in the save dialog, in the display currency", () => {
     openSave();
-    const input = screen.getByLabelText<HTMLInputElement>("Income");
+    const input = screen.getByLabelText<HTMLInputElement>("Income (after tax)");
     expect(input.id).toBe("save-income");
     expect(input.min).toBe("0");
     expect(screen.getByLabelText("Net contribution")).toBeDefined();
@@ -54,7 +54,7 @@ describe("save flow: income next to the contribution", () => {
   it("sends both keys when both are filled", async () => {
     openSave();
     fireEvent.change(screen.getByLabelText("Net contribution"), { target: { value: "250" } });
-    fireEvent.change(screen.getByLabelText("Income"), { target: { value: "4000.5" } });
+    fireEvent.change(screen.getByLabelText("Income (after tax)"), { target: { value: "4000.5" } });
     fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
     await waitFor(() => {
       expect(writes()).toHaveLength(1);
@@ -67,7 +67,7 @@ describe("save flow: income next to the contribution", () => {
 
   it("sends income alone when the contribution is blank", async () => {
     openSave();
-    fireEvent.change(screen.getByLabelText("Income"), { target: { value: "3000" } });
+    fireEvent.change(screen.getByLabelText("Income (after tax)"), { target: { value: "3000" } });
     fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
     await waitFor(() => {
       expect(writes()).toHaveLength(1);
@@ -86,11 +86,36 @@ describe("save flow: income next to the contribution", () => {
 
   it("refuses a negative income client-side and sends nothing", async () => {
     openSave();
-    fireEvent.change(screen.getByLabelText("Income"), { target: { value: "-5" } });
+    fireEvent.change(screen.getByLabelText("Income (after tax)"), { target: { value: "-5" } });
     fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
     // NetWorthDisplay prefixes save errors with "Snapshot failed: " (unchanged).
     expect(await screen.findByText("Snapshot failed: Income must be a number of 0 or more")).toBeDefined();
     expect(writes()).toHaveLength(0);
+  });
+});
+
+describe("income is labelled as net, after-tax take-home (B2.1 N4)", () => {
+  it("the save dialog's field is labelled after tax", () => {
+    openSave();
+    const label = document.querySelector('label[for="save-income"]');
+    expect(label?.textContent).toMatch(/after tax/);
+  });
+
+  it("the edit dialog's field is labelled after tax", () => {
+    render(
+      <EditContributionDialog
+        open
+        id="snap-9"
+        netContribution={null}
+        income={null}
+        displayCurrency="EUR"
+        dateLabel="March 1, 2026"
+        onClose={() => undefined}
+        onSaved={() => undefined}
+      />,
+    );
+    const label = document.querySelector('label[for="edit-income"]');
+    expect(label?.textContent).toMatch(/after tax/);
   });
 });
 
@@ -113,13 +138,13 @@ describe("EditContributionDialog: edits both fields", () => {
   it("pre-fills both fields from the snapshot", () => {
     openEdit(200, 3000);
     expect(screen.getByLabelText<HTMLInputElement>("Net contribution").value).toBe("200");
-    expect(screen.getByLabelText<HTMLInputElement>("Income").value).toBe("3000");
+    expect(screen.getByLabelText<HTMLInputElement>("Income (after tax)").value).toBe("3000");
     expect(screen.getByText("Edit contribution and income")).toBeDefined();
   });
 
   it("PATCHes both keys; a cleared income is sent as null", async () => {
     openEdit(200, 3000);
-    fireEvent.change(screen.getByLabelText("Income"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Income (after tax)"), { target: { value: "" } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => {
       expect(writes()).toHaveLength(1);
@@ -132,7 +157,7 @@ describe("EditContributionDialog: edits both fields", () => {
 
   it("adds income to a snapshot that had none", async () => {
     openEdit(null, null);
-    fireEvent.change(screen.getByLabelText("Income"), { target: { value: "5200" } });
+    fireEvent.change(screen.getByLabelText("Income (after tax)"), { target: { value: "5200" } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => {
       expect(writes()).toHaveLength(1);
@@ -142,7 +167,7 @@ describe("EditContributionDialog: edits both fields", () => {
 
   it("refuses a negative income and sends nothing", () => {
     openEdit(100, null);
-    fireEvent.change(screen.getByLabelText("Income"), { target: { value: "-1" } });
+    fireEvent.change(screen.getByLabelText("Income (after tax)"), { target: { value: "-1" } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(screen.getByText("Income must be a number of 0 or more")).toBeDefined();
     expect(writes()).toHaveLength(0);

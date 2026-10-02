@@ -23,7 +23,7 @@ export function IncomeField({ value, onChange, currency, id = "income", disabled
   return (
     <div className="flex flex-col gap-1">
       <label htmlFor={id} className="text-foreground/70 text-sm font-medium">
-        Income
+        Income (after tax)
       </label>
       <input
         id={id}

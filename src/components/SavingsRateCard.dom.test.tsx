@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { render, screen, cleanup, within } from "@testing-library/react";
 import { describe, it, expect, afterEach } from "vitest";
-import { SavingsRateCard, NOTHING_KNOWN, formatRate } from "./SavingsRateCard";
+import { SavingsRateCard, NOTHING_KNOWN, SUBTITLE, formatRate } from "./SavingsRateCard";
 import { ContributionsChart } from "./ContributionsChart";
 import type { Tables } from "@/lib/database.types";
 
@@ -39,6 +39,18 @@ function card(snapshots: Tables<"snapshots">[]) {
   expect(screen.getByRole("heading", { name: "Savings rate" })).toBeDefined();
   return container;
 }
+
+describe("SavingsRateCard: income is after tax (B2.1 N4)", () => {
+  it.each([
+    ["nothing known", [row(1)]],
+    ["a known rate", [row(1), row(2, { net_contribution: 300, income: 1000 })]],
+  ] as const)("the subtitle says the rate is of after-tax income: %s", (_case, snapshots) => {
+    const container = card([...snapshots]);
+    expect(screen.getByText(SUBTITLE)).toBeDefined();
+    expect(container.textContent).toMatch(/of after-tax income/);
+    expectNoJunk(container);
+  });
+});
 
 describe("SavingsRateCard: rendered states", () => {
   it("1. known latest and average, the average labelled with its count", () => {
