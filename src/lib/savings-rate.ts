@@ -21,6 +21,12 @@ import { buildContributionSplits, type ContributionSnapshot } from "./contributi
 // contribution of 0 against a positive income is a real 0%. Rates above 100%
 // and below 0% are kept as they are, never clamped, and carry a label.
 //
+// The headline average is pooled (slice B2.1): over the last AVERAGE_WINDOW
+// known intervals, sum of contributions / sum of incomes, both already in the
+// display currency. A plain mean of rates would let one low-income interval
+// with a windfall outweigh a normal month; pooling weights each interval by
+// what was earned in it. Income is net (after-tax) take-home, per the UI label.
+//
 // Pure: no clock, no I/O. Input order does not matter; it is sorted by date
 // here, because the split pairs adjacent snapshots.
 
@@ -48,7 +54,10 @@ export interface SavingsRateSummary {
   intervals: IntervalRate[];
   /** The most recent interval, known or not; null with fewer than 2 snapshots. */
   latest: IntervalRate | null;
-  /** Mean of the last `averageCount` known rates, or null if none is known. */
+  /**
+   * Pooled rate over the last `averageCount` known intervals: their summed
+   * contribution / their summed income. Null if none is known.
+   */
   average: number | null;
   averageLabel: RateLabel | null;
   /** How many known intervals the average uses (at most AVERAGE_WINDOW). */
@@ -102,9 +111,14 @@ export function summarizeSavingsRates(
   rates: Record<Currency, number>,
 ): SavingsRateSummary {
   const intervals = buildSavingsRates(snapshots, displayCurrency, rates);
-  const known = intervals.flatMap((iv) => (iv.rate === null ? [] : [iv.rate]));
+  // Known = rate not null, which already means contribution and income are
+  // both present and income > 0.
+  const known = intervals.filter((iv) => iv.rate !== null);
   const window = known.slice(-AVERAGE_WINDOW);
-  const average = window.length === 0 ? null : window.reduce((sum, r) => sum + r, 0) / window.length;
+  const contributionSum = window.reduce((sum, iv) => sum + (iv.contribution ?? 0), 0);
+  const incomeSum = window.reduce((sum, iv) => sum + (iv.income ?? 0), 0);
+  const pooled = incomeSum > 0 ? contributionSum / incomeSum : null;
+  const average = pooled !== null && Number.isFinite(pooled) ? pooled : null;
   return {
     intervals,
     latest: intervals.at(-1) ?? null,

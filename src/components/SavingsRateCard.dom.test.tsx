@@ -53,7 +53,9 @@ describe("SavingsRateCard: rendered states", () => {
     expect(within(latest).getByText("25.0%")).toBeDefined();
     expect(latest.textContent).toContain("Latest interval, to Apr 1, 2026");
     expect(within(average).getByText("avg of 2 known")).toBeDefined();
-    expect(within(average).getByText("27.5%")).toBeDefined();
+    // Pooled (B2.1 N1): (300 + 500) / (1000 + 2000) = 26.7%. It read 27.5%, the
+    // plain mean of 30% and 25%, before the average was pooled.
+    expect(within(average).getByText("26.7%")).toBeDefined();
     expect(container.textContent).not.toMatch(/more than earned|withdrawal/);
     expect(screen.queryByText(NOTHING_KNOWN)).toBeNull();
     expectNoJunk(container);

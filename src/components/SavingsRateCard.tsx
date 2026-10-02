@@ -49,8 +49,8 @@ function LabelChip({ label }: { label: RateLabel | null }) {
 }
 
 /**
- * Headline savings-rate card (S-24): the latest interval's rate and the mean of
- * the last 6 known rates, each with its context. Unknown is shown as words,
+ * Headline savings-rate card (S-24): the latest interval's rate and the pooled
+ * rate of the last 6 known intervals (B2.1), each with its context. Unknown is shown as words,
  * never as 0%. Rates over 100% or under 0% are shown as they are, with a label.
  */
 export function SavingsRateCard({ snapshots, displayCurrency, rates }: Props) {

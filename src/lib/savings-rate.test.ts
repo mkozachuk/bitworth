@@ -192,6 +192,62 @@ describe("summarizeSavingsRates: the average of the last 6 known", () => {
   });
 });
 
+describe("summarizeSavingsRates: the average is pooled (B2.1 N1)", () => {
+  // Pooled = sum(contribution) / sum(income) over the window. The plain mean of
+  // rates would be (0.9 + 0.1) / 2 = 0.5; pooled is 1900 / 11000 = 0.1727...
+  it("weights each interval by its income: a windfall in a low-income month does not dominate", () => {
+    const s = summarizeSavingsRates(
+      [
+        snap("2026-01-01"),
+        snap("2026-02-01", { netContribution: 900, income: 1000 }), // 90%
+        snap("2026-03-01", { netContribution: 1000, income: 10000 }), // 10%
+      ],
+      "USD",
+      RATES,
+    );
+    expect(s.averageCount).toBe(2);
+    expect(s.average).toBeCloseTo(1900 / 11000, 12);
+    expect(s.average).toBeCloseTo(0.1727, 4);
+    // More than 10 points away from the plain mean.
+    expect(Math.abs((s.average ?? 0) - 0.5)).toBeGreaterThan(0.1);
+  });
+
+  it("pools only the last 6 known intervals; unknown intervals add nothing to either sum", () => {
+    const s = summarizeSavingsRates(
+      [
+        snap("2026-01-01"),
+        snap("2026-02-01", { netContribution: 9000, income: 10000 }), // 7th known back: outside the window
+        snap("2026-03-01", { netContribution: 100, income: 1000 }),
+        snap("2026-04-01", { netContribution: 100, income: 1000 }),
+        snap("2026-05-01", { netContribution: 5000, income: null }), // unknown: not pooled
+        snap("2026-06-01", { netContribution: 100, income: 1000 }),
+        snap("2026-07-01", { netContribution: 100, income: 1000 }),
+        snap("2026-08-01", { netContribution: 100, income: 1000 }),
+        snap("2026-09-01", { netContribution: 2000, income: 5000 }),
+      ],
+      "USD",
+      RATES,
+    );
+    expect(s.averageCount).toBe(6);
+    expect(s.average).toBeCloseTo(2500 / 10000, 12);
+  });
+
+  it("pools in the display currency: amounts converted from each snapshot's own currency", () => {
+    // 250 EUR of 1000 EUR, then 1925 PLN of 3850 PLN, shown in USD:
+    // contributions 271.739... + 500, incomes 1086.956... + 1000.
+    const s = summarizeSavingsRates(
+      [
+        snap("2026-01-01"),
+        snap("2026-02-01", { displayCurrency: "EUR", netContribution: 250, income: 1000 }),
+        snap("2026-03-01", { displayCurrency: "PLN", netContribution: 1925, income: 3850 }),
+      ],
+      "USD",
+      RATES,
+    );
+    expect(s.average).toBeCloseTo((250 / 0.92 + 500) / (1000 / 0.92 + 1000), 12);
+  });
+});
+
 describe("rateLabel", () => {
   it.each([
     [null, null],
