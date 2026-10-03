@@ -3,7 +3,7 @@ project: "BitWorth"
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-07-27
+updated: 2026-10-04
 prd_version: 1
 main_goal: market-feedback
 top_blocker: capacity
@@ -49,10 +49,15 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 | S-19 | metal-price-fetch          | see live gold/silver spot prices (in display currency) when adding a precious-metals asset           | F-01, S-01, S-03             | —                    | done     |
 | S-20 | net-worth-trajectory       | project future net worth from their real snapshot history and see when they'll hit a target          | F-01, S-02                   | —                    | done     |
 | S-21 | savings-goals              | define custom savings goals and see progress cards with an ETA derived from their real trend         | F-01, S-01, S-02, S-05, S-20 | —                    | done     |
-| S-22 | snapshot-reminder          | get an in-app nudge when it's been too long since their last snapshot                                | F-01, S-02, S-05             | —                    | proposed |
-| S-23 | category-mix-trends        | see how their allocation across categories shifted over time as a stacked-area chart                 | F-01, S-02                   | —                    | proposed |
-| S-24 | income-savings-rate        | record income and see their savings rate (contributions ÷ income) per snapshot interval              | F-01, S-02, S-05, S-17       | —                    | proposed |
+| S-22 | snapshot-reminder          | get an in-app nudge when it's been too long since their last snapshot                                | F-01, S-02, S-05             | —                    | done     |
+| S-23 | category-mix-trends        | see how their allocation across categories shifted over time as a stacked-area chart                 | F-01, S-02                   | —                    | done     |
+| S-24 | income-savings-rate        | record income and see their savings rate (contributions ÷ income) per snapshot interval              | F-01, S-02, S-05, S-17       | —                    | done     |
 | S-25 | asset-list-reorder         | reorder their asset list by drag-and-drop in an explicit "edit list" mode, persisted across sessions | F-01, S-01, S-07             | —                    | done     |
+| S-26 | asset-tags                 | tag assets with their own labels and chart each tag's value over snapshot history on the dashboard   | F-01, S-01, S-02, S-12, S-13 | —                    | done     |
+| S-27 | stale-price-reprice        | see a banner when priced holdings have not been repriced for 7 days and reprice them in one click    | F-01, S-01, S-03, S-19       | —                    | done     |
+| S-28 | snapshot-csv-export        | download their snapshot history as a CSV file from Settings                                          | F-01, S-02, S-05, S-13       | —                    | done     |
+| S-29 | backup-restore-fidelity    | restore a backup without silently losing contributions, allocation, tags, or income                  | F-01, S-13                   | —                    | done     |
+| S-30 | db-tests-pglite            | (foundation) migrations, restore_backup and RLS are tested against real Postgres (PGlite) in CI      | F-01                         | —                    | done     |
 
 ## Streams
 
@@ -75,6 +80,10 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | H+     | Snapshot insights | `… → S-23`, `S-17 → S-24`                           | Extensions of Stream H reading the same snapshot history: `S-23` sums `snapshot_items` by category per snapshot into a stacked-area mix-over-time chart (reuses the S-11/S-12 read+matching); `S-24` adds an income series on top of S-17's `net_contribution` to compute a savings rate. Parallel with everything after their prerequisites                                                                                   |
 | M      | Assets-page UX    | `F-01` → `S-01` → `S-07` → `S-25`                   | Direct-manipulation layer over the existing asset list: `S-25` adds a user-controlled row order (new `assets.sort_order` column) surfaced as an "edit list" mode with drag handles. Touches both list renderings S-07 produced (desktop `<table>` + mobile `<ul>` cards) and every read path that currently orders by `created_at`. Parallel with everything after `S-07`                                                      |
 | —      | Dashboard nudge   | `F-01` → `S-02` → `S-22`                            | `S-22` is a standalone dashboard-UX nudge — a dismissible in-app banner when the manual snapshot is overdue (the manual-only successor to the dropped auto-save FR-016). No new read path; reuses `Banner.astro` + `snapshots.created_at`. Parallel with everything after S-02                                                                                                                                                 |
+| H+ | Snapshot insights | `… → S-12 → S-26` | `S-26` adds user-defined tags on assets (new `tags` + `asset_tags` tables), records each item's tag ids on `snapshot_items` at save time, and charts per-tag value over history in a Tag Trends card. Built and merged as slices B1a/B1b without a change folder |
+| K+ | Pricing freshness | `S-03`, `S-19` → `S-27` | `S-27` flags crypto/metal holdings whose stored amount is older than 7 days and refreshes them on demand through `POST /api/assets/reprice`, reusing the reprice-on-save helper in `src/lib/reprice.ts` |
+| I+ | Data portability | `S-13` → `S-28`, `S-29` | `S-28` adds a read-only CSV of snapshot history next to the JSON backup; `S-29` closes the restore gaps the JSON backup had (fields missing from the whitelist or the `restore_backup` RPC) |
+| — | Test foundation | `F-01` → `S-30` | `S-30` runs the migrations, `restore_backup` and RLS policies on in-process Postgres (PGlite) as the `test:db` CI step |
 
 ## Baseline
 
@@ -459,7 +468,10 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Scope guard: **in-app banner only — no email or push notifications.** Email/push needs scheduling + a delivery channel the app deliberately lacks (no background jobs, no mail infra); it is a materially larger, separate concern. (Owner: planner) Recommendation: explicitly defer email/push; note it here so it isn't silently assumed in scope.
   - "Never snapshotted" state: no snapshots at all. (Owner: planner) Recommendation: treat zero snapshots as _not_ overdue (the empty dashboard already prompts a first snapshot elsewhere); the reminder is for lapsed users, not new ones.
 - **Risk:** Low — a pure, presentational banner over an already-loaded timestamp. Main risks: (a) a nagging banner that can't be dismissed — mitigant: localStorage dismiss keyed to the latest snapshot; (b) date math off-by-one / timezone drift in "days since" — mitigant: a pure, table-tested `daysSince(latestCreatedAt, now)` helper; (c) scope creep into notification infra — mitigant: the explicit in-app-only scope guard above.
-- **Status:** proposed
+- **As built:** the interval is a fixed `SNAPSHOT_REMINDER_DAYS = 30` constant and the banner is always on: no `show_snapshot_reminder` / `snapshot_reminder_days` preference and no settings toggle were added. Dismiss is client-side (localStorage keyed by the latest snapshot's `created_at`); zero snapshots are not overdue; in-app only.
+- **Landed:** merge `f4a4c71` (PR #56) carrying `5a89677` (feat(dashboard): remind when snapshots are overdue).
+- **Key files:** `src/lib/snapshot-reminder.ts` (pure `daysSince` / `isSnapshotOverdue`), `src/components/assets/SnapshotReminderBanner.tsx`, `src/pages/dashboard.astro`.
+- **Status:** done
 
 ### S-23: Category mix over time
 
@@ -475,7 +487,10 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Placement: a new section on the dashboard trends area vs the assets page. (Owner: planner) Recommendation: dashboard trends section, near `NetWorthChart`/`AssetTrendsChart`.
   - Empty/sparse history: 0–1 snapshots, or categories that appear/disappear over time. (Owner: planner) Recommendation: reuse the series-builder null-handling from S-12; render a "not enough history" state below 2 snapshots.
 - **Risk:** Low — read-and-present over `snapshot_items` with stable category FKs (more robust than the per-asset identity S-11/S-12 dealt with). Main risks: (a) liabilities skewing a normalized share view — mitigant: define and state the liability handling; (b) a category present in some snapshots but not others creating gaps — mitigant: a pure, unit-tested `src/lib/category-mix.ts` series builder that zero-fills missing categories per snapshot; (c) reinventing chart scaffolding — mitigant: copy the existing Recharts conventions.
-- **Status:** proposed
+- **As built:** absolute and share modes; liabilities stack below the axis in the absolute view and are excluded from the share view (no share row when a snapshot's asset total is ~0).
+- **Landed:** committed directly to master: `b9fdd32` (pure module), `ceb8063` (dashboard card), `b301208` (share-view gap test).
+- **Key files:** `src/lib/category-mix.ts`, `src/components/CategoryMixChart.tsx`, `src/pages/dashboard.astro`.
+- **Status:** done
 
 ### S-24: Income & savings-rate
 
@@ -492,7 +507,10 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Presentation: a headline savings-rate metric + a line overlaid on `ContributionsChart` vs a separate small chart. (Owner: planner) Recommendation: reuse `ContributionsChart` — add the savings-rate as a secondary-axis line or a per-bar label; isolate the per-interval math in the pure `src/lib/savings-rate.ts` reusing `convertAmount`.
   - Missing data: old snapshots and any interval without income must render "unknown rate", never 0 or a divide-by-zero. (Owner: planner)
 - **Risk:** Low — a nullable column + a pure metric over the existing S-17 contribution data. Main risks: (a) divide-by-zero / null income — mitigant: a pure, table-tested `src/lib/savings-rate.ts` with an explicit null/"unknown" path; (b) currency mismatch between stored income and display currency — mitigant: reuse the S-17 stored-in-display-currency convention and `convertAmount`; (c) a savings rate presented as precise when the underlying contribution was estimated — mitigant: carry the same interval-honesty framing S-17 uses ("unknown split" → "unknown rate").
-- **Status:** proposed
+- **As built:** per-snapshot nullable `income` (after-tax), entered at save time and in the edit dialog; the headline average is pooled as sum(contribution) / sum(income) over the recent known intervals rather than a mean of rates; unknown income renders as an unknown rate, never 0.
+- **Landed:** committed directly to master: `029ff34` (`snapshots.income` column + backup), `18c3515` (pure rate), `bd78b1b` (income capture), `2272101` (card + chart overlay); follow-up `42507e8` (pooled headline average) and `7e5bf18` (income labelled as after-tax).
+- **Key files:** `src/lib/savings-rate.ts`, `src/components/SavingsRateCard.tsx`, `src/components/ContributionsChart.tsx`, `supabase/migrations/20261002160000_snapshots_income.sql`, `supabase/migrations/20261002170000_restore_backup_income.sql`.
+- **Status:** done
 
 ### S-25: Asset list reordering (drag-and-drop)
 
@@ -512,6 +530,77 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - **Scope of the custom order.** Does it apply everywhere assets are listed, or only the assets page? Other surfaces (`dashboard.astro`, `balancer.astro`, `fire.astro`, `forecast.astro`) fetch assets for aggregate math where row order is meaningless. (Owner: planner) Recommendation: v1 = the assets page list only; leave the aggregate reads unordered. New assets take the top slot (`min(sort_order) - 1`), preserving today's newest-first feel.
   - **Accessibility.** A drag-only affordance is unusable by keyboard and screen reader. (Owner: planner) Recommendation: wire dnd-kit's `KeyboardSensor` (grab with Space/Enter, move with arrows) and its `announcements` for an aria-live "moved X to position N of M"; give each handle an accessible name that includes the asset name, so the E2E suite can drive it via `getByRole` rather than CSS selectors (per the project E2E locator rule).
 - **Risk:** Low-to-moderate. The math is trivial; the risk is concentrated in three places the codebase has been bitten before: (a) **a partial bulk write** leaving an incoherent order — mitigant: one atomic renumbering RPC, never a loop of per-row updates; (b) **the backup blind spot** — a new `assets` column that isn't threaded into `backup.ts` _and_ `restore_backup` silently loses the user's ordering on every restore; the `metal_symbol` migration is the standing proof this is easy to miss; (c) **touch drag vs page scroll on iOS Safari** — the same class of pointer-event quirk that forced the controlled-state fallback on the Radix dropdown; mitigant: drag from an explicit handle with `touch-action: none` and an activation constraint, and verify on a real iOS device / the installed PWA (S-08), not just a desktop browser at a narrow viewport. Secondary: keep the pure part (given an id array, produce the renumbered pairs) in a small unit-tested helper so the reorder logic isn't only exercised through the DOM.
+- **Status:** done
+
+
+### S-26: Asset tags and tag trends
+
+- **Outcome:** user can create their own tags in Settings, attach any number of them to an asset (tag picker and chips on the asset form and list), and see a Tag Trends chart on the dashboard plotting each opted-in tag's value across snapshot history. Tag membership is recorded on each snapshot item at save time, so history reflects the tags an asset carried then, not now.
+- **Change ID:** `asset-tags` (label only; built as slices B1a/B1b without a `context/changes/` folder)
+- **PRD refs:** — (post-MVP snapshot-insight extension; not a PRD functional requirement)
+- **Prerequisites:** `F-01`, `S-01` (assets), `S-02` (snapshots + `snapshot_items`), `S-12` (per-series trend conventions), `S-13` (backup envelope the new tables join)
+- **Parallel with:** all slices after `S-13`
+- **Blockers:** —
+- **Unknowns:** — (recorded after shipping)
+- **Risk:** Low residual. New user-owned tables are covered by RLS (USING + WITH CHECK) and by the backup completeness and RPC-parity tests.
+- **Landed:** committed directly to master: `2e097da`, `57e2e3b`, `7d31575` (B1a: data layer, API, Settings UI), `4102a43`, `64fd9df`, `1f68690` (B1b: tag ids on snapshot items, series builder, dashboard chart).
+- **Key files:** `supabase/migrations/20261002120000_asset_tags.sql`, `supabase/migrations/20261002140000_snapshot_item_tag_ids.sql`, `src/lib/tags.ts`, `src/pages/api/tags/index.ts`, `src/pages/api/assets/[id]/tags.ts`, `src/components/TagTrendsChart.tsx`.
+- **Status:** done
+
+### S-27: Stale-price banner and one-click reprice
+
+- **Outcome:** when any crypto or precious-metals holding has a stored amount older than 7 days, the dashboard shows a banner naming how stale the prices are, with a "Reprice now" action that refreshes those holdings from the live price sources without saving a snapshot.
+- **Change ID:** `stale-price-reprice` (label only; no `context/changes/` folder)
+- **PRD refs:** — (post-MVP pricing extension; follows the snapshot-save reprice resolved under S-19)
+- **Prerequisites:** `F-01`, `S-01`, `S-03` (crypto prices), `S-19` (metal prices)
+- **Parallel with:** all slices after `S-19`
+- **Blockers:** —
+- **Unknowns:** — (recorded after shipping)
+- **Risk:** Low residual. Staleness uses `assets.updated_at` as an upper bound on the amount's age; the reprice path shares its predicate with the save-time reprice in `src/lib/reprice.ts`.
+- **Landed:** merge `f4a4c71` (PR #56) carrying `d0c3ad5` (staleness detection), `b998bc2` (`POST /api/assets/reprice`), `e7ef093` (dashboard banner).
+- **Key files:** `src/lib/stale-prices.ts`, `src/lib/priced-holding.ts`, `src/pages/api/assets/reprice.ts`, `src/components/assets/StalePriceBanner.tsx`.
+- **Status:** done
+
+### S-28: Snapshot history CSV export
+
+- **Outcome:** from Settings, user can download their whole snapshot history as one CSV file (long format: one row per snapshot item, snapshot-level columns repeated) that opens cleanly in a spreadsheet. The JSON backup (S-13) stays the restore format; the CSV is read-only.
+- **Change ID:** `snapshot-csv-export` (label only; no `context/changes/` folder)
+- **PRD refs:** — (lifts the CSV half of the PRD §Non-Goals "Data export (PDF, CSV)"; see §Parked)
+- **Prerequisites:** `F-01`, `S-02` (snapshots + items), `S-05` (Settings host), `S-13` (the backup panel the download sits next to)
+- **Parallel with:** all slices after `S-13`
+- **Blockers:** —
+- **Unknowns:** — (recorded after shipping)
+- **Risk:** Low residual. RFC 4180 quoting, plain decimals, a UTF-8 BOM for non-ASCII names, and a formula-injection guard on text cells are pinned by unit tests.
+- **Landed:** merge `f4a4c71` (PR #56) carrying `f98cf90`.
+- **Key files:** `src/lib/snapshot-csv.ts`, `src/pages/api/snapshots/export.csv.ts` (`GET /api/snapshots/export.csv`), `src/components/settings/BackupRestore.tsx`.
+- **Status:** done
+
+### S-29: Backup restore fidelity
+
+- **Outcome:** a backup exported and imported again restores everything the user had: snapshot net contributions, allocation cards and targets, tags and asset tags, tag ids on snapshot items, and snapshot income. An import file whose snapshot items reference a snapshot the file does not contain is rejected instead of producing orphan items.
+- **Change ID:** `backup-restore-fidelity` (label only; groups several fixes, no `context/changes/` folder)
+- **PRD refs:** — (hardening of S-13)
+- **Prerequisites:** `F-01`, `S-13`
+- **Parallel with:** —
+- **Blockers:** —
+- **Unknowns:** — (recorded after shipping)
+- **Risk:** Low residual. Every user-owned table and column is now guarded by the backup completeness, ownership and RPC-parity tests, so a new field missing from `backup.ts` or the `restore_backup` RPC fails CI (the gap S-19's `metal_symbol` migration and S-25 had to close by hand).
+- **Landed:** committed directly to master: `fef9e3b` (net_contribution), `5bc2d4c` (allocation cards and targets), `2e097da` and `4102a43` (tags, tag_ids, inside S-26), `029ff34` (income, inside S-24), `ecf3aa5` (orphan snapshot items rejected).
+- **Key files:** `src/lib/backup.ts`, `src/lib/backup-completeness.test.ts`, `src/lib/backup-rpc-parity.test.ts`, `supabase/migrations/20261001120000_restore_backup_net_contribution.sql`, `supabase/migrations/20261001130000_restore_backup_allocation.sql`.
+- **Status:** done
+
+### S-30: Database tests on PGlite in CI
+
+- **Outcome:** (foundation) the migrations, the `restore_backup` RPC and the RLS policies are exercised against a real in-process Postgres (PGlite) by `npm run test:db`, which runs in CI after the unit and integration suite.
+- **Change ID:** `db-tests-pglite` (label only; no `context/changes/` folder)
+- **PRD refs:** — (test infrastructure)
+- **Prerequisites:** `F-01`
+- **Parallel with:** —
+- **Blockers:** —
+- **Unknowns:** — (recorded after shipping)
+- **Risk:** Low residual. PGlite is not the hosted Supabase Postgres; auth-dependent behaviour is covered only as far as the harness emulates `auth.uid()`.
+- **Landed:** merge `54b3556` (PR #57) carrying `84654f7` (tests) and `ca3bf90` (CI step; CI also runs on pushes to every branch).
+- **Key files:** `vitest.db.config.ts`, `src/test/db/harness.ts`, `src/test/db/migrations.test.ts`, `src/test/db/restore-backup.test.ts`, `src/test/db/rls.test.ts`, `.github/workflows/ci.yml`.
 - **Status:** done
 
 ## Backlog Handoff
@@ -559,7 +648,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Snapshot auto-save (FR-016)** — **Dropped 2026-06-16.** The manual snapshot trigger (FR-017, shipped in S-02) is the snapshot mechanism; auto-save will not be built. The first-login-of-month vs fixed-day-of-month question is moot. Decision recorded in issue #8 (closed, not planned); revisit only if auto-save is ever picked up.
 - **FIRE calculator** — Was a PRD §Non-Goal; promoted to a planned slice (**S-09**) on 2026-06-11 per user decision. Uses current net worth as the projection starting point. The PRD §Non-Goals section should be updated to reflect this scope change.
 - **Bank/broker integrations** — Non-goal per PRD §Non-Goals.
-- **Data export (PDF, CSV)** — Non-goal per PRD §Non-Goals. (Note: full-account **backup** export/import in JSON is a distinct concern — data portability, not formatted reporting — and is now a planned slice, **S-13**. The PDF/CSV reporting export remains a non-goal.)
+- **Data export (PDF, CSV)** — PRD §Non-Goals. **CSV shipped as S-28** (snapshot history CSV from Settings, `GET /api/snapshots/export.csv`); **PDF remains parked.** The PRD §Non-Goals section should be updated to reflect the CSV scope change. (Note: full-account **backup** export/import in JSON is a distinct concern — data portability, not formatted reporting — shipped as **S-13**.)
 - **Native mobile app** — Non-goal per PRD §Non-Goals.
 - **Observability scaffolding** — Baseline reports no logging/error-tracking. Not blocking MVP; observability is deferred until a production incident surfaces a need.
 - **Charting library** — Not in the baseline. A decision (Chart.js, Recharts, visx) will be made during S-02 planning.
@@ -606,3 +695,11 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **S-20: Empirical net-worth trajectory** — Archived 2026-07-24 → `context/archive/2026-07-19-net-worth-trajectory/`. Note: built on a feature branch and merged to master on archive day; the eight manual checks were re-run as `e2e/trajectory-verify.spec.ts` rather than recalled. Lesson: a screenshot timed on DOM-readiness catches Recharts mid-animation and reads as a rendering defect — settle on pixels before judging anything visual.
 - **S-21: Custom savings goals** — Archived 2026-07-24 → `context/archive/2026-07-24-savings-goals/`. Note: `goals` table (two kinds — net_worth / category — with a coherence CHECK and RLS USING+WITH CHECK); pure `src/lib/goals.ts` with a five-state `GoalEta` discriminant reusing S-20's `etaToTarget`; `/dashboard/goals` CRUD + settings-gated `GoalsProgress` card mirroring `FireProgress`; backup RPC/whitelist landed together in one phase, schemaVersion bumped to 2 with `goals` optional so v1 files stay importable. Impl-review APPROVED (0 critical/warning; 3 low observations all fixed). Lesson: —.
 - **S-25: Asset list reordering (drag-and-drop)** — Archived 2026-07-27 → `context/archive/2026-07-27-asset-list-reorder/`. Note: `assets.sort_order INTEGER NOT NULL DEFAULT 0` backfilled from `created_at DESC` with the `updated_at` trigger suppressed across the backfill; atomic `reorder_assets(uuid[])` RPC (SECURITY DEFINER, `search_path=public, pg_temp`, EXECUTE to `authenticated` only) validating a complete duplicate-free cover, behind `PATCH /api/assets/order`; both read paths re-sorted with a `created_at DESC` tiebreak so a pre-`sort_order` backup degrades to today's order; column threaded into `backup.ts` + `restore_backup` in the same phase per the `metal_symbol` precedent. `@dnd-kit` edit mode across the desktop table and mobile cards, gated to the All tab, with KeyboardSensor and name-and-position aria-live announcements. No impl-review run. Lesson: dnd-kit fires a `dragOver` over the grabbed row itself on keyboard drag start, silently overwriting the "Picked up …" announcement in the same frame — suppress the self-over case or the grab is never announced.
+- **S-22: Snapshot cadence reminder** — Shipped 2026-10-03 → merge `f4a4c71` (PR #56). No change folder. Note: fixed 30-day interval, no settings toggle (see the S-22 section). Lesson: —.
+- **S-23: Category mix over time** — Shipped 2026-10-02 → `b9fdd32`..`b301208` on master. No change folder. Lesson: —.
+- **S-24: Income & savings-rate** — Shipped 2026-10-02 → `029ff34`..`7e5bf18` on master. No change folder. Lesson: —.
+- **S-26: Asset tags and tag trends** — Shipped 2026-10-02 → `2e097da`..`1f68690` on master. No change folder. Lesson: —.
+- **S-27: Stale-price banner and one-click reprice** — Shipped 2026-10-03 → merge `f4a4c71` (PR #56). No change folder. Lesson: —.
+- **S-28: Snapshot history CSV export** — Shipped 2026-10-03 → merge `f4a4c71` (PR #56). No change folder. Lesson: —.
+- **S-29: Backup restore fidelity** — Shipped 2026-10-01..2026-10-02 → `fef9e3b`, `5bc2d4c`, `ecf3aa5` (plus the backup parts of S-24 and S-26) on master. No change folder. Lesson: —.
+- **S-30: Database tests on PGlite in CI** — Shipped 2026-10-03 → merge `54b3556` (PR #57). No change folder. Lesson: —.

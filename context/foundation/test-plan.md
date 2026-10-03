@@ -52,11 +52,11 @@ Each row is a discrete rollout phase that will open its own change folder via `/
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|------------------|----------------|------------|--------|----------------|
-| 1 | Runner bootstrap + first critical-path unit | Bootstrap Vitest and ship the first unit test on the net worth calculation. | #1 | unit | complete | `context/changes/testing-runner-bootstrap/` |
-| 2 | Critical-path API integration | Integration tests on `/api/assets/[id]/` and `/api/snapshots/`, plus the auth-decision contract on `/api/*`. | #2, #3, #5 | integration (handler + Supabase stub) + contract | complete | `context/changes/testing-critical-path-api-integration/` |
-| 3 | External API failure & cache integrity | Unit tests on the rates/crypto fetcher and cache read/write for failure paths. | #4, #6 | unit (with `fetch` stub) + small integration on dashboard fallback render | complete | `context/changes/testing-external-api-failure-cache/` |
-| 4 | Quality-gates wiring | Wire lint + typecheck + Vitest unit/integration into CI; document local run command. | #5 (contract enforced in CI) | CI config | complete | `context/changes/testing-quality-gates-wiring/` |
-| 5 | DOM hydration & e2e on critical UI | Install Playwright; ship DOM hydration test + e2e on dashboard total and empty-assets snapshot path | #1 (DOM half), #3 (chart-rendering half) | DOM (happy-dom) + Playwright e2e | complete | `context/changes/test-plan-refresh-2026-06-08/` |
+| 1 | Runner bootstrap + first critical-path unit | Bootstrap Vitest and ship the first unit test on the net worth calculation. | #1 | unit | complete | `context/archive/2026-06-01-testing-runner-bootstrap/` |
+| 2 | Critical-path API integration | Integration tests on `/api/assets/[id]/` and `/api/snapshots/`, plus the auth-decision contract on `/api/*`. | #2, #3, #5 | integration (handler + Supabase stub) + contract | complete | `context/archive/2026-06-02-testing-critical-path-api-integration/` |
+| 3 | External API failure & cache integrity | Unit tests on the rates/crypto fetcher and cache read/write for failure paths. | #4, #6 | unit (with `fetch` stub) + small integration on dashboard fallback render | complete | `context/archive/2026-06-07-testing-external-api-failure-cache/` |
+| 4 | Quality-gates wiring | Wire lint + typecheck + Vitest unit/integration into CI; document local run command. | #5 (contract enforced in CI) | CI config | complete | `context/archive/2026-06-07-testing-quality-gates-wiring/` |
+| 5 | DOM hydration & e2e on critical UI | Install Playwright; ship DOM hydration test + e2e on dashboard total and empty-assets snapshot path | #1 (DOM half), #3 (chart-rendering half) | DOM (happy-dom) + Playwright e2e | complete | `context/archive/2026-06-08-test-plan-refresh-2026-06-08/` |
 
 **Why no AI-native phase.** Risks are all deterministic correctness (data, auth, external API failure). The project has no AI surface, and visual snapshot tests are explicitly out of scope (see §7). Classic-only is the right call here.
 
