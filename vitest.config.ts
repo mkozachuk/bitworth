@@ -1,4 +1,4 @@
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 // `astro:env/server` is a virtual module provided by Astro's vite plugin, which
@@ -29,6 +29,8 @@ export default defineConfig({
   plugins: [tsconfigPaths(), astroEnvServerStub()],
   test: {
     include: ["src/**/*.test.{ts,tsx}"],
+    // Real-Postgres tests run through `npm run test:db` (vitest.db.config.ts).
+    exclude: [...configDefaults.exclude, "src/test/db/**"],
     environment: "node",
   },
 });
