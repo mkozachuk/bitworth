@@ -5,6 +5,8 @@ import { getRates } from "@/lib/exchange-rates";
 import { computeNetWorth } from "@/lib/net-worth";
 import { computeFireProjection, monthsOfRunway, type FireInputs } from "@/lib/fire";
 import { NetWorthDisplay } from "@/components/assets/NetWorthDisplay";
+import { StalePriceBanner } from "@/components/assets/StalePriceBanner";
+import { SnapshotReminderBanner } from "@/components/assets/SnapshotReminderBanner";
 import { AssetsSummary } from "@/components/assets/AssetsSummary";
 import { NetWorthChart } from "@/components/NetWorthChart";
 import { ContributionsChart } from "@/components/ContributionsChart";
@@ -352,6 +354,12 @@ if (showDriftAlerts) {
     {
       assets && (
         <>
+          <StalePriceBanner assets={assets as AssetWithCategory[]} nowMs={Date.now()} client:load />
+          <SnapshotReminderBanner
+            latestSnapshotCreatedAt={latestSnapshot?.created_at ?? null}
+            nowMs={Date.now()}
+            client:load
+          />
           <NetWorthDisplay
             assets={assets as AssetWithCategory[]}
             displayCurrency={displayCurrency}

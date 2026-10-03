@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getPrice as getCryptoPrice } from "./crypto-prices";
 import { getPrice as getMetalPrice } from "./metal-prices";
+import { priceKeyFor, type PriceKey, type PriceSource } from "./priced-holding";
 
 // A priced holding (crypto / precious metal) stores `amount = quantity × price`
 // as a fiat USD total, computed once in the browser at entry/edit time and never
@@ -40,24 +41,6 @@ export interface RepriceResult<T> {
   repriced: RepricedEntry[];
   /** Stored amount kept for these — price unavailable or the write failed. */
   failed: RepriceFailure[];
-}
-
-type PriceSource = "crypto" | "metal";
-
-interface PriceKey {
-  source: PriceSource;
-  symbol: string;
-  quantity: number;
-}
-
-function priceKeyFor(asset: RepriceableAsset): PriceKey | null {
-  const quantity = asset.quantity;
-  if (quantity === null || !(quantity > 0)) return null;
-  const crypto = asset.crypto_symbol?.trim().toUpperCase();
-  if (crypto) return { source: "crypto", symbol: crypto, quantity };
-  const metal = asset.metal_symbol?.trim().toUpperCase();
-  if (metal) return { source: "metal", symbol: metal, quantity };
-  return null;
 }
 
 type PriceOutcome = { price: number } | { code: string };
