@@ -327,7 +327,7 @@ export function NetWorthDisplay({ assets, displayCurrency, rates, snapshots = []
   const { lastMonth, jan } = computeNetWorthDeltas(snapshots);
 
   return (
-    <div className="bg-card border-primary/60 rounded-md border-[1.5px] p-6">
+    <div id="snapshot-save" className="bg-card border-primary/60 rounded-md border-[1.5px] p-6">
       {/* The wrapper band: a kraft strap across the lid, bearing the seal. */}
       <div className="bg-kraft/50 border-border -mx-6 -mt-6 mb-4 flex items-center justify-between gap-3 rounded-t-[4px] border-b px-6 py-2.5">
         <h2 className="text-foreground/70 flex items-center gap-2 font-sans text-xs font-bold tracking-[0.12em] uppercase">
