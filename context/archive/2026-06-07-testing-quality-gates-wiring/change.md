@@ -1,10 +1,10 @@
 ---
 change_id: testing-quality-gates-wiring
 title: Quality-gates wiring (CI for lint, typecheck, Vitest)
-status: implemented
+status: archived
 created: 2026-06-07
 updated: 2026-06-07
-archived_at: null
+archived_at: 2026-10-03T22:51:57Z
 ---
 
 ## Notes

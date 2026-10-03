@@ -1,10 +1,10 @@
 ---
 change_id: testing-external-api-failure-cache
 title: External API failure & cache integrity
-status: shipped
+status: archived
 created: 2026-06-07
 updated: 2026-06-07
-archived_at: null
+archived_at: 2026-10-03T22:51:57Z
 ---
 
 ## Notes
