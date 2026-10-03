@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Download, Upload, TriangleAlert } from "lucide-react";
+import { Download, FileSpreadsheet, Upload, TriangleAlert } from "lucide-react";
 import { ServerError } from "@/components/auth/ServerError";
 
 type Mode = "replace" | "merge";
@@ -10,6 +10,7 @@ export function BackupRestore() {
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [csvExporting, setCsvExporting] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   async function handleExport() {
@@ -41,6 +42,38 @@ export function BackupRestore() {
       setError("Network error. Please try again.");
     } finally {
       setExporting(false);
+    }
+  }
+
+  // Snapshot history for spreadsheets. Separate from the backup export above:
+  // the JSON backup is the restore format, the CSV is read-only analysis.
+  async function handleCsvExport() {
+    setError(null);
+    setCsvExporting(true);
+    try {
+      const res = await fetch("/api/snapshots/export.csv");
+      if (!res.ok) {
+        const json = (await res.json().catch(() => null)) as { error?: { message: string } } | null;
+        setError(json?.error?.message ?? "CSV export failed. Please try again.");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      // As with the backup, `anchor.download` wins over Content-Disposition for
+      // blob URLs, so the server's filename shape is rebuilt from the local date.
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, "0");
+      anchor.download = `bitworth-snapshots-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.csv`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setCsvExporting(false);
     }
   }
 
@@ -126,6 +159,27 @@ export function BackupRestore() {
             <>
               <Download className="size-4" />
               Export backup
+            </>
+          )}
+        </button>
+        <p className="text-muted-foreground mt-4 mb-3 text-xs">
+          Snapshot history as a CSV for spreadsheets: one row per snapshot item. Not a backup — it cannot be imported.
+        </p>
+        <button
+          type="button"
+          onClick={handleCsvExport}
+          disabled={csvExporting}
+          className="border-primary text-primary hover:bg-primary/8 flex items-center gap-2 rounded-sm border-[1.5px] px-4 py-2 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {csvExporting ? (
+            <>
+              <span className="border-primary/30 border-t-primary size-4 animate-spin rounded-full border-2" />
+              Preparing CSV...
+            </>
+          ) : (
+            <>
+              <FileSpreadsheet className="size-4" />
+              Download CSV
             </>
           )}
         </button>
