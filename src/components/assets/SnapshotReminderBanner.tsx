@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { daysSince, isSnapshotOverdue } from "@/lib/snapshot-reminder";
 
 const DISMISS_STORAGE_KEY = "bitworth.snapshotReminder.dismissedLatestCreatedAt";
@@ -16,16 +16,24 @@ export function snapshotReminderText(days: number): string {
 }
 
 export function SnapshotReminderBanner({ latestSnapshotCreatedAt, nowMs, saveTargetId = "snapshot-save" }: Props) {
-  const [dismissedLatest, setDismissedLatest] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
+  // `undefined` = storage not read yet. Server render and the first client render
+  // both see `undefined` and render nothing, so hydration always matches; storage
+  // is read only after mount, and a dismissed banner never paints.
+  const [dismissedLatest, setDismissedLatest] = useState<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    let stored: string | null = null;
     try {
-      return window.localStorage.getItem(DISMISS_STORAGE_KEY);
+      stored = window.localStorage.getItem(DISMISS_STORAGE_KEY);
     } catch {
-      return null;
+      stored = null;
     }
-  });
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot sync from an external store (localStorage) after mount; reading it during render is exactly the hydration mismatch this avoids
+    setDismissedLatest(stored);
+  }, []);
 
   if (!isSnapshotOverdue(latestSnapshotCreatedAt, nowMs)) return null;
+  if (dismissedLatest === undefined) return null;
   if (latestSnapshotCreatedAt && dismissedLatest === latestSnapshotCreatedAt) return null;
 
   const elapsedDays = latestSnapshotCreatedAt ? daysSince(latestSnapshotCreatedAt, nowMs) : 0;
