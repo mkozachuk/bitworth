@@ -1,0 +1,368 @@
+-- restore_backup keeps the backup file's user_preferences.updated_at (NB-003).
+--
+-- Before: the upsert's ON CONFLICT ... DO UPDATE fired the BEFORE UPDATE
+-- trigger user_prefs_updated_at (shared update_updated_at()), which stamped
+-- now() over the file's value. The row always exists, so every restore lost it.
+--
+-- Design: user_preferences gets its own trigger function,
+-- user_prefs_set_updated_at(). It stamps now() exactly like update_updated_at()
+-- unless BOTH hold:
+--   1. the transaction-local GUC bitworth.restore_prefs_updated_at = 'on',
+--      which restore_backup sets just before its upsert and clears just after;
+--   2. current_user is not an API role (anon / authenticated). Inside the
+--      SECURITY DEFINER restore_backup current_user is the function owner, so
+--      a client that sets the GUC itself still gets now() on its UPDATEs.
+-- When honoured, NEW.updated_at is kept (the upsert supplies
+-- COALESCE(file value, now()), so a file without one still gets now()).
+--
+-- update_updated_at() and every other updated_at trigger (assets,
+-- allocation_*) are untouched: a client still cannot backdate
+-- assets.updated_at, which StalePriceBanner reads.
+--
+-- restore_backup: the only change from 20261002170000_restore_backup_income.sql
+-- is the two set_config calls around the user_preferences upsert. Signature,
+-- SECURITY DEFINER, search_path and grants are unchanged (CREATE OR REPLACE
+-- keeps the ACL from 20260621000000_restore_backup_grants.sql).
+--
+-- Rollback: re-apply 20261002170000_restore_backup_income.sql, then
+--   DROP TRIGGER user_prefs_updated_at ON user_preferences;
+--   CREATE TRIGGER user_prefs_updated_at BEFORE UPDATE ON user_preferences
+--     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+--   DROP FUNCTION user_prefs_set_updated_at();
+
+BEGIN;
+
+CREATE OR REPLACE FUNCTION restore_backup(p_mode text, p_data jsonb)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_user uuid := auth.uid();
+BEGIN
+  IF v_user IS NULL THEN
+    RAISE EXCEPTION 'restore_backup: no authenticated user';
+  END IF;
+
+  IF p_mode NOT IN ('replace', 'merge') THEN
+    RAISE EXCEPTION 'restore_backup: invalid mode %', p_mode;
+  END IF;
+
+  -- replace: clear the caller's rows, children first. user_preferences is the
+  -- 1:1 PK-on-user row (upserted below), never deleted.
+  IF p_mode = 'replace' THEN
+    -- Tag links first (they reference assets and tags), then the tags.
+    DELETE FROM asset_tags WHERE user_id = v_user;
+    DELETE FROM tags WHERE user_id = v_user;
+    -- Balancer rows first: targets reference both cards and assets, then the
+    -- cards themselves (the assets DELETE below would cascade the targets but
+    -- leave the cards behind, empty).
+    DELETE FROM allocation_targets WHERE user_id = v_user;
+    DELETE FROM allocation_cards WHERE user_id = v_user;
+    DELETE FROM snapshot_items
+      WHERE snapshot_id IN (SELECT id FROM snapshots WHERE user_id = v_user);
+    DELETE FROM snapshots WHERE user_id = v_user;
+    DELETE FROM assets WHERE user_id = v_user;
+    DELETE FROM goals WHERE user_id = v_user;
+  END IF;
+
+  -- user_preferences: upsert the single row on its PK (user_id). Both modes.
+  -- The row always exists (on_auth_users_insert), so this takes the UPDATE
+  -- path; the flag below tells user_prefs_set_updated_at() to keep the file's
+  -- updated_at (now() when the file has none) instead of stamping now().
+  -- Transaction-local, and cleared again right after this one statement.
+  PERFORM set_config('bitworth.restore_prefs_updated_at', 'on', true);
+  INSERT INTO user_preferences (
+    user_id,
+    display_currency,
+    theme,
+    fire_annual_expenses,
+    fire_annual_income,
+    fire_barista_income,
+    fire_current_age,
+    fire_expected_return,
+    fire_inflation_rate,
+    fire_safe_withdrawal_rate,
+    fire_starting_principal_override,
+    fire_traditional_retirement_age,
+    show_fire_dashboard,
+    show_drift_alerts,
+    show_goals,
+    show_trajectory,
+    created_at,
+    updated_at
+  )
+  SELECT
+    v_user,
+    COALESCE(r.display_currency, 'USD'),
+    COALESCE(r.theme, 'system'),
+    r.fire_annual_expenses,
+    r.fire_annual_income,
+    r.fire_barista_income,
+    r.fire_current_age,
+    r.fire_expected_return,
+    r.fire_inflation_rate,
+    COALESCE(r.fire_safe_withdrawal_rate, 0.04),
+    r.fire_starting_principal_override,
+    COALESCE(r.fire_traditional_retirement_age, 65),
+    COALESCE(r.show_fire_dashboard, true),
+    COALESCE(r.show_drift_alerts, true),
+    COALESCE(r.show_goals, true),
+    COALESCE(r.show_trajectory, true),
+    COALESCE(r.created_at, now()),
+    COALESCE(r.updated_at, now())
+  FROM jsonb_populate_recordset(null::user_preferences, p_data->'user_preferences') AS r
+  ON CONFLICT (user_id) DO UPDATE SET
+    display_currency = EXCLUDED.display_currency,
+    theme = EXCLUDED.theme,
+    fire_annual_expenses = EXCLUDED.fire_annual_expenses,
+    fire_annual_income = EXCLUDED.fire_annual_income,
+    fire_barista_income = EXCLUDED.fire_barista_income,
+    fire_current_age = EXCLUDED.fire_current_age,
+    fire_expected_return = EXCLUDED.fire_expected_return,
+    fire_inflation_rate = EXCLUDED.fire_inflation_rate,
+    fire_safe_withdrawal_rate = EXCLUDED.fire_safe_withdrawal_rate,
+    fire_starting_principal_override = EXCLUDED.fire_starting_principal_override,
+    fire_traditional_retirement_age = EXCLUDED.fire_traditional_retirement_age,
+    show_fire_dashboard = EXCLUDED.show_fire_dashboard,
+    show_drift_alerts = EXCLUDED.show_drift_alerts,
+    show_goals = EXCLUDED.show_goals,
+    show_trajectory = EXCLUDED.show_trajectory,
+    created_at = EXCLUDED.created_at,
+    updated_at = EXCLUDED.updated_at;
+
+  PERFORM set_config('bitworth.restore_prefs_updated_at', 'off', true);
+
+  -- assets: id already regenerated by prepareForImport (allocation targets are
+  -- remapped to it); user_id stamped here. The id falls back to a generated one
+  -- for a payload from a client that predates this migration (see header).
+  -- sort_order COALESCEs to 0 for pre-S-25 files.
+  INSERT INTO assets (
+    id,
+    user_id,
+    category_id,
+    name,
+    amount,
+    currency,
+    crypto_symbol,
+    metal_symbol,
+    notes,
+    quantity,
+    show_on_chart,
+    sort_order,
+    created_at,
+    updated_at
+  )
+  SELECT
+    COALESCE(r.id, gen_random_uuid()),
+    v_user,
+    r.category_id,
+    r.name,
+    r.amount,
+    r.currency,
+    r.crypto_symbol,
+    r.metal_symbol,
+    r.notes,
+    r.quantity,
+    COALESCE(r.show_on_chart, false),
+    COALESCE(r.sort_order, 0),
+    COALESCE(r.created_at, now()),
+    COALESCE(r.updated_at, now())
+  FROM jsonb_populate_recordset(null::assets, p_data->'assets') AS r;
+
+  -- tags: id already regenerated by prepareForImport (links are remapped to
+  -- it); user_id stamped here. Merge-mode name clash: a file tag whose name
+  -- matches an existing tag of the caller, ignoring case, is skipped here and
+  -- its links attach to the existing tag below (see header).
+  INSERT INTO tags (
+    id,
+    user_id,
+    name,
+    show_on_dashboard,
+    created_at,
+    updated_at
+  )
+  SELECT
+    r.id,
+    v_user,
+    r.name,
+    COALESCE(r.show_on_dashboard, false),
+    COALESCE(r.created_at, now()),
+    COALESCE(r.updated_at, now())
+  FROM jsonb_populate_recordset(null::tags, p_data->'tags') AS r
+  WHERE NOT EXISTS (
+    SELECT 1 FROM tags t WHERE t.user_id = v_user AND lower(t.name) = lower(r.name)
+  );
+
+  -- snapshots: id already regenerated by prepareForImport; user_id stamped here.
+  INSERT INTO snapshots (
+    id,
+    user_id,
+    total_net_worth,
+    display_currency,
+    base_currency,
+    source,
+    note,
+    net_contribution,
+    income,
+    created_at
+  )
+  SELECT
+    r.id,
+    v_user,
+    r.total_net_worth,
+    r.display_currency,
+    COALESCE(r.base_currency, 'USD'),
+    r.source,
+    r.note,
+    r.net_contribution,
+    r.income,
+    COALESCE(r.created_at, now())
+  FROM jsonb_populate_recordset(null::snapshots, p_data->'snapshots') AS r;
+
+  -- snapshot_items last: snapshot_id already remapped to the new parents by
+  -- prepareForImport. Owned transitively via snapshot_id; no user_id column.
+  INSERT INTO snapshot_items (
+    snapshot_id,
+    category_id,
+    name,
+    original_amount,
+    original_currency,
+    converted_amount,
+    display_currency,
+    exchange_rate_usd,
+    display_order,
+    tag_ids,
+    created_at
+  )
+  SELECT
+    r.snapshot_id,
+    r.category_id,
+    r.name,
+    r.original_amount,
+    r.original_currency,
+    r.converted_amount,
+    r.display_currency,
+    r.exchange_rate_usd,
+    COALESCE(r.display_order, 0),
+    CASE
+      WHEN r.tag_ids IS NULL THEN NULL
+      ELSE ARRAY(
+        SELECT t.id
+        FROM unnest(r.tag_ids) WITH ORDINALITY AS e(tag_id, ord)
+        LEFT JOIN jsonb_populate_recordset(null::tags, p_data->'tags') AS f ON f.id = e.tag_id
+        LEFT JOIN tags t ON t.user_id = v_user AND lower(t.name) = lower(f.name)
+        ORDER BY e.ord
+      )
+    END,
+    COALESCE(r.created_at, now())
+  FROM jsonb_populate_recordset(null::snapshot_items, p_data->'snapshot_items') AS r;
+
+  -- goals: id/user_id dropped by prepareForImport; user_id stamped here. No FK
+  -- to any other backed-up table, so ordering against the inserts above is free.
+  INSERT INTO goals (
+    user_id,
+    name,
+    kind,
+    category_id,
+    target_amount,
+    target_currency,
+    target_date,
+    created_at,
+    updated_at
+  )
+  SELECT
+    v_user,
+    r.name,
+    r.kind,
+    r.category_id,
+    r.target_amount,
+    r.target_currency,
+    r.target_date,
+    COALESCE(r.created_at, now()),
+    COALESCE(r.updated_at, now())
+  FROM jsonb_populate_recordset(null::goals, p_data->'goals') AS r;
+
+  -- allocation_cards: id already regenerated by prepareForImport (targets are
+  -- remapped to it); user_id stamped here. In merge mode these are appended as
+  -- new cards; the caller's existing cards are never read or modified.
+  INSERT INTO allocation_cards (
+    id,
+    user_id,
+    name,
+    position,
+    created_at,
+    updated_at
+  )
+  SELECT
+    r.id,
+    v_user,
+    r.name,
+    COALESCE(r.position, 0),
+    COALESCE(r.created_at, now()),
+    COALESCE(r.updated_at, now())
+  FROM jsonb_populate_recordset(null::allocation_cards, p_data->'allocation_cards') AS r;
+
+  -- allocation_targets last: asset_id and card_id already remapped to the new
+  -- parents by prepareForImport, and both parents are inserted above. id/user_id
+  -- dropped by prepareForImport; user_id stamped here, id defaults.
+  INSERT INTO allocation_targets (
+    user_id,
+    card_id,
+    asset_id,
+    target_pct,
+    created_at,
+    updated_at
+  )
+  SELECT
+    v_user,
+    r.card_id,
+    r.asset_id,
+    r.target_pct,
+    COALESCE(r.created_at, now()),
+    COALESCE(r.updated_at, now())
+  FROM jsonb_populate_recordset(null::allocation_targets, p_data->'allocation_targets') AS r;
+
+  -- asset_tags last: asset_id already remapped to the new asset by
+  -- prepareForImport. tag_id is resolved by name to the caller's tag: the file
+  -- tag inserted above, or the existing tag it merged into. LEFT joins, so an
+  -- unresolvable link fails NOT NULL instead of vanishing.
+  INSERT INTO asset_tags (
+    asset_id,
+    tag_id,
+    user_id,
+    created_at
+  )
+  SELECT
+    r.asset_id,
+    t.id,
+    v_user,
+    COALESCE(r.created_at, now())
+  FROM jsonb_populate_recordset(null::asset_tags, p_data->'asset_tags') AS r
+  LEFT JOIN jsonb_populate_recordset(null::tags, p_data->'tags') AS f ON f.id = r.tag_id
+  LEFT JOIN tags t ON t.user_id = v_user AND lower(t.name) = lower(f.name);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION user_prefs_set_updated_at()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = pg_catalog, pg_temp
+AS $$
+BEGIN
+  IF coalesce(current_setting('bitworth.restore_prefs_updated_at', true), '') = 'on'
+     AND current_user NOT IN ('anon', 'authenticated') THEN
+    NEW.updated_at = coalesce(NEW.updated_at, now());
+  ELSE
+    NEW.updated_at = now();
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER user_prefs_updated_at ON user_preferences;
+CREATE TRIGGER user_prefs_updated_at BEFORE UPDATE ON user_preferences
+  FOR EACH ROW EXECUTE FUNCTION user_prefs_set_updated_at();
+
+COMMIT;
