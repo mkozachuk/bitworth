@@ -30,4 +30,9 @@ jobs:
         if: env.SUPABASE_URL != ''
       - run: npm run test:e2e
         if: env.SUPABASE_URL != ''
+      # Smoke e2e against a local Supabase stub (e2e/smoke): no secrets, never gated.
+      - name: Install Playwright chromium (smoke)
+        run: npx playwright install chromium --with-deps
+      - name: E2E smoke (stubbed Supabase)
+        run: npm run test:e2e:smoke
       - run: npm run build
