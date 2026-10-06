@@ -316,8 +316,7 @@ export function serialize(data: BackupInput, exportedAt: string): BackupEnvelope
 }
 
 export type ValidateResult =
-  | { ok: true; data: BackupData }
-  | { ok: false; code: string; message: string; context?: unknown };
+  { ok: true; data: BackupData } | { ok: false; code: string; message: string; context?: unknown };
 
 function fail(code: string, message: string, context?: unknown): ValidateResult {
   return context === undefined ? { ok: false, code, message } : { ok: false, code, message, context };
