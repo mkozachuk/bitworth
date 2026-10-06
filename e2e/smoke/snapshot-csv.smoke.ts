@@ -1,15 +1,17 @@
 import { readFile } from "node:fs/promises";
 import { test, expect } from "@playwright/test";
 import { STALE_ASSET_NAME } from "./fixtures.ts";
-import { signInAs } from "./session.ts";
+import { signInAs, waitForHydration } from "./session.ts";
 
 test("Download CSV saves the snapshot history", async ({ page, context, baseURL }) => {
   await signInAs(context, "stale", baseURL ?? "");
 
   await page.goto("/dashboard/settings");
 
+  const downloadButton = page.getByRole("button", { name: "Download CSV" });
+  await waitForHydration(downloadButton);
   const downloadPromise = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Download CSV" }).click();
+  await downloadButton.click();
   const download = await downloadPromise;
 
   expect(download.suggestedFilename()).toMatch(/^bitworth-snapshots-\d{4}-\d{2}-\d{2}\.csv$/);

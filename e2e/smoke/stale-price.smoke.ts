@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { signInAs } from "./session.ts";
+import { signInAs, waitForHydration } from "./session.ts";
 
 test("stale priced holding shows the banner and Reprice now posts once", async ({ page, context, baseURL }) => {
   await signInAs(context, "stale", baseURL ?? "");
@@ -16,6 +16,7 @@ test("stale priced holding shows the banner and Reprice now posts once", async (
   await expect(page.getByText("Price for 1 holding is 10 days old")).toBeVisible();
   const button = page.getByRole("button", { name: "Reprice now" });
   await expect(button).toBeVisible();
+  await waitForHydration(button);
 
   const request = page.waitForRequest((req) => req.url().endsWith("/api/assets/reprice") && req.method() === "POST");
   await button.click();
