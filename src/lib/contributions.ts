@@ -29,8 +29,7 @@ export interface ContributionSnapshot {
  * recorded (`net_contribution == null`) so the split cannot be computed.
  */
 export type IntervalSplit = { date: string; totalChange: number } & (
-  | { kind: "split"; contribution: number; growth: number }
-  | { kind: "unknown" }
+  { kind: "split"; contribution: number; growth: number } | { kind: "unknown" }
 );
 
 /** Snap float dust near zero to exactly 0 so rounding noise does not read as movement. */

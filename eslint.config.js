@@ -78,11 +78,14 @@ const astroConfig = tseslint.config({
 });
 
 // Supabase-generated database.types.ts uses conditional type parameter defaults with 'never'
-// that trigger no-redundant-type-constituents; the pattern is structurally required
+// that trigger no-redundant-type-constituents; the pattern is structurally required.
+// Its Record<never, never> placeholders for empty schema sections trip
+// no-generated-empty-object-type (added to strictTypeChecked in typescript-eslint 8.71).
 const databaseTypesConfig = tseslint.config({
   files: ["src/lib/database.types.ts"],
   rules: {
     "@typescript-eslint/no-redundant-type-constituents": "off",
+    "@typescript-eslint/no-generated-empty-object-type": "off",
   },
 });
 

@@ -1,4 +1,4 @@
-import type { BrowserContext } from "@playwright/test";
+import { expect, type BrowserContext, type Locator } from "@playwright/test";
 import { SCENARIOS, STUB_URL, userFor, type Scenario } from "./fixtures.ts";
 
 const YEAR_S = 365 * 24 * 3600;
@@ -34,4 +34,16 @@ export async function signInAs(context: BrowserContext, scenario: Scenario, base
       sameSite: "Lax",
     },
   ]);
+}
+
+/**
+ * Waits until the Astro island around `locator` has hydrated. `client:load`
+ * islands are server-rendered, so their buttons are visible before React
+ * attaches handlers, and a click in that window is silently lost. Astro drops
+ * the island's `ssr` attribute once hydration completes.
+ */
+export async function waitForHydration(locator: Locator): Promise<void> {
+  const island = locator.locator("xpath=ancestor::astro-island[1]");
+  await expect(island).toHaveCount(1);
+  await expect(island).not.toHaveAttribute("ssr");
 }
