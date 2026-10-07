@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { CurrencyBadge } from "./CurrencyBadge";
 import { ContributionField } from "./ContributionField";
 import type { Tables } from "@/lib/database.types";
-import { convertAmount, type Currency } from "@/lib/net-worth";
+import { computeNetWorth, type Currency } from "@/lib/net-worth";
 import { computeNetWorthDeltas, type SnapshotDelta } from "@/lib/net-worth-deltas";
 
 type AssetWithCategory = Tables<"assets"> & { category: Tables<"asset_categories"> };
@@ -309,19 +309,17 @@ export function NetWorthDisplay({ assets, displayCurrency, rates, snapshots = []
       });
   }, []);
 
-  const currentNetWorth = (() => {
-    let totalAssets = 0;
-    let totalLiabilities = 0;
-    for (const asset of assets) {
-      const converted = convertAmount(asset.amount, asset.currency as Currency, displayCurrency, rates);
-      if (asset.category.is_liability) {
-        totalLiabilities += converted;
-      } else {
-        totalAssets += converted;
-      }
-    }
-    return totalAssets - totalLiabilities;
-  })();
+  // One calculation feeds the headline, Assets and Liabilities. The DB
+  // `currency` string is cast to Currency at the boundary (Currency cast lesson).
+  const {
+    totalAssets,
+    totalLiabilities,
+    netWorth: currentNetWorth,
+  } = computeNetWorth(
+    assets.map((a) => ({ ...a, currency: a.currency as Currency })),
+    displayCurrency,
+    rates,
+  );
 
   // Baselines are anchored on the newest snapshot, never on the wall clock.
   const { lastMonth, jan } = computeNetWorthDeltas(snapshots);
@@ -361,22 +359,14 @@ export function NetWorthDisplay({ assets, displayCurrency, rates, snapshots = []
         <div>
           <p className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">Assets</p>
           <p className="text-gain tnum mt-1 text-lg font-bold">
-            +
-            {assets
-              .filter((a) => !a.category.is_liability)
-              .reduce((sum, a) => sum + convertAmount(a.amount, a.currency as Currency, displayCurrency, rates), 0)
-              .toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
+            +{totalAssets.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
             {displayCurrency}
           </p>
         </div>
         <div>
           <p className="text-foreground/60 text-xs font-bold tracking-[0.12em] uppercase">Liabilities</p>
           <p className="text-loss tnum mt-1 text-lg font-bold">
-            −
-            {assets
-              .filter((a) => a.category.is_liability)
-              .reduce((sum, a) => sum + convertAmount(a.amount, a.currency as Currency, displayCurrency, rates), 0)
-              .toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
+            −{totalLiabilities.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
             {displayCurrency}
           </p>
         </div>
