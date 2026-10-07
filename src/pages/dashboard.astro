@@ -128,7 +128,7 @@ if (showFireDashboard) {
     })),
     displayCurrency,
     rates,
-  );
+  ).netWorth;
 
   // Pull the core columns into consts so the `configured` alias narrows them to
   // non-null inside the branch below (TS aliased-condition narrowing) — avoiding
@@ -226,7 +226,7 @@ if (showGoals) {
     })),
     displayCurrency,
     rates,
-  );
+  ).netWorth;
 
   // ONE fit for every goal, over the already-fetched snapshots. Filter to the
   // comparable (same display currency) rows FIRST so the trend never spans a

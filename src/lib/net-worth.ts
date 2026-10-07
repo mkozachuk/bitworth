@@ -26,22 +26,22 @@ export function convertAmount(
   return inUSD * rates[toCurrency];
 }
 
+export interface NetWorthBreakdown {
+  totalAssets: number;
+  totalLiabilities: number;
+  netWorth: number;
+}
+
 /**
- * Returns the user's net worth in `displayCurrency` (assets minus liabilities).
- *
- * TODO(future-refactor): callers that need the breakdown (e.g.
- * NetWorthDisplay.tsx's IIFE at lines 137-149 and the two `.filter().reduce()`
- * calls at 199-202/210-213) re-implement this loop just to expose
- * `totalAssets` and `totalLiabilities` separately. Replace the return type
- * with `{ totalAssets, totalLiabilities, netWorth }` and update callers to
- * consume the breakdown directly. Tracked from the testing-runner-bootstrap
- * impl-review (F8, 2026-06-02).
+ * Returns the user's net worth breakdown in `displayCurrency`: the converted
+ * sum of non-liability rows, the converted sum of liability rows, and
+ * `netWorth = totalAssets - totalLiabilities`, all from one pass.
  */
 export function computeNetWorth(
   assets: NetWorthAsset[],
   displayCurrency: Currency,
   rates: Record<Currency, number>,
-): number {
+): NetWorthBreakdown {
   let totalAssets = 0;
   let totalLiabilities = 0;
   for (const asset of assets) {
@@ -52,5 +52,5 @@ export function computeNetWorth(
       totalAssets += converted;
     }
   }
-  return totalAssets - totalLiabilities;
+  return { totalAssets, totalLiabilities, netWorth: totalAssets - totalLiabilities };
 }

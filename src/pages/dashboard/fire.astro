@@ -32,7 +32,7 @@ const startingPrincipal = computeNetWorth(
   })),
   displayCurrency,
   rates,
-);
+).netWorth;
 
 const { data: prefs } = await supabase
   .from("user_preferences")

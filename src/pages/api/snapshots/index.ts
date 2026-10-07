@@ -159,7 +159,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     })),
     displayCurrency,
     rates,
-  );
+  ).netWorth;
 
   // Insert snapshot
   const { data: snapshot, error: snapshotError }: { data: Tables<"snapshots"> | null; error: null | PostgrestError } =
