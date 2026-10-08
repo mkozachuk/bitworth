@@ -31,7 +31,7 @@ Fully manual input — no bank connections, no aggregators — yet meaningfully 
 
 ## Capabilities and Constraints
 
-Shipped capability (roadmap S-01…S-21 all done): asset CRUD across 13 categories (liabilities negative), net worth with deltas, snapshots + trend chart, top movers, per-asset trends, live crypto and metals pricing, FIRE calculator + Monte Carlo simulation + FIRE progress card, net-worth trajectory projection, savings goals, asset balancer (declared vs real allocation, buy plan), allocation drift alerts, contributions-vs-growth split, backup import/export, settings (display currency PLN/USD/EUR, theme light/dark/system, dashboard card toggles), email/password auth, landing page.
+Shipped capability (roadmap S-01…S-30 all done; S-30 is test infrastructure): asset CRUD across 13 categories (liabilities negative), net worth with deltas, snapshots + trend chart, top movers, per-asset trends, live crypto and metals pricing, FIRE calculator + Monte Carlo simulation + FIRE progress card, net-worth trajectory projection, savings goals, asset balancer (declared vs real allocation, buy plan), allocation drift alerts, contributions-vs-growth split, backup import/export, settings (display currency PLN/USD/EUR, theme light/dark/system, dashboard card toggles), email/password auth, landing page, in-app snapshot reminder, category-mix chart over snapshot history, income and savings rate, asset list reorder (drag-and-drop), asset tags with tag trends, stale-price reprice banner, snapshot history CSV export, backup restore fidelity (contributions, allocation, tags and income survive a restore).
 
 Constraints and product facts:
 
@@ -41,7 +41,7 @@ Constraints and product facts:
 - Tech: Astro v6 SSR + React 19 islands, Tailwind CSS v4, Supabase, Recharts, Radix UI + Lucide, deployed on Cloudflare Workers. Error shape is always `{ error: { code, message, context? } }`.
 - Non-goals on record: no bank/broker integrations, no native mobile app, no inflation-adjusted figures, no historical exchange-rate series.
 - Performance expectations: net worth visible within 2 s of page load; action feedback within 500 ms.
-- Proposed next slices (undecided, not committed): snapshot reminder (S-22), category-mix trends (S-23), income/savings-rate (S-24).
+- Next slices: none committed — every slice on the roadmap (S-01…S-30) is done; what comes next is undecided.
 
 ## Brand Commitments
 
