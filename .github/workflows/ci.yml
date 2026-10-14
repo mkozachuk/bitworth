@@ -20,6 +20,34 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Prod advisory report (non-blocking)
+        # Report only, never a gate: always exits 0 (NB-174).
+        continue-on-error: true
+        run: |
+          npm audit --omit=dev --json > "$RUNNER_TEMP/prod-audit.json" 2>/dev/null || true
+          line=$(node -e '
+            const fs = require("fs");
+            let r = "unavailable (no audit output)";
+            try {
+              const t = fs.readFileSync(process.argv[1], "utf8").trim();
+              if (t) {
+                const j = JSON.parse(t);
+                const v = j.metadata && j.metadata.vulnerabilities;
+                if (v) {
+                  r = ["critical", "high", "moderate", "low"].map((k) => k + "=" + (v[k] | 0)).join(" ") + " total=" + (v.total | 0);
+                } else {
+                  const why = (j.error && (j.error.code || j.error.summary)) || "no metadata.vulnerabilities";
+                  r = "unavailable (" + String(why).replace(/[()\r\n]/g, " ").slice(0, 80) + ")";
+                }
+              }
+            } catch (e) {
+              r = "unavailable (unparseable audit JSON)";
+            }
+            console.log("prod advisories: " + r);
+          ' "$RUNNER_TEMP/prod-audit.json") || line="prod advisories: unavailable (parser failed)"
+          echo "$line"
+          if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then echo "$line" >> "$GITHUB_STEP_SUMMARY"; fi
+          exit 0
       - run: npx astro sync
       - run: npm run typecheck
       - run: npm run lint
