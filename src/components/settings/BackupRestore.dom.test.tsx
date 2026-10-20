@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from "vitest";
 import { BackupRestore } from "./BackupRestore";
 
 // Rendered checks for the "Download CSV" control beside the backup export: it
@@ -10,7 +10,7 @@ import { BackupRestore } from "./BackupRestore";
 type FetchFn = (url: string) => Promise<Response>;
 
 let downloads: string[];
-let clickSpy: ReturnType<typeof vi.spyOn>;
+let clickSpy: MockInstance<HTMLAnchorElement["click"]>;
 
 beforeEach(() => {
   downloads = [];
