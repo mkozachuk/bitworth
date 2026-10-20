@@ -10,6 +10,7 @@ import pwa from "./src/integrations/pwa";
 // https://astro.build/config
 export default defineConfig({
   output: "server",
+  compressHTML: true,
   integrations: [react(), sitemap(), pwa()],
   vite: {
     plugins: [tailwindcss()],
