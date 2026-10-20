@@ -82,4 +82,55 @@ describe("getRates", () => {
     expect(result.EUR).toBeCloseTo(1 / 0.92, 6);
     expect(result.PLN).toBeCloseTo(1, 6);
   });
+
+  it("returns fetched rates and warns when every cache upsert fails", async () => {
+    const upsertError = { data: null, error: { message: "permission denied for table exchange_rate_cache" } };
+    const m = createSupabaseMock({
+      userId: null,
+      tableResultQueues: {
+        // Two cache-read misses, then seven failing upserts.
+        exchange_rate_cache: [
+          { data: null, error: null },
+          { data: null, error: null },
+          ...Array.from({ length: 7 }, () => upsertError),
+        ],
+      },
+    });
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+      new Response(JSON.stringify({ rates: { USD: 1.1, PLN: 4.4 } }), { status: 200 }),
+    );
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    try {
+      const result = await getRates(asClient(m.client));
+
+      expect(result).not.toEqual({ USD: 1.0, EUR: 0.92, PLN: 3.85 });
+      expect(result.USD).toBe(1.0);
+      expect(result.EUR).toBeCloseTo(1 / 1.1, 6);
+      expect(result.PLN).toBeCloseTo(4.4 / 1.1, 6);
+      expect(warn).toHaveBeenCalled();
+      expect(
+        warn.mock.calls.some((args) => String(args[0]).includes("permission denied for table exchange_rate_cache")),
+      ).toBe(true);
+      expect(warn.mock.calls.some((args) => String(args[0]).includes("EUR->USD"))).toBe(true);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("fetches rates from the frankfurter.dev v1 endpoint", async () => {
+    const m = createSupabaseMock({
+      userId: null,
+      tableResults: {
+        exchange_rate_cache: { data: null, error: null },
+      },
+    });
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+      new Response(JSON.stringify({ rates: { USD: 1.1, PLN: 4.4 } }), { status: 200 }),
+    );
+
+    await getRates(asClient(m.client));
+
+    expect(fetch as ReturnType<typeof vi.fn>).toHaveBeenCalledWith("https://api.frankfurter.dev/v1/latest?from=EUR");
+  });
 });
