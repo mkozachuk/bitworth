@@ -92,14 +92,14 @@ BitWorth is a real installable Progressive Web App and is built mobile-first.
 | Charts        | Recharts                                   | ^3.8.1            |
 | UI primitives | Radix UI, Lucide icons                     | ^2.1.16 / ^1.14.0 |
 | PWA           | `vite-plugin-pwa` + Workbox                | ^1.3.0            |
-| Deployment    | Cloudflare Workers (`@astrojs/cloudflare`) | ^13.5.0           |
+| Deployment    | Cloudflare Workers (`@astrojs/cloudflare`) | ^14.x             |
 | Testing       | Vitest (unit) + Playwright (E2E)           | ^3.2.6 / ^1.60.0  |
 
 ## Getting started (local dev)
 
 **Prerequisites**
 
-- Node.js `22.14.0` (see [`.nvmrc`](.nvmrc))
+- Node.js `22.22.0` (see [`.nvmrc`](.nvmrc))
 - Docker — required to run the local Supabase stack
 
 **Setup**
