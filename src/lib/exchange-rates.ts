@@ -11,7 +11,10 @@ const STATIC_RATES: Record<Currency, number> = {
 const CACHE_TTL_SECONDS = 3600;
 
 async function upsertRate(supabase: SupabaseClient, base: string, target: string, rate: number): Promise<void> {
-  await supabase.from("exchange_rate_cache").upsert(
+  // supabase-js resolves with `{ error }` instead of throwing, so a failed
+  // cache write is silent unless we read it. Log and carry on: the fetched
+  // rates are still correct for this request.
+  const { error } = await supabase.from("exchange_rate_cache").upsert(
     {
       base_currency: base,
       target_currency: target,
@@ -20,6 +23,10 @@ async function upsertRate(supabase: SupabaseClient, base: string, target: string
     },
     { onConflict: "base_currency,target_currency" },
   );
+  if (error) {
+    // eslint-disable-next-line no-console
+    console.warn(`exchange_rate_cache upsert failed for ${base}->${target}: ${error.message}`);
+  }
 }
 
 async function getCachedRate(
@@ -58,7 +65,7 @@ export async function getRates(supabase: SupabaseClient): Promise<Record<Currenc
       };
     }
 
-    const res = await fetch("https://api.frankfurter.app/latest?from=EUR");
+    const res = await fetch("https://api.frankfurter.dev/v1/latest?from=EUR");
     if (!res.ok) throw new Error(`frankfurter responded ${res.status}`);
     const json = (await res.json()) as { rates: Record<string, number | undefined> };
 
