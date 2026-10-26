@@ -40,9 +40,17 @@ export default function pwa(): AstroIntegration {
             // including it would bloat the precache by ~30 files.
             globIgnores: ["**/app_icons/**", "**/sw.js", "**/workbox-*.js"],
             cleanupOutdatedCaches: true,
-            navigateFallback: "/offline.html",
-            navigateFallbackDenylist: [/^\/api\//, /^https:\/\/.*\.supabase\.co\//],
+            // vite-plugin-pwa defaults navigateFallback to "index.html";
+            // null disables the app-shell NavigationRoute entirely.
+            navigateFallback: null,
             runtimeCaching: [
+              {
+                // Navigations always go to the network; the precached offline
+                // page is served only when that network request fails.
+                urlPattern: ({ request }) => request.mode === "navigate",
+                handler: "NetworkOnly",
+                options: { precacheFallback: { fallbackURL: "/offline.html" } },
+              },
               {
                 urlPattern: ({ url }) =>
                   url.pathname.startsWith("/icons/") ||
