@@ -12,6 +12,8 @@
 
 **Applies to**: API handlers doing sequential dependent inserts across related tables.
 
+**Closed** (NB-060): the snapshot POST now writes parent + items through one `create_snapshot()` call (one transaction); the compensating delete is gone.
+
 ## Public API endpoints need explicit auth decisions
 
 **Context**: src/pages/api/rates.ts — `GET /api/rates` does not call `supabase.auth.getUser()` to verify the session, unlike every other API route in the project.
@@ -54,17 +56,17 @@
 
 **Closed**: Phase 5 of `testing-critical-path-api-integration` — `WITH CHECK` clauses added to the four user-owned policies in the migration.
 
-## `(snapshot_id, asset_id)` has no unique constraint
+## A double submit saved a second snapshot parent (was: "`(snapshot_id, asset_id)` has no unique constraint")
 
-**Context**: supabase/migrations/20260529190856_initial_schema.sql:54-66 — `snapshot_items` table has no unique constraint on `(snapshot_id, asset_id)`. The `snapshot_items` PK is `id` (auto-generated UUID), not the natural composite key.
+**Context**: an earlier version of this lesson said `snapshot_items` lacked a unique constraint on `(snapshot_id, asset_id)`. That premise was wrong: `snapshot_items` has no `asset_id` column (supabase/migrations/20260529190856_initial_schema.sql — items carry `category_id`, `name` and amounts, a point-in-time copy, not a link to the asset). Two concurrent POSTs never share a `snapshot_id`, so no per-item constraint could have caught them.
 
-**Problem**: Two concurrent POSTs from the same user can both fetch the same assets set in parallel, both insert a parent snapshot, and both insert items with the same `(snapshot_id, asset_id)` pairs. With no unique constraint, both inserts succeed and the chart renders duplicated items for the duplicate snapshots. The lesson §1 worst case (orphan parent) is one failure mode; the concurrent duplicate is another.
+**Problem**: the real risk was one level up. A double submit (a retry after a lost response, a double click, two tabs) ran the whole POST twice and committed two parent `snapshots` rows for one save, each with its own full set of items. Nothing in the schema said "this is the same save".
 
-**Rule**: When a child table represents a child of a parent with a natural composite identity (`snapshot_id`, `asset_id`), the natural key SHOULD be a unique constraint, not just inferred. The composite uniqueness is what makes the operation idempotent under concurrent writes.
+**Rule**: idempotency belongs on the parent, keyed by the client's intent: the client mints one id per save intent and the database enforces it with a unique index, checked by `INSERT … ON CONFLICT DO NOTHING` in the same transaction as the children, never by select-then-insert.
 
-**Applies to**: Any new child table where the natural key is `(parent_id, child_id)`. Currently OPEN — no test pins this. Tracked for a follow-up migration; not in Phase 2 scope because the test plan's risk map did not include it.
+**Applies to**: any user-triggered create that writes a parent plus children and can be retried.
 
-**Open**: no test coverage. A future phase that adds a unique constraint migration should also add a test that two concurrent POSTs produce one item per `(snapshot_id, asset_id)` pair.
+**Closed** (NB-060): `snapshots.client_request_id` + partial unique index `(user_id, client_request_id) WHERE client_request_id IS NOT NULL` + `create_snapshot()` (supabase/migrations/20261126070000_atomic_snapshot_save.sql); the save dialog sends one `crypto.randomUUID()` per intent. Pinned in src/test/db/create-snapshot.test.ts (replay, other user, rollback) and src/pages/api/snapshots/index.test.ts (201 vs 200 replay).
 
 ## Empty-assets on snapshot POST still creates a parent row
 

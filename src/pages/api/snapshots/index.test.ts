@@ -2,11 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 import { createSupabaseMock, createCookiesStub, findCall } from "@/test-utils/supabase-mock";
 
 // /api/snapshots is the only handler exercising Risks #2 AND #3 together:
-// the GET filter (cross-tenant) AND the POST atomicity (orphan worst case
-// per lessons.md §1) AND the sort order (chart's defensive re-sort is
-// load-bearing per research §3). This file ships in two passes: Phase 2
-// adds the GET filter assertions, Phase 3 extends with the 6 POST
-// scenarios and the sort-order assertions.
+// the GET filter (cross-tenant) AND the POST atomicity AND the sort order
+// (chart's defensive re-sort is load-bearing per research §3). Since NB-060
+// the POST writes parent + items through ONE `create_snapshot` rpc call, so
+// atomicity and idempotency live in the database function (pinned on real
+// Postgres in src/test/db/create-snapshot.test.ts); here the route's side of
+// the contract is pinned: what it sends, and how it maps the reply.
 //
 // The `vi.mock("@/lib/exchange-rates", ...)` below bends the test-plan
 // §6.2 "never mock internal modules" policy for one helper. The
@@ -142,6 +143,35 @@ describe("GET /api/snapshots", () => {
   });
 });
 
+interface RpcCall {
+  name: string;
+  args: { p_snapshot: Record<string, unknown>; p_items: Record<string, unknown>[]; p_client_request_id: unknown };
+}
+
+/**
+ * Replace the shared mock's rpc (always `{data: null}`) with one that records
+ * every call and answers with `reply`. Default reply: a created snapshot.
+ */
+function stubRpc(
+  m: ReturnType<typeof createSupabaseMock>,
+  reply: { data: unknown; error: unknown } = { data: { snapshot: parentSnapshot, created: true }, error: null },
+): RpcCall[] {
+  const calls: RpcCall[] = [];
+  m.client.rpc = (name: string, args: unknown) => {
+    calls.push({ name, args: args as RpcCall["args"] });
+    return Promise.resolve(reply);
+  };
+  return calls;
+}
+
+function onlyRpcCall(calls: RpcCall[]): RpcCall["args"] {
+  expect(calls).toHaveLength(1);
+  expect(calls[0].name).toBe("create_snapshot");
+  return calls[0].args;
+}
+
+const KEY = "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b";
+
 describe("POST /api/snapshots", () => {
   function makeRequest(): Request {
     return new Request("http://localhost/api/snapshots", {
@@ -154,27 +184,106 @@ describe("POST /api/snapshots", () => {
   // set `tableResults.assets` explicitly.
   const defaultTableResults = { assets: baseAssetsResult };
 
-  it("happy path: 2 assets, both inserts succeed", async () => {
-    const m = createSupabaseMock({
-      userId: userA,
-      tableResults: defaultTableResults,
-      tableResultQueues: {
-        // snapshots: parent insert succeeds (single)
-        snapshots: [{ data: parentSnapshot, error: null }],
-      },
-    });
+  function setup(
+    tableResults: Record<string, { data: unknown; error: unknown }> = defaultTableResults,
+    reply?: { data: unknown; error: unknown },
+  ): { m: ReturnType<typeof createSupabaseMock>; calls: RpcCall[] } {
+    const m = createSupabaseMock({ userId: userA, tableResults });
+    const calls = stubRpc(m, reply);
     mocks.factory = () => m;
+    return { m, calls };
+  }
+
+  function makeJsonRequest(body: unknown): Request {
+    return new Request("http://localhost/api/snapshots", {
+      method: "POST",
+      headers: { Cookie: "sb-access-token=fake", "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  it("happy path: 2 assets, one create_snapshot call carries the parent and both items", async () => {
+    const { m, calls } = setup();
 
     const response = await POST({ request: makeRequest(), cookies: createCookiesStub() } as never);
     expect(response.status).toBe(201);
 
-    // The items insert was awaited with a 2-element array
-    const itemsInsert = m.recorded.find(
-      (c) => c.method === "insert" && m.builders.get("snapshot_items")?.__recorded.includes(c),
-    );
-    expect(itemsInsert).toBeDefined();
-    const items = itemsInsert?.args[0] as unknown[];
-    expect(items).toHaveLength(2);
+    const args = onlyRpcCall(calls);
+    expect(args.p_items).toHaveLength(2);
+    expect(args.p_snapshot).toMatchObject({
+      total_net_worth: 1500,
+      display_currency: "USD",
+      base_currency: "USD",
+      source: "manual",
+    });
+    // No direct table writes any more: no parent insert, no items insert, no
+    // compensating delete.
+    expect(m.builders.get("snapshots")).toBeUndefined();
+    expect(m.builders.get("snapshot_items")).toBeUndefined();
+    expect(m.recorded.find((c) => c.method === "delete")).toBeUndefined();
+  });
+
+  it("passes a UUID client_request_id to the rpc and answers 201 with the created row", async () => {
+    const { calls } = setup();
+
+    const response = await POST({
+      request: makeJsonRequest({ client_request_id: KEY }),
+      cookies: createCookiesStub(),
+    } as never);
+    expect(response.status).toBe(201);
+    expect(onlyRpcCall(calls).p_client_request_id).toBe(KEY);
+    const body = (await response.json()) as { data: { id: string }; repricing: unknown };
+    expect(body.data.id).toBe(parentSnapshot.id);
+    expect(body.repricing).toEqual({ repriced: 0, failed: [] });
+  });
+
+  it("a replayed client_request_id answers 200 with the existing row, same response shape", async () => {
+    const existing = { ...parentSnapshot, id: "snap-first", client_request_id: KEY };
+    const { calls } = setup(defaultTableResults, { data: { snapshot: existing, created: false }, error: null });
+
+    const response = await POST({
+      request: makeJsonRequest({ client_request_id: KEY }),
+      cookies: createCookiesStub(),
+    } as never);
+    expect(response.status).toBe(200);
+    expect(onlyRpcCall(calls).p_client_request_id).toBe(KEY);
+    const body = (await response.json()) as Record<string, unknown>;
+    expect(Object.keys(body).sort()).toEqual(["data", "repricing"]);
+    expect((body.data as { id: string }).id).toBe("snap-first");
+  });
+
+  it.each([
+    ["a non-UUID string", "not-a-uuid"],
+    ["a number", 42],
+    ["a UUID with trailing junk", `${KEY}x`],
+    ["an empty string", ""],
+  ])("rejects %s as client_request_id with 400 VALIDATION_ERROR and calls nothing", async (_case, key) => {
+    const { calls } = setup();
+    const response = await POST({
+      request: makeJsonRequest({ client_request_id: key }),
+      cookies: createCookiesStub(),
+    } as never);
+    expect(response.status).toBe(400);
+    const json = (await response.json()) as { error: { code: string } };
+    expect(json.error.code).toBe("VALIDATION_ERROR");
+    expect(calls).toHaveLength(0);
+  });
+
+  it("legacy bodyless POST calls the rpc with a NULL client_request_id", async () => {
+    const { calls } = setup();
+    const response = await POST({ request: makeRequest(), cookies: createCookiesStub() } as never);
+    expect(response.status).toBe(201);
+    expect(onlyRpcCall(calls).p_client_request_id).toBeNull();
+  });
+
+  it("an explicit null client_request_id is the legacy NULL key", async () => {
+    const { calls } = setup();
+    const response = await POST({
+      request: makeJsonRequest({ client_request_id: null, net_contribution: 5 }),
+      cookies: createCookiesStub(),
+    } as never);
+    expect(response.status).toBe(201);
+    expect(onlyRpcCall(calls).p_client_request_id).toBeNull();
   });
 
   it("reprices crypto holdings before recording: total and items use the live amount", async () => {
@@ -191,12 +300,7 @@ describe("POST /api/snapshots", () => {
       crypto_symbol: "BTC",
       category: { ...assetA.category, id: "crypto", name: "Crypto" },
     };
-    const m = createSupabaseMock({
-      userId: userA,
-      tableResults: { assets: { data: [assetA, btc], error: null } },
-      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
-    });
-    mocks.factory = () => m;
+    const { m, calls } = setup({ assets: { data: [assetA, btc], error: null } });
 
     const response = await POST({ request: makeRequest(), cookies: createCookiesStub() } as never);
     expect(response.status).toBe(201);
@@ -206,14 +310,9 @@ describe("POST /api/snapshots", () => {
     // The refreshed amount was written back to the asset row…
     expect(findCall(m.recorded, "update", [{ amount: 40000, currency: "USD" }])).toBeDefined();
     // …and is what the snapshot recorded (500 cash + 40,000 BTC).
-    const parentInsert = m.recorded.find(
-      (c) => c.method === "insert" && m.builders.get("snapshots")?.__recorded.includes(c),
-    );
-    expect((parentInsert?.args[0] as { total_net_worth: number }).total_net_worth).toBe(40500);
-    const itemsInsert = m.recorded.find(
-      (c) => c.method === "insert" && m.builders.get("snapshot_items")?.__recorded.includes(c),
-    );
-    const items = itemsInsert?.args[0] as { name: string; original_amount: number }[];
+    const args = onlyRpcCall(calls);
+    expect(args.p_snapshot.total_net_worth).toBe(40500);
+    const items = args.p_items as { name: string; original_amount: number }[];
     expect(items.find((i) => i.name === "Bitcoin")?.original_amount).toBe(40000);
   });
 
@@ -230,12 +329,7 @@ describe("POST /api/snapshots", () => {
       quantity: 1,
       metal_symbol: "XAU",
     };
-    const m = createSupabaseMock({
-      userId: userA,
-      tableResults: { assets: { data: [assetA, gold], error: null } },
-      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
-    });
-    mocks.factory = () => m;
+    const { m, calls } = setup({ assets: { data: [assetA, gold], error: null } });
 
     const response = await POST({ request: makeRequest(), cookies: createCookiesStub() } as never);
     expect(response.status).toBe(201);
@@ -245,185 +339,85 @@ describe("POST /api/snapshots", () => {
       { id: "asset-gold", name: "Gold", symbol: "XAU", code: "PRICE_UNAVAILABLE" },
     ]);
 
-    const parentInsert = m.recorded.find(
-      (c) => c.method === "insert" && m.builders.get("snapshots")?.__recorded.includes(c),
-    );
-    expect((parentInsert?.args[0] as { total_net_worth: number }).total_net_worth).toBe(4553);
+    expect(onlyRpcCall(calls).p_snapshot.total_net_worth).toBe(4553);
     expect(m.recorded.find((c) => c.method === "update")).toBeUndefined();
   });
 
-  it("items insert fails, compensating delete succeeds", async () => {
-    const m = createSupabaseMock({
-      userId: userA,
-      tableResults: defaultTableResults,
-      tableResultQueues: {
-        // snapshots: parent insert succeeds, then compensating delete succeeds
-        snapshots: [
-          { data: parentSnapshot, error: null },
-          { data: null, error: null },
-        ],
-        // snapshot_items: items insert fails
-        snapshot_items: [{ data: null, error: { message: "items fail" } }],
-      },
-    });
-    mocks.factory = () => m;
+  it("rpc error → 500 INSERT_FAILED with the database message, and no other write", async () => {
+    const { m, calls } = setup(defaultTableResults, { data: null, error: { message: "items fail" } });
 
     const response = await POST({ request: makeRequest(), cookies: createCookiesStub() } as never);
     expect(response.status).toBe(500);
-
-    // The compensating delete.eq("id", snapshot.id) was invoked
-    const deleteCall = m.recorded.find((c) => c.method === "delete");
-    expect(deleteCall).toBeDefined();
-    expect(findCall(m.recorded, "eq", ["id", parentSnapshot.id])).toBeDefined();
+    const body = (await response.json()) as { error: { code: string; message: string } };
+    expect(body.error).toEqual({ code: "INSERT_FAILED", message: "items fail" });
+    expect(calls).toHaveLength(1);
+    // The database rolled the parent back; the route has nothing to clean up.
+    expect(m.recorded.find((c) => c.method === "delete")).toBeUndefined();
+    expect(m.builders.get("snapshots")).toBeUndefined();
   });
 
-  it("items insert fails AND compensating delete fails (lesson §1 worst case)", async () => {
-    // TODO: replace with a Postgres function or supabase.rpc wrapping both
-    // inserts so the lesson §1 worst case is structurally impossible. The
-    // test currently pins the orphan-on-failure behavior; once the fix
-    // lands, this test should be updated to assert the new (no-orphan)
-    // behavior, not removed.
-    const m = createSupabaseMock({
-      userId: userA,
-      tableResults: defaultTableResults,
-      tableResultQueues: {
-        snapshots: [
-          { data: parentSnapshot, error: null },
-          { data: null, error: { message: "compensating delete fails" } },
-        ],
-        snapshot_items: [{ data: null, error: { message: "items fail" } }],
-      },
-    });
-    mocks.factory = () => m;
-
-    const response = await POST({ request: makeRequest(), cookies: createCookiesStub() } as never);
-    // Both fail → handler returns 500 with the itemsError message; the
-    // parent row remains in the DB. The test pins this current behavior.
-    expect(response.status).toBe(500);
-    const body = (await response.json()) as { error: { message: string } };
-    expect(body.error.message).toBe("items fail");
-
-    // The delete was attempted (it failed, but it was attempted)
-    const deleteCall = m.recorded.find((c) => c.method === "delete");
-    expect(deleteCall).toBeDefined();
-  });
-
-  it("items insert silently no-ops (error: null but no rows)", async () => {
-    // The most insidious failure: items insert returns `{error: null}` but
-    // writes zero rows. The handler does not enter the compensating-delete
-    // branch because it sees no error. The parent row is committed, the
-    // items are absent — an orphan by another name.
-    const m = createSupabaseMock({
-      userId: userA,
-      tableResults: defaultTableResults,
-      tableResultQueues: {
-        snapshots: [{ data: parentSnapshot, error: null }],
-        snapshot_items: [{ data: [], error: null }],
-      },
-    });
-    mocks.factory = () => m;
-
-    const response = await POST({ request: makeRequest(), cookies: createCookiesStub() } as never);
-    expect(response.status).toBe(201);
-
-    // The compensating-delete branch was NOT entered
-    const deleteCall = m.recorded.find((c) => c.method === "delete");
-    expect(deleteCall).toBeUndefined();
+  it("rpc answers without a snapshot row → 500 INSERT_FAILED, never a 201", async () => {
+    for (const data of [null, {}, { created: true }]) {
+      setup(defaultTableResults, { data, error: null });
+      const response = await POST({ request: makeRequest(), cookies: createCookiesStub() } as never);
+      expect(response.status).toBe(500);
+      const body = (await response.json()) as { error: { code: string } };
+      expect(body.error.code).toBe("INSERT_FAILED");
+    }
   });
 
   it("empty assets: parent row created with total_net_worth: 0", async () => {
-    // Pins the current behavior at src/pages/api/snapshots/index.ts:140 —
-    // a parent snapshot with `total_net_worth: 0` is still committed when
-    // the user has no assets. The chart would render a single zero point.
-    // Whether this is desired is a product question; the test pins so a
-    // future refactor is observable.
-    const m = createSupabaseMock({
-      userId: userA,
-      tableResults: { assets: { data: [], error: null } },
-      tableResultQueues: {
-        snapshots: [{ data: { ...parentSnapshot, total_net_worth: 0 }, error: null }],
+    // Pins the current behavior: a parent snapshot with `total_net_worth: 0`
+    // is still committed when the user has no assets (the rpc gets an empty
+    // items array and writes the parent only). Whether this is desired is a
+    // product question; the test pins so a future refactor is observable.
+    const { calls } = setup(
+      { assets: { data: [], error: null } },
+      {
+        data: { snapshot: { ...parentSnapshot, total_net_worth: 0 }, created: true },
+        error: null,
       },
-    });
-    mocks.factory = () => m;
+    );
 
     const response = await POST({ request: makeRequest(), cookies: createCookiesStub() } as never);
     expect(response.status).toBe(201);
     const body = (await response.json()) as { data: { total_net_worth: number } };
     expect(body.data.total_net_worth).toBe(0);
 
-    // The snapshot_items builder was never called (no items insert at all)
-    const itemsBuilder = m.builders.get("snapshot_items");
-    expect(itemsBuilder).toBeUndefined();
+    const args = onlyRpcCall(calls);
+    expect(args.p_items).toEqual([]);
+    expect(args.p_snapshot.total_net_worth).toBe(0);
   });
 
-  function makeJsonRequest(body: unknown): Request {
-    return new Request("http://localhost/api/snapshots", {
-      method: "POST",
-      headers: { Cookie: "sb-access-token=fake", "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-  }
-
-  function snapshotInsertPayload(m: ReturnType<typeof createSupabaseMock>): Record<string, unknown> {
-    const snapshotsBuilder = m.builders.get("snapshots");
-    const snapshotInsert = snapshotsBuilder?.__recorded.find((c) => c.method === "insert");
-    expect(snapshotInsert).toBeDefined();
-    return snapshotInsert?.args[0] as Record<string, unknown>;
-  }
-
-  it("persists net_contribution: 500 from the body into the insert payload", async () => {
-    const m = createSupabaseMock({
-      userId: userA,
-      tableResults: defaultTableResults,
-      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
-    });
-    mocks.factory = () => m;
-
+  it("persists net_contribution: 500 from the body into the rpc payload", async () => {
+    const { calls } = setup();
     const response = await POST({
       request: makeJsonRequest({ net_contribution: 500 }),
       cookies: createCookiesStub(),
     } as never);
     expect(response.status).toBe(201);
-    expect(snapshotInsertPayload(m).net_contribution).toBe(500);
+    expect(onlyRpcCall(calls).p_snapshot.net_contribution).toBe(500);
   });
 
   it("persists a negative net_contribution (-200, a withdrawal)", async () => {
-    const m = createSupabaseMock({
-      userId: userA,
-      tableResults: defaultTableResults,
-      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
-    });
-    mocks.factory = () => m;
-
+    const { calls } = setup();
     const response = await POST({
       request: makeJsonRequest({ net_contribution: -200 }),
       cookies: createCookiesStub(),
     } as never);
     expect(response.status).toBe(201);
-    expect(snapshotInsertPayload(m).net_contribution).toBe(-200);
+    expect(onlyRpcCall(calls).p_snapshot.net_contribution).toBe(-200);
   });
 
-  it("bodyless POST succeeds (201) with no net_contribution key in the insert payload", async () => {
-    const m = createSupabaseMock({
-      userId: userA,
-      tableResults: defaultTableResults,
-      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
-    });
-    mocks.factory = () => m;
-
+  it("bodyless POST succeeds (201) with no net_contribution key in the rpc payload", async () => {
+    const { calls } = setup();
     const response = await POST({ request: makeRequest(), cookies: createCookiesStub() } as never);
     expect(response.status).toBe(201);
-    expect(snapshotInsertPayload(m)).not.toHaveProperty("net_contribution");
+    expect(onlyRpcCall(calls).p_snapshot).not.toHaveProperty("net_contribution");
   });
 
   it("rejects a non-numeric net_contribution with 400 VALIDATION_ERROR", async () => {
-    const m = createSupabaseMock({
-      userId: userA,
-      tableResults: defaultTableResults,
-      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
-    });
-    mocks.factory = () => m;
-
+    const { calls } = setup();
     const response = await POST({
       request: makeJsonRequest({ net_contribution: "lots" }),
       cookies: createCookiesStub(),
@@ -431,16 +425,11 @@ describe("POST /api/snapshots", () => {
     expect(response.status).toBe(400);
     const body = (await response.json()) as { error: { code: string } };
     expect(body.error.code).toBe("VALIDATION_ERROR");
+    expect(calls).toHaveLength(0);
   });
 
   it("rejects a NaN net_contribution with 400 VALIDATION_ERROR", async () => {
-    const m = createSupabaseMock({
-      userId: userA,
-      tableResults: defaultTableResults,
-      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
-    });
-    mocks.factory = () => m;
-
+    const { calls } = setup();
     // NaN is not valid JSON, so it serializes to null; send a raw NaN-bearing
     // string body to exercise the non-finite guard directly.
     const request = new Request("http://localhost/api/snapshots", {
@@ -452,66 +441,48 @@ describe("POST /api/snapshots", () => {
     // Invalid JSON is swallowed → bodyless behavior (201, no key). This pins
     // that a malformed body never 500s and never persists a bad value.
     expect(response.status).toBe(201);
-    expect(snapshotInsertPayload(m)).not.toHaveProperty("net_contribution");
+    const args = onlyRpcCall(calls);
+    expect(args.p_snapshot).not.toHaveProperty("net_contribution");
+    expect(args.p_client_request_id).toBeNull();
   });
 
   it("treats explicit null net_contribution as no contribution (column stays NULL)", async () => {
-    const m = createSupabaseMock({
-      userId: userA,
-      tableResults: defaultTableResults,
-      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
-    });
-    mocks.factory = () => m;
-
+    const { calls } = setup();
     const response = await POST({
       request: makeJsonRequest({ net_contribution: null }),
       cookies: createCookiesStub(),
     } as never);
     expect(response.status).toBe(201);
-    expect(snapshotInsertPayload(m)).not.toHaveProperty("net_contribution");
+    expect(onlyRpcCall(calls).p_snapshot).not.toHaveProperty("net_contribution");
   });
 
-  it("persists income from the body into the insert payload (B2)", async () => {
-    const m = createSupabaseMock({
-      userId: userA,
-      tableResults: defaultTableResults,
-      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
-    });
-    mocks.factory = () => m;
-
+  it("persists income from the body into the rpc payload (B2)", async () => {
+    const { calls } = setup();
     const response = await POST({
       request: makeJsonRequest({ net_contribution: 500, income: 4200.5 }),
       cookies: createCookiesStub(),
     } as never);
     expect(response.status).toBe(201);
-    expect(snapshotInsertPayload(m).income).toBe(4200.5);
-    expect(snapshotInsertPayload(m).net_contribution).toBe(500);
+    const args = onlyRpcCall(calls);
+    expect(args.p_snapshot.income).toBe(4200.5);
+    expect(args.p_snapshot.net_contribution).toBe(500);
   });
 
   it("income alone is accepted, and a body with neither key leaves both out (B2)", async () => {
-    const m = createSupabaseMock({
-      userId: userA,
-      tableResults: defaultTableResults,
-      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
-    });
-    mocks.factory = () => m;
+    const { calls } = setup();
     const response = await POST({ request: makeJsonRequest({ income: 0 }), cookies: createCookiesStub() } as never);
     expect(response.status).toBe(201);
-    expect(snapshotInsertPayload(m).income).toBe(0);
-    expect(snapshotInsertPayload(m)).not.toHaveProperty("net_contribution");
+    const args = onlyRpcCall(calls);
+    expect(args.p_snapshot.income).toBe(0);
+    expect(args.p_snapshot).not.toHaveProperty("net_contribution");
   });
 
-  it("explicit null income, and a bodyless POST, leave income out of the insert (column stays NULL) (B2)", async () => {
+  it("explicit null income, and a bodyless POST, leave income out of the rpc payload (column stays NULL) (B2)", async () => {
     for (const request of [makeJsonRequest({ income: null }), makeRequest()]) {
-      const m = createSupabaseMock({
-        userId: userA,
-        tableResults: defaultTableResults,
-        tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
-      });
-      mocks.factory = () => m;
+      const { calls } = setup();
       const response = await POST({ request, cookies: createCookiesStub() } as never);
       expect(response.status).toBe(201);
-      expect(snapshotInsertPayload(m)).not.toHaveProperty("income");
+      expect(onlyRpcCall(calls).p_snapshot).not.toHaveProperty("income");
     }
   });
 
@@ -519,59 +490,43 @@ describe("POST /api/snapshots", () => {
     ["negative", -1],
     ["non-numeric", "lots"],
   ])("rejects a %s income with 400 VALIDATION_ERROR and inserts nothing (B2)", async (_case, income) => {
-    const m = createSupabaseMock({
-      userId: userA,
-      tableResults: defaultTableResults,
-      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
-    });
-    mocks.factory = () => m;
+    const { calls } = setup();
     const response = await POST({ request: makeJsonRequest({ income }), cookies: createCookiesStub() } as never);
     expect(response.status).toBe(400);
     const json = (await response.json()) as { error: { code: string } };
     expect(json.error.code).toBe("VALIDATION_ERROR");
-    expect(m.builders.get("snapshots")?.__recorded.find((c) => c.method === "insert")).toBeUndefined();
+    expect(calls).toHaveLength(0);
   });
 
-  it("insert payload does NOT include created_at", async () => {
-    // Structural-property pin for the DB-default contract. The handler
-    // must never set `created_at` on the insert payload; the DB default
-    // `NOW()` is the source of truth. A future maintainer adding a
-    // client-derived timestamp is caught here.
-    const m = createSupabaseMock({
-      userId: userA,
-      tableResults: defaultTableResults,
-      tableResultQueues: {
-        snapshots: [{ data: parentSnapshot, error: null }],
-      },
-    });
-    mocks.factory = () => m;
-
-    await POST({ request: makeRequest(), cookies: createCookiesStub() } as never);
-
-    const snapshotsBuilder = m.builders.get("snapshots");
-    const snapshotInsert = snapshotsBuilder?.__recorded.find((c) => c.method === "insert");
-    expect(snapshotInsert).toBeDefined();
-    const payload = snapshotInsert?.args[0] as Record<string, unknown>;
-    expect(payload).not.toHaveProperty("created_at");
+  it("rpc payload does NOT include created_at or user_id", async () => {
+    // Structural-property pin. The DB default `NOW()` is the source of truth
+    // for created_at; user_id is auth.uid() inside create_snapshot. A future
+    // maintainer adding either to the payload is caught here.
+    const { calls } = setup();
+    await POST({
+      request: makeJsonRequest({ client_request_id: KEY, net_contribution: 1 }),
+      cookies: createCookiesStub(),
+    } as never);
+    const args = onlyRpcCall(calls);
+    expect(args.p_snapshot).not.toHaveProperty("created_at");
+    expect(args.p_snapshot).not.toHaveProperty("user_id");
+    for (const item of args.p_items) {
+      expect(item).not.toHaveProperty("created_at");
+      expect(item).not.toHaveProperty("snapshot_id");
+    }
   });
 
   // Slice B1b, T6: the tags each asset carries are recorded on its item.
   it("records each asset's current tag ids on its item, read in the same assets query", async () => {
     const tagged = { ...assetA, asset_tags: [{ tag_id: "tag-z" }, { tag_id: "tag-a" }] };
     const untagged = { ...assetB, asset_tags: [] };
-    const m = createSupabaseMock({
-      userId: userA,
-      tableResults: { assets: { data: [tagged, untagged], error: null } },
-      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
-    });
-    mocks.factory = () => m;
+    const { m, calls } = setup({ assets: { data: [tagged, untagged], error: null } });
 
     const response = await POST({ request: makeRequest(), cookies: createCookiesStub() } as never);
     expect(response.status).toBe(201);
     const assetsSelect = m.builders.get("assets")?.__recorded.find((c) => c.method === "select");
     expect(assetsSelect?.args[0]).toBe("*, category:asset_categories(*), asset_tags(tag_id)");
-    const itemsInsert = m.builders.get("snapshot_items")?.__recorded.find((c) => c.method === "insert");
-    const items = itemsInsert?.args[0] as { name: string; tag_ids: string[] | null }[];
+    const items = onlyRpcCall(calls).p_items as { name: string; tag_ids: string[] | null }[];
     // Sorted, so the same tag set always records the same array. An untagged
     // asset records [] ("recorded, no tags"), not NULL ("not recorded").
     expect(items.map((i) => [i.name, i.tag_ids])).toEqual([
@@ -581,17 +536,10 @@ describe("POST /api/snapshots", () => {
   });
 
   it("records NULL (not recorded), never [], when the tag embed is absent from the row", async () => {
-    const m = createSupabaseMock({
-      userId: userA,
-      tableResults: defaultTableResults,
-      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
-    });
-    mocks.factory = () => m;
-
+    const { calls } = setup();
     const response = await POST({ request: makeRequest(), cookies: createCookiesStub() } as never);
     expect(response.status).toBe(201);
-    const itemsInsert = m.builders.get("snapshot_items")?.__recorded.find((c) => c.method === "insert");
-    const items = itemsInsert?.args[0] as { tag_ids: string[] | null }[];
+    const items = onlyRpcCall(calls).p_items as { tag_ids: string[] | null }[];
     expect(items.map((i) => i.tag_ids)).toEqual([null, null]);
   });
 
@@ -610,17 +558,11 @@ describe("POST /api/snapshots", () => {
       category: { ...assetA.category, id: "crypto", name: "Crypto" },
       asset_tags: [{ tag_id: "tag-risk" }],
     };
-    const m = createSupabaseMock({
-      userId: userA,
-      tableResults: { assets: { data: [btc], error: null } },
-      tableResultQueues: { snapshots: [{ data: parentSnapshot, error: null }] },
-    });
-    mocks.factory = () => m;
+    const { calls } = setup({ assets: { data: [btc], error: null } });
 
     const response = await POST({ request: makeRequest(), cookies: createCookiesStub() } as never);
     expect(response.status).toBe(201);
-    const itemsInsert = m.builders.get("snapshot_items")?.__recorded.find((c) => c.method === "insert");
-    const items = itemsInsert?.args[0] as { original_amount: number; tag_ids: string[] | null }[];
+    const items = onlyRpcCall(calls).p_items as { original_amount: number; tag_ids: string[] | null }[];
     expect(items).toEqual([expect.objectContaining({ original_amount: 40000, tag_ids: ["tag-risk"] })]);
   });
 });

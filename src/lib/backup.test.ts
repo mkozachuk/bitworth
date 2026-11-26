@@ -77,6 +77,7 @@ function makeInput(): BackupInput {
         note: null,
         net_contribution: null,
         income: null,
+        client_request_id: null,
         created_at: ISO,
       },
       {
@@ -89,6 +90,7 @@ function makeInput(): BackupInput {
         note: null,
         net_contribution: null,
         income: null,
+        client_request_id: null,
         created_at: ISO,
       },
     ],

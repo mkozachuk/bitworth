@@ -28,12 +28,14 @@ import {
 const TYPES_FILE = new URL("./database.types.ts", import.meta.url);
 
 // Columns of a backed-up table that are deliberately NOT exported, each with
-// its reason. Empty for every table today: backups are whole-row by design.
+// its reason. Backups are whole-row by design, so this stays short.
 // Adding a column here is a decision, so write the reason next to it.
 const NOT_BACKED_UP: Record<string, readonly string[]> = {
   user_preferences: [],
   assets: [],
-  snapshots: [],
+  // client_request_id is a request idempotency key (NB-060), not user data; a
+  // restored row gets NULL, the legacy value, and restore_backup never writes it.
+  snapshots: ["client_request_id"],
   snapshot_items: [],
   goals: [],
   allocation_cards: [],
