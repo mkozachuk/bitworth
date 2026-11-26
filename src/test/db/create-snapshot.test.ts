@@ -78,6 +78,19 @@ describe("create_snapshot on real Postgres", () => {
     expect(res.rows[0].def).toMatch(/\(user_id, client_request_id\)/);
   });
 
+  it("is plpgsql, SECURITY INVOKER (RLS applies) and pins search_path", async () => {
+    await asSuperuser(db);
+    const res = await db.query<{ lang: string; prosecdef: boolean; proconfig: string[] | null }>(
+      `SELECT l.lanname AS lang, p.prosecdef, p.proconfig
+         FROM pg_proc p JOIN pg_language l ON l.oid = p.prolang
+        WHERE p.proname = 'create_snapshot' AND p.pronamespace = 'public'::regnamespace`,
+    );
+    expect(res.rows).toHaveLength(1);
+    expect(res.rows[0].lang).toBe("plpgsql");
+    expect(res.rows[0].prosecdef).toBe(false);
+    expect(res.rows[0].proconfig).toEqual(["search_path=public, pg_temp"]);
+  });
+
   it("creates the parent and its items in one call and returns created = true", async () => {
     await asUser(db, USER_A);
     const r = await call(SNAPSHOT, [item("Alpha savings", 0), item("Alpha coins", 1, "crypto")], KEY_1);
