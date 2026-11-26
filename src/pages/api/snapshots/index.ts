@@ -3,8 +3,11 @@ import { createClient } from "@/lib/supabase";
 import { getRates } from "@/lib/exchange-rates";
 import { computeNetWorth, convertAmount, type Currency } from "@/lib/net-worth";
 import { repriceAssets } from "@/lib/reprice";
-import type { Tables } from "@/lib/database.types";
+import type { Json, Tables } from "@/lib/database.types";
 import type { PostgrestError } from "@supabase/supabase-js";
+
+// A client_request_id is any RFC 4122-shaped UUID (crypto.randomUUID() mints v4).
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 interface ErrorShape {
   error: { code: string; message: string; context?: unknown };
@@ -69,6 +72,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   // income. Each key is optional; `null` leaves its column NULL (omitted).
   let netContribution: number | undefined;
   let income: number | undefined;
+  // Idempotency key (NB-060): one per save intent, minted by the client. A
+  // second POST with the same key returns the first snapshot instead of saving
+  // the month twice. Absent/null → NULL → always creates (legacy callers).
+  let clientRequestId: string | null = null;
   try {
     const body: unknown = await request.json();
     if (typeof body === "object" && body !== null) {
@@ -103,6 +110,20 @@ export const POST: APIRoute = async ({ request, cookies }) => {
             );
           }
           income = raw;
+        }
+      }
+      if ("client_request_id" in fields) {
+        const raw = fields.client_request_id;
+        if (raw !== null && raw !== undefined) {
+          if (typeof raw !== "string" || !UUID_RE.test(raw)) {
+            return new Response(
+              JSON.stringify({
+                error: { code: "VALIDATION_ERROR", message: "client_request_id must be a UUID" },
+              } satisfies ErrorShape),
+              { status: 400, headers: { "Content-Type": "application/json" } },
+            );
+          }
+          clientRequestId = raw;
         }
       }
     }
@@ -161,32 +182,50 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     rates,
   ).netWorth;
 
-  // Insert snapshot
-  const { data: snapshot, error: snapshotError }: { data: Tables<"snapshots"> | null; error: null | PostgrestError } =
-    await supabase
-      .from("snapshots")
-      .insert({
-        user_id: user.id,
-        total_net_worth: totalNetWorth,
-        display_currency: displayCurrency,
-        base_currency: "USD",
-        source: "manual",
-        // Only set the key when a finite number was provided; omitting it
-        // leaves the nullable column NULL (unknown split).
-        ...(netContribution !== undefined ? { net_contribution: netContribution } : {}),
-        // Same rule for income: omitted unless a number was sent.
-        ...(income !== undefined ? { income } : {}),
-      })
-      .select()
-      .single();
+  // Parent and items are written by one database function call, so one
+  // transaction: an item failure rolls the parent back (no orphan, no cleanup
+  // call), and a replayed client_request_id inserts nothing and returns the
+  // existing row. user_id is auth.uid() inside the function, never sent.
+  const items = assets.map((asset, idx) => ({
+    category_id: asset.category_id,
+    name: asset.name,
+    original_amount: asset.amount,
+    original_currency: asset.currency,
+    converted_amount: convertAmount(asset.amount, asset.currency as Currency, displayCurrency, rates),
+    display_currency: displayCurrency,
+    exchange_rate_usd: rates[asset.currency as Currency],
+    display_order: idx,
+    // Tags recorded at save time (B1b). [] = recorded, no tags. If the embed
+    // is somehow absent, record NULL ("not recorded") rather than a false [].
+    tag_ids: Array.isArray(asset.asset_tags) ? asset.asset_tags.map((t) => t.tag_id).sort() : null,
+  }));
 
-  if (snapshotError) {
+  const rpcResponse: { data: unknown; error: PostgrestError | null } = await supabase.rpc("create_snapshot", {
+    p_snapshot: {
+      total_net_worth: totalNetWorth,
+      display_currency: displayCurrency,
+      base_currency: "USD",
+      source: "manual",
+      // Only set the key when a finite number was provided; omitting it
+      // leaves the nullable column NULL (unknown split).
+      ...(netContribution !== undefined ? { net_contribution: netContribution } : {}),
+      // Same rule for income: omitted unless a number was sent.
+      ...(income !== undefined ? { income } : {}),
+    },
+    p_items: items as unknown as Json,
+    p_client_request_id: clientRequestId,
+  });
+  const { data: result, error: rpcError } = rpcResponse;
+
+  if (rpcError) {
     return new Response(
-      JSON.stringify({ error: { code: "INSERT_FAILED", message: snapshotError.message } } satisfies ErrorShape),
+      JSON.stringify({ error: { code: "INSERT_FAILED", message: rpcError.message } } satisfies ErrorShape),
       { status: 500, headers: { "Content-Type": "application/json" } },
     );
   }
 
+  const saved = result as { snapshot?: Tables<"snapshots">; created?: boolean } | null;
+  const snapshot = saved?.snapshot;
   if (!snapshot) {
     return new Response(
       JSON.stringify({
@@ -196,41 +235,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     );
   }
 
-  // Insert snapshot_items for each asset
-  if (assets.length > 0) {
-    const items = assets.map((asset, idx) => ({
-      snapshot_id: snapshot.id,
-      category_id: asset.category_id,
-      name: asset.name,
-      original_amount: asset.amount,
-      original_currency: asset.currency,
-      converted_amount: convertAmount(asset.amount, asset.currency as Currency, displayCurrency, rates),
-      display_currency: displayCurrency,
-      exchange_rate_usd: rates[asset.currency as Currency],
-      display_order: idx,
-      // Tags recorded at save time (B1b). [] = recorded, no tags. If the embed
-      // is somehow absent, record NULL ("not recorded") rather than a false [].
-      tag_ids: Array.isArray(asset.asset_tags) ? asset.asset_tags.map((t) => t.tag_id).sort() : null,
-    }));
-
-    const { error: itemsError } = await supabase.from("snapshot_items").insert(items);
-    if (itemsError) {
-      // Compensating delete: roll back the snapshot row so neither insert is partially committed
-      await supabase.from("snapshots").delete().eq("id", snapshot.id);
-      return new Response(
-        JSON.stringify({ error: { code: "INSERT_FAILED", message: itemsError.message } } satisfies ErrorShape),
-        { status: 500, headers: { "Content-Type": "application/json" } },
-      );
-    }
-  }
-
   return new Response(
     JSON.stringify({
       data: snapshot,
       repricing: { repriced: repricing.repriced.length, failed: repricing.failed },
     }),
     {
-      status: 201,
+      // 201 for a new snapshot; 200 for a replayed key (nothing was written).
+      status: saved.created === false ? 200 : 201,
       headers: { "Content-Type": "application/json" },
     },
   );

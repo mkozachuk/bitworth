@@ -21,6 +21,7 @@ function row(month: number, over: Partial<Tables<"snapshots">> = {}): Tables<"sn
     note: null,
     net_contribution: null,
     income: null,
+    client_request_id: null,
     created_at: `2026-${String(month).padStart(2, "0")}-01T12:00:00Z`,
     ...over,
   };

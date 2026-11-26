@@ -393,6 +393,7 @@ export interface Database {
       snapshots: {
         Row: {
           base_currency: string;
+          client_request_id: string | null;
           created_at: string;
           display_currency: string;
           id: string;
@@ -405,6 +406,7 @@ export interface Database {
         };
         Insert: {
           base_currency?: string;
+          client_request_id?: string | null;
           created_at?: string;
           display_currency: string;
           id?: string;
@@ -417,6 +419,7 @@ export interface Database {
         };
         Update: {
           base_currency?: string;
+          client_request_id?: string | null;
           created_at?: string;
           display_currency?: string;
           id?: string;
@@ -522,6 +525,10 @@ export interface Database {
     };
     Views: Record<never, never>;
     Functions: {
+      create_snapshot: {
+        Args: { p_snapshot: Json; p_items: Json; p_client_request_id: string | null };
+        Returns: Json;
+      };
       reorder_assets: {
         Args: { p_ids: string[] };
         Returns: undefined;

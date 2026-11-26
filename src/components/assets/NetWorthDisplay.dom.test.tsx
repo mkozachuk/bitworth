@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NetWorthDisplay } from "./NetWorthDisplay";
 import type { Tables } from "@/lib/database.types";
@@ -81,5 +81,46 @@ describe("NetWorthDisplay DOM", () => {
     render(<NetWorthDisplay assets={[]} displayCurrency="USD" rates={RATES} snapshots={[]} />);
 
     expect(screen.getByText(/^0\.00/)).toBeDefined();
+  });
+
+  it("sends one client_request_id per save intent: same key on a retry after an error, a fresh one on a new dialog", async () => {
+    const sent: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url: string, init?: RequestInit) => {
+        if (url === "/api/snapshots") {
+          sent.push((JSON.parse(init?.body as string) as { client_request_id: string }).client_request_id);
+          return Promise.resolve(
+            new Response(JSON.stringify({ error: { code: "INSERT_FAILED", message: "boom" } }), { status: 500 }),
+          );
+        }
+        return Promise.resolve(new Response(JSON.stringify({ rates: RATES }), { status: 200 }));
+      }),
+    );
+    render(<NetWorthDisplay assets={[]} displayCurrency="USD" rates={RATES} snapshots={[]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Save snapshot/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm", hidden: true }));
+    await waitFor(() => {
+      expect(screen.getByText(/Snapshot failed: boom/)).toBeDefined();
+    });
+    // Retry from the same open dialog: the same intent, so the same key.
+    fireEvent.click(screen.getByRole("button", { name: "Confirm", hidden: true }));
+    await waitFor(() => {
+      expect(sent).toHaveLength(2);
+    });
+
+    // Close and open the dialog again: a new intent, so a new key.
+    fireEvent.click(screen.getByRole("button", { name: "Cancel", hidden: true }));
+    fireEvent.click(screen.getByRole("button", { name: /snapshot/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm", hidden: true }));
+    await waitFor(() => {
+      expect(sent).toHaveLength(3);
+    });
+
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    for (const key of sent) expect(key).toMatch(uuid);
+    expect(sent[1]).toBe(sent[0]);
+    expect(sent[2]).not.toBe(sent[0]);
   });
 });

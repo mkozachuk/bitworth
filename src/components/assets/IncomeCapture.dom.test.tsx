@@ -32,6 +32,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function writes(): FetchCall[] {
   return (fetchMock.mock.calls as FetchCall[]).filter(([url]) => url.startsWith("/api/snapshots"));
 }
@@ -62,7 +64,12 @@ describe("save flow: income next to the contribution", () => {
     const [url, init] = writes()[0];
     expect(url).toBe("/api/snapshots");
     expect(init?.method).toBe("POST");
-    expect(JSON.parse(init?.body as string)).toEqual({ net_contribution: 250, income: 4000.5 });
+    // Every save also carries its idempotency key (NB-060).
+    expect(JSON.parse(init?.body as string)).toEqual({
+      net_contribution: 250,
+      income: 4000.5,
+      client_request_id: expect.stringMatching(UUID) as unknown,
+    });
   });
 
   it("sends income alone when the contribution is blank", async () => {
@@ -72,16 +79,23 @@ describe("save flow: income next to the contribution", () => {
     await waitFor(() => {
       expect(writes()).toHaveLength(1);
     });
-    expect(JSON.parse(writes()[0][1]?.body as string)).toEqual({ income: 3000 });
+    expect(JSON.parse(writes()[0][1]?.body as string)).toEqual({
+      income: 3000,
+      client_request_id: expect.stringMatching(UUID) as unknown,
+    });
   });
 
-  it("sends no body when both are blank (unchanged legacy save)", async () => {
+  it("sends only the idempotency key when both are blank (no contribution, no income)", async () => {
+    // Before NB-060 a blank save sent no body at all; the server still accepts
+    // that legacy call, but the dialog now always sends its client_request_id.
     openSave();
     fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
     await waitFor(() => {
       expect(writes()).toHaveLength(1);
     });
-    expect(writes()[0][1]?.body).toBeUndefined();
+    expect(JSON.parse(writes()[0][1]?.body as string)).toEqual({
+      client_request_id: expect.stringMatching(UUID) as unknown,
+    });
   });
 
   it("refuses a negative income client-side and sends nothing", async () => {

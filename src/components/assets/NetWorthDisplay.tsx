@@ -80,12 +80,17 @@ function SaveButton({
   // snapshot still saved (with stored values), so this is a notice, not an error.
   const [repriceWarning, setRepriceWarning] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  // Idempotency key for the current save intent (NB-060): minted when the
+  // dialog opens, kept across a retry after an error so the server can return
+  // the first snapshot instead of saving the month twice, dropped on success.
+  const requestIdRef = useRef<string | null>(null);
 
   const openDialog = useCallback(() => {
     if (state === "loading") return;
     setContribution("");
     setIncome("");
     setState("idle");
+    requestIdRef.current = crypto.randomUUID();
     const dialog = dialogRef.current;
     if (dialog && !dialog.open) dialog.showModal();
   }, [state]);
@@ -99,15 +104,14 @@ function SaveButton({
     if (state === "loading") return;
 
     // Build the request body: a blank field records an unknown value (key left
-    // out; no body at all when both are blank), a filled field sends a parsed
-    // number: signed for the contribution, >= 0 for income. Guard NaN client-side.
+    // out), a filled field sends a parsed number: signed for the contribution,
+    // >= 0 for income. Guard NaN client-side. The idempotency key always goes.
     const trimmed = contribution.trim();
     const trimmedIncome = income.trim();
-    let init: RequestInit = {
-      method: "POST",
-      credentials: "include",
+    requestIdRef.current ??= crypto.randomUUID();
+    const payload: { net_contribution?: number; income?: number; client_request_id: string } = {
+      client_request_id: requestIdRef.current,
     };
-    const payload: { net_contribution?: number; income?: number } = {};
     if (trimmed !== "") {
       const parsed = Number(trimmed);
       if (!Number.isFinite(parsed)) {
@@ -124,13 +128,12 @@ function SaveButton({
       }
       payload.income = parsed;
     }
-    if (Object.keys(payload).length > 0) {
-      init = {
-        ...init,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      };
-    }
+    const init: RequestInit = {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    };
 
     setState("loading");
     try {
@@ -142,6 +145,8 @@ function SaveButton({
       if (!res.ok) {
         throw new Error(json.error?.message ?? `HTTP ${res.status}`);
       }
+      // Saved (or replayed): the next save is a new intent with a new key.
+      requestIdRef.current = null;
       const failedSymbols = [...new Set((json.repricing?.failed ?? []).map((f) => f.symbol))];
       const warning =
         failedSymbols.length > 0 ? `Price unavailable for ${failedSymbols.join(", ")} — stored values used.` : null;
