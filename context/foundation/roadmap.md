@@ -58,6 +58,7 @@ Alex, a privacy-conscious individual, replaces their manual spreadsheet with a d
 | S-28 | snapshot-csv-export        | download their snapshot history as a CSV file from Settings                                          | F-01, S-02, S-05, S-13       | —                    | done   |
 | S-29 | backup-restore-fidelity    | restore a backup without silently losing contributions, allocation, tags, or income                  | F-01, S-13                   | —                    | done   |
 | S-30 | db-tests-pglite            | (foundation) migrations, restore_backup and RLS are tested against real Postgres (PGlite) in CI      | F-01                         | —                    | done   |
+| S-31 | period-returns             | see their return over the latest unbroken run of snapshots, net of contributions (TWR, simple, MD)   | F-01, S-02, S-17             | —                    | done   |
 
 ## Streams
 
@@ -600,6 +601,20 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Low residual. PGlite is not the hosted Supabase Postgres; auth-dependent behaviour is covered only as far as the harness emulates `auth.uid()`.
 - **Landed:** merge `54b3556` (PR #57) carrying `84654f7` (tests) and `ca3bf90` (CI step; CI also runs on pushes to every branch).
 - **Key files:** `vitest.db.config.ts`, `src/test/db/harness.ts`, `src/test/db/migrations.test.ts`, `src/test/db/restore-backup.test.ts`, `src/test/db/rls.test.ts`, `.github/workflows/ci.yml`.
+- **Status:** done
+
+### S-31: Period returns net of contributions
+
+- **Outcome:** user sees how their net worth performed over a period with their own deposits and withdrawals taken out: a dashboard card leads with the time-weighted return (TWR) over the latest unbroken run of snapshots and its date span, and keeps the simple return and the Modified Dietz return in a closed "Details" element, each with one explanatory line.
+- **Change ID:** `period-returns` (label only; no `context/changes/` folder)
+- **PRD refs:** — (post-MVP snapshot-insight extension, roadmap research C-10)
+- **Prerequisites:** `S-02` (snapshot history), `S-17` (`net_contribution` and `buildContributionSplits`)
+- **Parallel with:** —
+- **Blockers:** —
+- **Decision:** return method — "owner 13.11: all three, TWR main". Each contribution is assumed to sit at the middle of its interval, because no flow date is stored.
+- **Unknowns:** — (recorded after shipping)
+- **Risk:** Low residual. A missing contribution is never read as 0: it breaks the chain, the card names the interval and says how many intervals the figure covers. Contributions are converted at today's rates (no historical FX), and only snapshots in the current display currency are compared.
+- **Key files:** `src/lib/period-returns.ts`, `src/lib/period-returns.test.ts`, `src/components/PeriodReturnsCard.tsx`, `src/components/PeriodReturnsCard.dom.test.tsx`, `src/pages/dashboard.astro`.
 - **Status:** done
 
 ## Backlog Handoff

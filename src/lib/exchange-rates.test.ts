@@ -15,6 +15,14 @@ const asClient = (c: ReturnType<typeof createSupabaseMock>["client"]): SupabaseC
 
 const NOW_ISO = new Date().toISOString();
 
+const V2_ECB_URL = "https://api.frankfurter.dev/v2/providers/ecb/rates?base=EUR&quotes=PLN,USD";
+
+// The body `curl` returned for V2_ECB_URL on 2026-11-27, verbatim.
+const RECON_BODY = [
+  { date: "2026-11-26", base: "EUR", quote: "PLN", rate: 4.4838 },
+  { date: "2026-11-26", base: "EUR", quote: "USD", rate: 1.0975 },
+];
+
 describe("getRates", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
@@ -97,7 +105,13 @@ describe("getRates", () => {
       },
     });
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-      new Response(JSON.stringify({ rates: { USD: 1.1, PLN: 4.4 } }), { status: 200 }),
+      new Response(
+        JSON.stringify([
+          { date: "2026-11-26", base: "EUR", quote: "PLN", rate: 4.4 },
+          { date: "2026-11-26", base: "EUR", quote: "USD", rate: 1.1 },
+        ]),
+        { status: 200 },
+      ),
     );
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
@@ -118,19 +132,64 @@ describe("getRates", () => {
     }
   });
 
-  it("fetches rates from the frankfurter.dev v1 endpoint", async () => {
+  it("fetches rates from the frankfurter.dev v2 ECB endpoint", async () => {
     const m = createSupabaseMock({
       userId: null,
       tableResults: {
         exchange_rate_cache: { data: null, error: null },
       },
     });
-    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-      new Response(JSON.stringify({ rates: { USD: 1.1, PLN: 4.4 } }), { status: 200 }),
-    );
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(new Response(JSON.stringify(RECON_BODY), { status: 200 }));
 
     await getRates(asClient(m.client));
 
-    expect(fetch as ReturnType<typeof vi.fn>).toHaveBeenCalledWith("https://api.frankfurter.dev/v1/latest?from=EUR");
+    expect(fetch as ReturnType<typeof vi.fn>).toHaveBeenCalledWith(V2_ECB_URL);
+  });
+
+  it("derives USD/EUR/PLN from the v2 array body", async () => {
+    const m = createSupabaseMock({
+      userId: null,
+      tableResults: {
+        exchange_rate_cache: { data: null, error: null },
+      },
+    });
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(new Response(JSON.stringify(RECON_BODY), { status: 200 }));
+
+    const result = await getRates(asClient(m.client));
+
+    expect(result.USD).toBe(1.0);
+    expect(result.EUR).toBeCloseTo(1 / 1.0975, 6);
+    expect(result.PLN).toBeCloseTo(4.4838 / 1.0975, 6);
+  });
+
+  it.each([
+    ["a v1-shaped object body", { rates: { USD: 1.1, PLN: 4.4 } }],
+    ["an array missing the PLN row", [{ date: "2026-11-26", base: "EUR", quote: "USD", rate: 1.0975 }]],
+    [
+      "a rate of 0",
+      [
+        { date: "2026-11-26", base: "EUR", quote: "PLN", rate: 4.4838 },
+        { date: "2026-11-26", base: "EUR", quote: "USD", rate: 0 },
+      ],
+    ],
+    [
+      "a rate given as a string",
+      [
+        { date: "2026-11-26", base: "EUR", quote: "PLN", rate: "4.4838" },
+        { date: "2026-11-26", base: "EUR", quote: "USD", rate: 1.0975 },
+      ],
+    ],
+  ])("returns STATIC_RATES for %s", async (_case, body) => {
+    const m = createSupabaseMock({
+      userId: null,
+      tableResults: {
+        exchange_rate_cache: { data: null, error: null },
+      },
+    });
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(new Response(JSON.stringify(body), { status: 200 }));
+
+    const result = await getRates(asClient(m.client));
+
+    expect(result).toEqual({ USD: 1.0, EUR: 0.92, PLN: 3.85 });
   });
 });

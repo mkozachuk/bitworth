@@ -10,6 +10,7 @@ import { SnapshotReminderBanner } from "@/components/assets/SnapshotReminderBann
 import { AssetsSummary } from "@/components/assets/AssetsSummary";
 import { NetWorthChart } from "@/components/NetWorthChart";
 import { ContributionsChart } from "@/components/ContributionsChart";
+import { PeriodReturnsCard } from "@/components/PeriodReturnsCard";
 import { SavingsRateCard } from "@/components/SavingsRateCard";
 import { TopMovers } from "@/components/assets/TopMovers";
 import { AssetTrendsChart, type SnapshotItemWithDate } from "@/components/AssetTrendsChart";
@@ -395,6 +396,12 @@ if (showDriftAlerts) {
             client:load
           />
           <ContributionsChart
+            snapshots={snapshots as Tables<"snapshots">[]}
+            displayCurrency={displayCurrency}
+            rates={rates}
+            client:load
+          />
+          <PeriodReturnsCard
             snapshots={snapshots as Tables<"snapshots">[]}
             displayCurrency={displayCurrency}
             rates={rates}
