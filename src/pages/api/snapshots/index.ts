@@ -170,7 +170,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     ? (rawCurrency as Currency)
     : "USD";
 
-  const rates = await getRates(supabase);
+  const { rates } = await getRates();
 
   const totalNetWorth = computeNetWorth(
     assets.map((a) => ({

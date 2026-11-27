@@ -2,6 +2,7 @@
 import Layout from "@/layouts/DashboardLayout.astro";
 import { createClient } from "@/lib/supabase";
 import { getRates } from "@/lib/exchange-rates";
+import { ApproximateRatesNotice } from "@/components/ApproximateRatesNotice";
 import { computeNetWorth, type Currency } from "@/lib/net-worth";
 import { FireCalculatorForm } from "@/components/fire/FireCalculatorForm";
 import type { FireInputs } from "@/lib/fire";
@@ -20,7 +21,7 @@ const displayCurrency: Currency = Astro.locals.displayCurrency ?? "USD";
 
 const { data: assets } = await supabase.from("assets").select("*, category:asset_categories(*)").eq("user_id", user.id);
 
-const rates = await getRates(supabase);
+const { rates, approximate } = await getRates();
 
 // First production caller of computeNetWorth (see plan / net-worth.ts). Cast the
 // DB `currency` string to Currency at the boundary per the Currency cast lesson.
@@ -65,6 +66,7 @@ const initialInputs: Partial<FireInputs> = {
 
 <Layout title="FIRE Calculator">
   <div class="mx-auto max-w-4xl px-4 py-8">
+    <ApproximateRatesNotice approximate={approximate} />
     <h1 class="font-display text-foreground mb-2 text-3xl font-bold">FIRE Calculator</h1>
     <p class="text-foreground/70 mb-6 text-sm">
       Project your path to Financial Independence / Retire Early. Figures are in {displayCurrency} in today's purchasing power.

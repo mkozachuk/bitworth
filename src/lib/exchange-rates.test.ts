@@ -1,19 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { createSupabaseMock } from "@/test-utils/supabase-mock";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { getRates } from "@/lib/exchange-rates";
 
-// The mock factory exposes only the methods the SUT touches (from/rpc/auth).
-// Cast at the call site so tsc accepts the structural mock as a real client.
-const asClient = (c: ReturnType<typeof createSupabaseMock>["client"]): SupabaseClient => c as unknown as SupabaseClient;
-
-// Pins the defensive `try/catch` fallback in `getRates` (Risk #4's rates
-// path) and the cache fast-path optimization. `getRates` imports
-// `SupabaseClient` as a type, so we pass the mock factory's `client`
-// directly. Network responses are stubbed via `vi.stubGlobal("fetch", ...)`
-// — the precedent for the project's network shim, established by this file.
-
-const NOW_ISO = new Date().toISOString();
+// getRates (NB-156): no Supabase. Order is the edge cache (caches.default),
+// then Frankfurter v2 with a cf cacheTtl, then STATIC_RATES. Network and the
+// Cache API are stubbed via `vi.stubGlobal` for `fetch` and `caches`; the
+// tests never reach Frankfurter.
 
 const V2_ECB_URL = "https://api.frankfurter.dev/v2/providers/ecb/rates?base=EUR&quotes=PLN,USD";
 
@@ -23,143 +14,181 @@ const RECON_BODY = [
   { date: "2026-11-26", base: "EUR", quote: "USD", rate: 1.0975 },
 ];
 
+const STATIC = { USD: 1.0, EUR: 0.92, PLN: 3.85 };
+
+interface FakeCache {
+  match: Mock<(req: Request) => Promise<Response | undefined>>;
+  put: Mock<(req: Request, res: Response) => Promise<void>>;
+}
+
+function fakeCache(cachedBody?: unknown): FakeCache {
+  return {
+    match: vi.fn((_req: Request) =>
+      Promise.resolve(cachedBody === undefined ? undefined : new Response(JSON.stringify(cachedBody))),
+    ),
+    put: vi.fn((_req: Request, _res: Response) => Promise.resolve()),
+  };
+}
+
+function installCache(cache: FakeCache): void {
+  vi.stubGlobal("caches", { default: cache });
+}
+
+const fetchMock = () => fetch as unknown as Mock;
+
+function respondWith(body: unknown, status = 200): void {
+  fetchMock().mockResolvedValue(new Response(typeof body === "string" ? body : JSON.stringify(body), { status }));
+}
+
+function expectLiveRecon(result: Awaited<ReturnType<typeof getRates>>): void {
+  expect(result.approximate).toBe(false);
+  expect(result.rates.USD).toBe(1.0);
+  expect(result.rates.EUR).toBeCloseTo(1 / 1.0975, 6);
+  expect(result.rates.PLN).toBeCloseTo(4.4838 / 1.0975, 6);
+}
+
+type WarnSpy = Mock<(...args: unknown[]) => void>;
+
+function warnedWith(warn: WarnSpy, ...parts: string[]): boolean {
+  return warn.mock.calls.some((args: unknown[]) => parts.every((p) => String(args[0]).includes(p)));
+}
+
 describe("getRates", () => {
+  let warn: WarnSpy;
+
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
+    warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
   });
 
   afterEach(() => {
+    warn.mockRestore();
     vi.unstubAllGlobals();
   });
 
-  it("returns STATIC_RATES when fetch throws", async () => {
-    const m = createSupabaseMock({
-      userId: null,
-      tableResults: {
-        exchange_rate_cache: { data: null, error: null },
-      },
-    });
-    (fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("network down"));
+  it("serves a cache hit with no fetch and approximate false", async () => {
+    const cache = fakeCache([
+      { date: "2026-11-25", base: "EUR", quote: "PLN", rate: 4.4 },
+      { date: "2026-11-25", base: "EUR", quote: "USD", rate: 1.1 },
+    ]);
+    installCache(cache);
 
-    const result = await getRates(asClient(m.client));
+    const result = await getRates();
 
-    expect(result).toEqual({ USD: 1.0, EUR: 0.92, PLN: 3.85 });
+    expect(fetchMock()).not.toHaveBeenCalled();
+    expect(cache.match).toHaveBeenCalledTimes(1);
+    const key = cache.match.mock.calls[0][0];
+    expect(key.method).toBe("GET");
+    expect(result.approximate).toBe(false);
+    expect(result.rates.USD).toBe(1.0);
+    expect(result.rates.EUR).toBeCloseTo(1 / 1.1, 6);
+    expect(result.rates.PLN).toBeCloseTo(4.4 / 1.1, 6);
+    expect(cache.put).not.toHaveBeenCalled();
   });
 
-  it("returns STATIC_RATES when fetch returns 503", async () => {
-    const m = createSupabaseMock({
-      userId: null,
-      tableResults: {
-        exchange_rate_cache: { data: null, error: null },
-      },
-    });
-    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(new Response("service unavailable", { status: 503 }));
+  it("on a miss fetches the v2 URL with cf.cacheTtl 3600 and stores the body with max-age=3600", async () => {
+    const cache = fakeCache();
+    installCache(cache);
+    respondWith(RECON_BODY);
 
-    const result = await getRates(asClient(m.client));
+    const result = await getRates();
 
-    expect(result).toEqual({ USD: 1.0, EUR: 0.92, PLN: 3.85 });
+    expect(fetchMock()).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock().mock.calls[0] as [
+      string,
+      { cf?: { cacheTtl?: number; cacheEverything?: boolean } },
+    ];
+    expect(url).toBe(V2_ECB_URL);
+    expect(init.cf?.cacheTtl).toBe(3600);
+    expect(init.cf?.cacheEverything).toBe(true);
+    expect(cache.put).toHaveBeenCalledTimes(1);
+    const [putKey, stored] = cache.put.mock.calls[0];
+    expect(putKey.url).toBe(cache.match.mock.calls[0][0].url);
+    expect(stored.headers.get("cache-control")).toContain("max-age=3600");
+    expect(await stored.json()).toEqual(RECON_BODY);
+    expectLiveRecon(result);
   });
 
-  it("returns STATIC_RATES when fetch returns 200 with malformed body", async () => {
-    const m = createSupabaseMock({
-      userId: null,
-      tableResults: {
-        exchange_rate_cache: { data: null, error: null },
-      },
-    });
-    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(new Response("not json", { status: 200 }));
+  it("goes straight to the fetch when caches is undefined", async () => {
+    respondWith(RECON_BODY);
 
-    const result = await getRates(asClient(m.client));
+    const result = await getRates();
 
-    expect(result).toEqual({ USD: 1.0, EUR: 0.92, PLN: 3.85 });
+    expect(typeof caches).toBe("undefined");
+    expect(fetchMock()).toHaveBeenCalledTimes(1);
+    expectLiveRecon(result);
   });
 
-  it("skips fetch when both EUR→USD and EUR→PLN are cached and fresh", async () => {
-    const m = createSupabaseMock({
-      userId: null,
-      tableResults: {
-        exchange_rate_cache: { data: { rate: 0.92, fetched_at: NOW_ISO }, error: null },
-      },
-    });
+  it("goes straight to the fetch when caches has no default", async () => {
+    vi.stubGlobal("caches", {});
+    respondWith(RECON_BODY);
 
-    const result = await getRates(asClient(m.client));
+    const result = await getRates();
 
-    expect(fetch as ReturnType<typeof vi.fn>).not.toHaveBeenCalled();
-    // USD is the base short-circuit (1.0); EUR = 1/0.92; PLN = 0.92/EUR-rate; both rates are 0.92 here.
-    expect(result.USD).toBe(1.0);
-    expect(result.EUR).toBeCloseTo(1 / 0.92, 6);
-    expect(result.PLN).toBeCloseTo(1, 6);
+    expect(fetchMock()).toHaveBeenCalledTimes(1);
+    expectLiveRecon(result);
   });
 
-  it("returns fetched rates and warns when every cache upsert fails", async () => {
-    const upsertError = { data: null, error: { message: "permission denied for table exchange_rate_cache" } };
-    const m = createSupabaseMock({
-      userId: null,
-      tableResultQueues: {
-        // Two cache-read misses, then seven failing upserts.
-        exchange_rate_cache: [
-          { data: null, error: null },
-          { data: null, error: null },
-          ...Array.from({ length: 7 }, () => upsertError),
-        ],
-      },
-    });
-    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-      new Response(
-        JSON.stringify([
-          { date: "2026-11-26", base: "EUR", quote: "PLN", rate: 4.4 },
-          { date: "2026-11-26", base: "EUR", quote: "USD", rate: 1.1 },
-        ]),
-        { status: 200 },
-      ),
-    );
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  it("logs a cache match throw and still uses the fetch", async () => {
+    const cache = fakeCache();
+    cache.match.mockRejectedValue(new Error("match exploded"));
+    installCache(cache);
+    respondWith(RECON_BODY);
 
-    try {
-      const result = await getRates(asClient(m.client));
+    const result = await getRates();
 
-      expect(result).not.toEqual({ USD: 1.0, EUR: 0.92, PLN: 3.85 });
-      expect(result.USD).toBe(1.0);
-      expect(result.EUR).toBeCloseTo(1 / 1.1, 6);
-      expect(result.PLN).toBeCloseTo(4.4 / 1.1, 6);
-      expect(warn).toHaveBeenCalled();
-      expect(
-        warn.mock.calls.some((args) => String(args[0]).includes("permission denied for table exchange_rate_cache")),
-      ).toBe(true);
-      expect(warn.mock.calls.some((args) => String(args[0]).includes("EUR->USD"))).toBe(true);
-    } finally {
-      warn.mockRestore();
-    }
+    expect(warnedWith(warn, "cache match", "match exploded")).toBe(true);
+    expect(fetchMock()).toHaveBeenCalledTimes(1);
+    expectLiveRecon(result);
   });
 
-  it("fetches rates from the frankfurter.dev v2 ECB endpoint", async () => {
-    const m = createSupabaseMock({
-      userId: null,
-      tableResults: {
-        exchange_rate_cache: { data: null, error: null },
-      },
-    });
-    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(new Response(JSON.stringify(RECON_BODY), { status: 200 }));
+  it("logs a cache put throw and keeps the live rates", async () => {
+    const cache = fakeCache();
+    cache.put.mockRejectedValue(new Error("put exploded"));
+    installCache(cache);
+    respondWith(RECON_BODY);
 
-    await getRates(asClient(m.client));
+    const result = await getRates();
 
-    expect(fetch as ReturnType<typeof vi.fn>).toHaveBeenCalledWith(V2_ECB_URL);
+    expect(cache.put).toHaveBeenCalledTimes(1);
+    expect(warnedWith(warn, "cache put", "put exploded")).toBe(true);
+    expectLiveRecon(result);
   });
 
-  it("derives USD/EUR/PLN from the v2 array body", async () => {
-    const m = createSupabaseMock({
-      userId: null,
-      tableResults: {
-        exchange_rate_cache: { data: null, error: null },
-      },
-    });
-    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(new Response(JSON.stringify(RECON_BODY), { status: 200 }));
+  it("returns STATIC_RATES, approximate, a fetch warn and no put when fetch throws", async () => {
+    const cache = fakeCache();
+    installCache(cache);
+    fetchMock().mockRejectedValue(new Error("network down"));
 
-    const result = await getRates(asClient(m.client));
+    const result = await getRates();
 
-    expect(result.USD).toBe(1.0);
-    expect(result.EUR).toBeCloseTo(1 / 1.0975, 6);
-    expect(result.PLN).toBeCloseTo(4.4838 / 1.0975, 6);
+    expect(result).toEqual({ rates: STATIC, approximate: true });
+    expect(warnedWith(warn, "fetch", "network down")).toBe(true);
+    expect(cache.put).not.toHaveBeenCalled();
+  });
+
+  it("returns STATIC_RATES, approximate, a status warn and no put on 503", async () => {
+    const cache = fakeCache();
+    installCache(cache);
+    respondWith("service unavailable", 503);
+
+    const result = await getRates();
+
+    expect(result).toEqual({ rates: STATIC, approximate: true });
+    expect(warnedWith(warn, "status 503")).toBe(true);
+    expect(cache.put).not.toHaveBeenCalled();
+  });
+
+  it("returns STATIC_RATES, approximate, a parse warn and no put on a malformed 200 body", async () => {
+    const cache = fakeCache();
+    installCache(cache);
+    respondWith("not json");
+
+    const result = await getRates();
+
+    expect(result).toEqual({ rates: STATIC, approximate: true });
+    expect(warnedWith(warn, "parse")).toBe(true);
+    expect(cache.put).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -179,17 +208,36 @@ describe("getRates", () => {
         { date: "2026-11-26", base: "EUR", quote: "USD", rate: 1.0975 },
       ],
     ],
-  ])("returns STATIC_RATES for %s", async (_case, body) => {
-    const m = createSupabaseMock({
-      userId: null,
-      tableResults: {
-        exchange_rate_cache: { data: null, error: null },
-      },
-    });
-    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(new Response(JSON.stringify(body), { status: 200 }));
+  ])("returns STATIC_RATES, approximate and no put for %s", async (_case, body) => {
+    const cache = fakeCache();
+    installCache(cache);
+    respondWith(body);
 
-    const result = await getRates(asClient(m.client));
+    const result = await getRates();
 
-    expect(result).toEqual({ USD: 1.0, EUR: 0.92, PLN: 3.85 });
+    expect(result).toEqual({ rates: STATIC, approximate: true });
+    expect(warnedWith(warn, "parse")).toBe(true);
+    expect(cache.put).not.toHaveBeenCalled();
+  });
+
+  it("treats a cached body that fails the parse as a miss", async () => {
+    const cache = fakeCache({ rates: { USD: 1.1, PLN: 4.4 } });
+    installCache(cache);
+    respondWith(RECON_BODY);
+
+    const result = await getRates();
+
+    expect(fetchMock()).toHaveBeenCalledTimes(1);
+    expect(warnedWith(warn, "parse", "cached body")).toBe(true);
+    expect(cache.put).toHaveBeenCalledTimes(1);
+    expectLiveRecon(result);
+  });
+
+  it("derives USD/EUR/PLN from the recon body", async () => {
+    respondWith(RECON_BODY);
+
+    const result = await getRates();
+
+    expectLiveRecon(result);
   });
 });
