@@ -2,6 +2,7 @@
 import Layout from "@/layouts/DashboardLayout.astro";
 import { createClient } from "@/lib/supabase";
 import { getRates } from "@/lib/exchange-rates";
+import { ApproximateRatesNotice } from "@/components/ApproximateRatesNotice";
 import { computeNetWorth } from "@/lib/net-worth";
 import { computeFireProjection, monthsOfRunway, type FireInputs } from "@/lib/fire";
 import { NetWorthDisplay } from "@/components/assets/NetWorthDisplay";
@@ -43,7 +44,7 @@ const displayCurrency: Currency = Astro.locals.displayCurrency ?? "USD";
 
 const { data: assets } = await supabase.from("assets").select("*, category:asset_categories(*)").eq("user_id", user.id);
 
-const rates = await getRates(supabase);
+const { rates, approximate } = await getRates();
 
 const { data: snapshots } = await supabase
   .from("snapshots")
@@ -347,6 +348,7 @@ if (showDriftAlerts) {
 
 <Layout title="Dashboard">
   <div class="mx-auto max-w-3xl px-4 py-8">
+    <ApproximateRatesNotice approximate={approximate} />
     <div class="mb-6 flex items-center gap-4">
       <h1 class="font-display text-foreground text-3xl font-bold">Dashboard</h1>
       <div class="rule-dotted min-w-0 flex-1"></div>

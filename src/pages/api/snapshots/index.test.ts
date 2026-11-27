@@ -25,7 +25,7 @@ vi.mock("@/lib/supabase", () => ({
 
 vi.mock("@/lib/exchange-rates", () => ({
   // eslint-disable-next-line @typescript-eslint/require-await
-  getRates: async () => ({ USD: 1, EUR: 1, PLN: 1 }),
+  getRates: async () => ({ rates: { USD: 1, EUR: 1, PLN: 1 }, approximate: false }),
 }));
 
 // The price modules import `astro:env/server` and call external APIs. The

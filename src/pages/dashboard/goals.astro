@@ -2,6 +2,7 @@
 import Layout from "@/layouts/DashboardLayout.astro";
 import { createClient } from "@/lib/supabase";
 import { getRates } from "@/lib/exchange-rates";
+import { ApproximateRatesNotice } from "@/components/ApproximateRatesNotice";
 import { type Currency } from "@/lib/net-worth";
 import { GoalsManager, type GoalCategory, type GoalRow } from "@/components/goals/GoalsManager";
 
@@ -33,7 +34,7 @@ const { data: categoryRows } = await supabase
   .select("id, name, icon")
   .order("display_order", { ascending: true });
 
-const rates = await getRates(supabase);
+const { rates, approximate } = await getRates();
 
 // Chained Supabase selects resolve to `any` in .astro frontmatter (the same
 // boundary balancer.astro and fire.astro cast through), so narrow once here.
@@ -43,6 +44,7 @@ const categories = (categoryRows ?? []) as GoalCategory[];
 
 <Layout title="Goals">
   <div class="mx-auto max-w-3xl px-4 py-8">
+    <ApproximateRatesNotice approximate={approximate} />
     <h1 class="font-display text-foreground mb-2 text-3xl font-bold">Savings Goals</h1>
     <p class="text-foreground/70 mb-6 text-sm">
       Track a named target against your total net worth or a single asset category. Progress appears on your dashboard.
