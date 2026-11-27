@@ -10,6 +10,37 @@ const STATIC_RATES: Record<Currency, number> = {
 
 const CACHE_TTL_SECONDS = 3600;
 
+/** Frankfurter v2, pinned to the ECB provider: one row per (base, quote) pair. */
+const FRANKFURTER_V2_ECB_URL = "https://api.frankfurter.dev/v2/providers/ecb/rates?base=EUR&quotes=PLN,USD";
+
+/** A usable rate: a finite number above zero. Anything else is a bad response. */
+function validRate(rate: unknown): rate is number {
+  return typeof rate === "number" && Number.isFinite(rate) && rate > 0;
+}
+
+/**
+ * Reads EUR->USD and EUR->PLN from the v2 array body. Throws on any other shape,
+ * a missing row or an unusable rate, so the caller falls back to STATIC_RATES
+ * instead of inventing a rate.
+ */
+function parseEcbRates(body: unknown): { eurUsd: number; eurPln: number } {
+  if (!Array.isArray(body)) throw new Error("frankfurter v2 body is not an array");
+  const rows = body as unknown[];
+  const rateFor = (quote: Currency): number => {
+    const row = rows.find(
+      (r): r is { base: unknown; quote: unknown; rate: unknown } =>
+        typeof r === "object" &&
+        r !== null &&
+        (r as { base?: unknown }).base === "EUR" &&
+        (r as { quote?: unknown }).quote === quote,
+    );
+    if (!row) throw new Error(`frankfurter v2 body has no EUR->${quote} row`);
+    if (!validRate(row.rate)) throw new Error(`frankfurter v2 EUR->${quote} rate is not a positive number`);
+    return row.rate;
+  };
+  return { eurUsd: rateFor("USD"), eurPln: rateFor("PLN") };
+}
+
 async function upsertRate(supabase: SupabaseClient, base: string, target: string, rate: number): Promise<void> {
   // supabase-js resolves with `{ error }` instead of throwing, so a failed
   // cache write is silent unless we read it. Log and carry on: the fetched
@@ -65,12 +96,9 @@ export async function getRates(supabase: SupabaseClient): Promise<Record<Currenc
       };
     }
 
-    const res = await fetch("https://api.frankfurter.dev/v1/latest?from=EUR");
+    const res = await fetch(FRANKFURTER_V2_ECB_URL);
     if (!res.ok) throw new Error(`frankfurter responded ${res.status}`);
-    const json = (await res.json()) as { rates: Record<string, number | undefined> };
-
-    const eurUsd = json.rates.USD ?? 1.0;
-    const eurPln = json.rates.PLN ?? STATIC_RATES.PLN;
+    const { eurUsd, eurPln } = parseEcbRates(await res.json());
 
     await Promise.all([
       upsertRate(supabase, "EUR", "USD", eurUsd),
